@@ -13,5 +13,5 @@ spec:
         kind: HelmRepository
         name: open-webui
         namespace: apps
-      version: 4.0.1
+      version: 4.1.0
   values:
