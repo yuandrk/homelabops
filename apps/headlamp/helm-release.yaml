@@ -12,5 +12,6 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: headlamp
+        namespace: apps
   # https://github.com/headlamp-k8s/headlamp/blob/main/charts/headlamp/values.yaml
   values:
