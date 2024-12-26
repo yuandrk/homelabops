@@ -12,3 +12,6 @@ override.tf.json
 terraform.tfstate.backup
 terraform/kube/kubeconfig
 .DS_Store
+*.ini
+Ansible/ssh/ssh_keys/id_rsa
+Ansible/ssh/ssh_keys/id_rsa.pub
