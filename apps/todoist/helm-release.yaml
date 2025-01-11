@@ -1,0 +1,17 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: teledoist
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: ./helm
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: GitRepository
+        name: teledoist
+  interval: 1m0s
+  values:
+    nodeSelector:
+      "kubernetes.io/arch": "arm64"
