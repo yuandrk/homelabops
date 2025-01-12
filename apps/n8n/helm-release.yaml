@@ -8,13 +8,9 @@ spec:
   chart:
     spec:
       chart: n8n
-      version: 0.25.0 # Match the version specified in the OCIRepository
+      version: 0.25.0
       sourceRef:
-        kind: HelmRepository
-        name: n8n           # Name must match the OCIRepository
+        kind: OCIRepository
+        name: n8n
         namespace: apps
   values:
-    replicas: 1 
-    persistence:
-      enabled: true
-      size: 10Gi
