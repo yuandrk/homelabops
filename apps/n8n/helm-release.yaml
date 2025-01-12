@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: my-n8n
+  name: n8n
   namespace: apps
 spec:
   interval: 10m
@@ -11,6 +11,6 @@ spec:
       version: 0.25.2
       sourceRef:
         kind: HelmRepository
-        name: my-n8n
+        name: n8n
         namespace: apps
   values:

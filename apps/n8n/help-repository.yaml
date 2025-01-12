@@ -1,8 +1,10 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: OCIRepository
 metadata:
-  name: my-n8n
+  name: n8n
   namespace: apps
 spec:
   interval: 10m
   url: oci://8gears.container-registry.com/library/n8n
+  ref:
+    tag: latest
