@@ -27,6 +27,15 @@ spec:
           kind: PrometheusRule
   values:
     grafana:
+      ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-staging"
+      tls:
+        - hosts:
+            - grafana.yuandrk.net
+          secretName: grafana-ingress-staging
     prometheus:
       prometheusSpec:
         podMonitorNamespaceSelector:
