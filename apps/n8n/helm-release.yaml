@@ -1,4 +1,4 @@
-apiVersion: helm.toolkit.fluxcd.io/v2
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: n8n
@@ -8,9 +8,13 @@ spec:
   chart:
     spec:
       chart: n8n
-      version: 0.25.2
+      version: 0.25.0 # Match the version specified in the OCIRepository
       sourceRef:
         kind: HelmRepository
-        name: n8n
+        name: n8n           # Name must match the OCIRepository
         namespace: apps
   values:
+    replicas: 1 
+    persistence:
+      enabled: true
+      size: 10Gi

@@ -7,4 +7,4 @@ spec:
   interval: 10m
   url: oci://8gears.container-registry.com/library/n8n
   ref:
-    tag: latest
+    tag: "0.25.0"
