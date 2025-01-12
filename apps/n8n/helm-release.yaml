@@ -1,0 +1,16 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: my-n8n
+  namespace: apps
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: my-n8n
+      version: 0.25.2
+      sourceRef:
+        kind: HelmRepository
+        name: my-n8n
+        namespace: apps
+  values:
