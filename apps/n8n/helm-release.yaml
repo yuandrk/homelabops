@@ -9,5 +9,4 @@ spec:
   sourceRef:
     kind: HelmRepository
     name: n8n
-    namespace: apps
   interval: 10m
