@@ -9,3 +9,6 @@ spec:
   chartRef:
     kind: OCIRepository
     name: n8n
+  values:
+    nodeSelector:
+      kubernetes.io/arch: amd64
