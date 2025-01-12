@@ -10,5 +10,7 @@ spec:
     kind: OCIRepository
     name: n8n
   values:
+    image:
+      tag: 1.74.1
     nodeSelector:
       kubernetes.io/arch: amd64
