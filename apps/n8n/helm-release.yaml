@@ -7,7 +7,7 @@ spec:
   interval: 10m
   chart:
     spec:
-      chart: my-n8n
+      chart: n8n
       version: 0.25.2
       sourceRef:
         kind: HelmRepository
