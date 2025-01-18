@@ -1,0 +1,19 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: github-runners
+  namespace: infra
+spec:
+  replicas: 2
+  template:
+    spec:
+      organization: teledoist
+      labels:
+        - "k3s-runner"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
