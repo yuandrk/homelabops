@@ -1,5 +1,5 @@
 apiVersion: metallb.io/v1beta1
-kind: AddressPool
+kind: IPAddressPool
 metadata:
   name: default
   namespace: infra
