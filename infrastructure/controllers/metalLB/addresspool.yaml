@@ -5,4 +5,4 @@ metadata:
   namespace: infra
 spec:
   addresses:
-    - 192.168.2.1-192.168.2.5 
+    - 192.168.2.2-192.168.2.5 
