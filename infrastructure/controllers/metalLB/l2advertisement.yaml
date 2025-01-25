@@ -1,5 +1,5 @@
 apiVersion: metallb.io/v1beta1
-kind: l2advertisements
+kind: L2Advertisement
 metadata:
   name: default
   namespace: infra
