@@ -5,9 +5,9 @@ metadata:
   namespace: apps
 spec:
   selector:
-    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/instance: headlamp
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 8080
+      targetPort: 4466
   type: LoadBalancer
