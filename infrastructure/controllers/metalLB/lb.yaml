@@ -5,7 +5,7 @@ metadata:
   namespace: apps
 spec:
   selector:
-    app: open-webui
+    app.kubernetes.io/instance: open-webui
   ports:
     - protocol: TCP
       port: 80
