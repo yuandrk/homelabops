@@ -3,4 +3,8 @@ kind: L2Advertisement
 metadata:
   name: default
   namespace: infra
-spec: {}
+spec:
+  ipAddressPools:
+    - default
+  interfaces:
+    - enp0s31f6

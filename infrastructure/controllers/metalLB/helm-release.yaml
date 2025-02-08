@@ -13,4 +13,11 @@ spec:
         name: metallb
         namespace: infra
   interval: 5m
+  values:
+    configInline:
+      address-pools:
+        - name: default
+          protocol: layer2
+          addresses:
+            - 192.168.2.2-192.168.2.6
 
