@@ -1,0 +1,55 @@
+repos:
+  # --- Universal hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # пробіли, фінальний \n, великі файли
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      # додаткові, які ти запропонував
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+      - id: check-executables-have-shebangs
+      - id: check-symlinks
+      - id: destroyed-symlinks
+
+  # --- YAML lint ---
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        additional_dependencies: [ yamllint==1.35.1 ]
+        files: \\.(yaml|yml)$
+
+  # --- Ansible lint ---
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.6.0      # остання на липень 2025
+    hooks:
+      - id: ansible-lint
+        additional_dependencies: [ ansible-core==2.17.0 ]
+        stages: [ commit, push ]
+
+  # --- Shell scripts ---
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: \\.(sh|bash)$
+
+
+  # --- Secrets scanning ---
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [ '--baseline', '.secrets.baseline' ]
+
+  # --- Conventional commits ---
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.27.0
+    hooks:
+      - id: commitizen
+        stages: [ commit-msg ]
