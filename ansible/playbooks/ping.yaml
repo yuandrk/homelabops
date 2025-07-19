@@ -1,0 +1,7 @@
+---
+- name: Smoke test - ping all hosts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ping
+      ansible.builtin.ping: 
