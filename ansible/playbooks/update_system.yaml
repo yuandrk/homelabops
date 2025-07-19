@@ -1,0 +1,8 @@
+# playbooks/update_system.yaml
+---
+- name: System Update
+  hosts: all
+  become: true
+  serial: 1
+  roles:
+    - system_update

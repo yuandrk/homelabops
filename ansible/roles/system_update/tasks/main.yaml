@@ -1,0 +1,16 @@
+# roles/system_update/tasks/main.yaml
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
+    update_cache: yes
+  tags: [updates]
+
+- name: Remove unused packages
+  apt:
+    autoremove: yes
+  tags: [updates]
+
+- name: Clean apt cache
+  apt:
+    autoclean: yes
+  tags: [updates]
