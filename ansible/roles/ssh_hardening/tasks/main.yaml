@@ -1,8 +1,8 @@
-# tasks file for ssh_hardening 
-# roles/ssh_hardening/tasks/main.yaml 
-# 1. Our drop-in (as before)
+# tasks file for ssh_hardening
 
-- name: Deploy Ansible hardening drop-in
+# ——— Stage 1: Open new SSH port safely ———
+
+- name: Deploy Ansible hardening drop-in (sshd_config)
   copy:
     dest: /etc/ssh/sshd_config.d/99-ansible-hardening.conf
     mode: '0644'
@@ -12,27 +12,63 @@
       # installed by Ansible ssh_hardening
       PasswordAuthentication no
       PubkeyAuthentication yes
-      {% if ssh_alt_port | int > 0 %}
-      Port {{ ssh_alt_port }}
+      {% if ssh_hardening_alt_port | int > 0 %}
+      Port {{ ssh_hardening_alt_port }}
       {% endif %}
   notify: Restart ssh
+  tags: [stage1]
 
-# comment obsolete lines (in sshd_config and cloud-init drop-in)
+- name: Ensure ssh.socket.d directory exists
+  file:
+    path: /etc/systemd/system/ssh.socket.d
+    state: directory
+    mode: '0755'
+  tags: [stage1]
+
+- name: Add drop-in for ssh.socket to listen on alt port
+  copy:
+    dest: /etc/systemd/system/ssh.socket.d/20-alt-port.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Socket]
+      ListenStream={{ ssh_hardening_alt_port }}
+  notify: Restart ssh socket
+  tags: [stage1]
+
+- name: Flush handlers immediately
+  meta: flush_handlers
+  tags: [stage1]
+
+- name: Wait until SSH alt port is reachable
+  wait_for:
+    port: "{{ ssh_hardening_alt_port | int }}"
+    timeout: 30
+  delegate_to: "{{ inventory_hostname }}"
+  tags: [stage1]
+
+# ——— Stage 2: Close default port (22) safely ———
+
 - name: Comment obsolete Port 22 / PasswordAuthentication yes
   replace:
     path: "{{ item.path }}"
     regexp: "{{ item.regex }}"
     replace: "{{ item.comment }}"
   loop:
-    - { path: '/etc/ssh/sshd_config',                         regex: '^Port[ ]+22',                       comment: '#Port 22 # disabled by Ansible' }
-    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf',    regex: '^Port[ ]+22',                       comment: '#Port 22 # disabled by Ansible' }
-    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf',    regex: '^PasswordAuthentication[ ]+yes',    comment: '# PasswordAuthentication yes # disabled by Ansible' }
+    - { path: '/etc/ssh/sshd_config',                      regex: '^Port[ ]+22',                    comment: '#Port 22 # disabled by Ansible' }
+    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf', regex: '^Port[ ]+22',                    comment: '#Port 22 # disabled by Ansible' }
+    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf', regex: '^PasswordAuthentication[ ]+yes', comment: '#PasswordAuthentication yes # disabled by Ansible' }
   notify: Restart ssh
+  tags: [stage2]
 
-# safety-net: wait until new port is open
-- name: Wait until SSH on new port becomes reachable
-  wait_for:
-    port: "{{ ssh_hardening_alt_port | int > 0 | ternary(ssh_hardening_alt_port, 22) }}"
-    timeout: 30
-  delegate_to: "{{ inventory_hostname }}"
-  when: ssh_hardening_alt_port | int > 0
+- name: Remove Port 22 from ssh.socket drop-ins
+  file:
+    path: /etc/systemd/system/ssh.socket.d/addresses.conf
+    state: absent
+  notify: Restart ssh socket
+  tags: [stage2]
+
+- name: Flush handlers after closing port 22
+  meta: flush_handlers
+  tags: [stage2]

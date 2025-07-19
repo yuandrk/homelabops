@@ -1,4 +1,3 @@
-# Production inventory 
 all:
   children:
     masters:
@@ -6,7 +5,18 @@ all:
         k3s-master:
           ansible_host: 10.10.0.1
           ansible_user: yuandrk
-          ansible_port: 2222 
+          ansible_port: 2222         
+          ssh_hardening_alt_port: 2222
           ansible_ssh_private_key_file: ~/.ssh/ansible
-          ssh_alt_port: 2222       
-          ansible_python_interpreter: /usr/bin/python3    
+    workers:
+      hosts:
+        k3s-worker1:
+          ansible_host: 10.10.0.2
+          ansible_user: yuandrk
+          ansible_port: 2222
+          ssh_hardening_alt_port: 2222
+        k3s-worker2:
+          ansible_host: 10.10.0.4
+          ansible_user: yuandrk
+          ansible_port: 2222
+          ssh_hardening_alt_port: 2222

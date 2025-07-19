@@ -1,6 +1,8 @@
---- # ssh_hardening.yaml
-- name: Harden SSH on masters and workers
-  hosts: masters
+---
+- name: Harden SSH on every node, one by one
+  hosts: masters,workers
   become: true
+  serial: 1
+  max_fail_percentage: 0
   roles:
-    - role: ssh_hardening
+    - ssh_hardening
