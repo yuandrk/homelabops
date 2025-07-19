@@ -1,0 +1,5 @@
+# handlers file for ssh_hardening 
+- name: Restart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted

@@ -6,6 +6,7 @@ all:
         k3s-master:
           ansible_host: 10.10.0.1
           ansible_user: yuandrk
+          ansible_port: 2222 
           ansible_ssh_private_key_file: ~/.ssh/ansible
           ssh_alt_port: 2222       
           ansible_python_interpreter: /usr/bin/python3    

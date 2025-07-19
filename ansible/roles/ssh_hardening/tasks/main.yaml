@@ -1,0 +1,38 @@
+# tasks file for ssh_hardening 
+# roles/ssh_hardening/tasks/main.yaml 
+# 1. Our drop-in (as before)
+
+- name: Deploy Ansible hardening drop-in
+  copy:
+    dest: /etc/ssh/sshd_config.d/99-ansible-hardening.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      # installed by Ansible ssh_hardening
+      PasswordAuthentication no
+      PubkeyAuthentication yes
+      {% if ssh_alt_port | int > 0 %}
+      Port {{ ssh_alt_port }}
+      {% endif %}
+  notify: Restart ssh
+
+# comment obsolete lines (in sshd_config and cloud-init drop-in)
+- name: Comment obsolete Port 22 / PasswordAuthentication yes
+  replace:
+    path: "{{ item.path }}"
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.comment }}"
+  loop:
+    - { path: '/etc/ssh/sshd_config',                         regex: '^Port[ ]+22',                       comment: '#Port 22 # disabled by Ansible' }
+    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf',    regex: '^Port[ ]+22',                       comment: '#Port 22 # disabled by Ansible' }
+    - { path: '/etc/ssh/sshd_config.d/50-cloud-init.conf',    regex: '^PasswordAuthentication[ ]+yes',    comment: '# PasswordAuthentication yes # disabled by Ansible' }
+  notify: Restart ssh
+
+# safety-net: wait until new port is open
+- name: Wait until SSH on new port becomes reachable
+  wait_for:
+    port: "{{ ssh_hardening_alt_port | int > 0 | ternary(ssh_hardening_alt_port, 22) }}"
+    timeout: 30
+  delegate_to: "{{ inventory_hostname }}"
+  when: ssh_hardening_alt_port | int > 0

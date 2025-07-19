@@ -1,0 +1,6 @@
+--- # ssh_hardening.yaml
+- name: Harden SSH on masters and workers
+  hosts: masters
+  become: true
+  roles:
+    - role: ssh_hardening
