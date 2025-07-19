@@ -1,0 +1,14 @@
+# .ansible-lint
+profile: production
+skip_list:
+  - yaml
+  - fqcn-builtins
+  - experimental
+  - no-changed-when
+warn_list:
+  - command-instead-of-shell
+  - risky-file-permissions
+
+exclude_paths:
+  - ansible/examples/    
+  - Ansible/             
