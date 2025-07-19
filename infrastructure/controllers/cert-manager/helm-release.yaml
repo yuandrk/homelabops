@@ -8,11 +8,11 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: "*" 
+      version: "*"
       sourceRef:
         kind: HelmRepository
         name: jetstack
         namespace: infra
       interval: 12h
-  values: 
+  values:
     installCRDs: true

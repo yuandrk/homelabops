@@ -10,5 +10,5 @@ warn_list:
   - risky-file-permissions
 
 exclude_paths:
-  - ansible/examples/    
-  - Ansible/             
+  - ansible/examples/
+  - Ansible/

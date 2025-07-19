@@ -16,3 +16,4 @@ terraform/kube/kubeconfig
 Ansible/ssh/ssh_keys/id_rsa
 Ansible/ssh/ssh_keys/id_rsa.pub
 directory_structure.md
+.venv/
