@@ -1,0 +1,6 @@
+# inventory/group_vars/masters/cloudflared.yaml
+cloudflared_tunnel_id: "4a6abf9a-d178-4a56-9586-a3d77907c5f1"
+cloudflared_hostname: "pihole.yuandrk.net"
+cloudflared_service_port: 80
+cloudflared_metrics: "127.0.0.1:9469"  
+cloudflared_no_autoupdate: true

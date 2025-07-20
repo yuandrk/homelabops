@@ -1,0 +1,8 @@
+tunnel: {{ cloudflared_tunnel_id }}
+credentials-file: /etc/cloudflared/{{ cloudflared_tunnel_id }}.json
+ingress:
+  - hostname: {{ cloudflared_hostname }}
+    service: http://127.0.0.1:{{ cloudflared_service_port }}
+  - service: http_status:404
+metrics: {{ cloudflared_metrics }}
+no-autoupdate: {{ cloudflared_no_autoupdate }}

@@ -1,0 +1,53 @@
+# roles/cloudflared/tasks/main.yml
+---
+- name: Add Cloudflare GPG key
+  ansible.builtin.get_url:
+    url: https://pkg.cloudflare.com/cloudflare-main.gpg
+    dest: /usr/share/keyrings/cloudflare-main.gpg
+    mode: "0644"
+  become: true
+
+- name: Add Cloudflare apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main"
+    filename: cloudflared
+    state: present
+  become: true
+
+- name: Install fixed version
+  ansible.builtin.apt:
+    name: "cloudflared={{ cloudflared_version }}"
+    state: present          # fixed 2025.7.0-1
+    update_cache: yes
+  notify: Restart cloudflared
+  become: true
+
+- name: Cloudflared service install
+  ansible.builtin.command:
+    cmd: cloudflared service install {{ cloudflared_token }}
+    creates: /etc/systemd/system/cloudflared.service
+  become: true
+
+- name: Ensure /etc/cloudflared directory exists
+  ansible.builtin.file:
+    path: /etc/cloudflared
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Render /etc/cloudflared/config.yml
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/cloudflared/config.yml
+    mode: "0644"
+  notify: Restart cloudflared
+  become: true
+
+- name: Enable & start service
+  ansible.builtin.systemd:
+    name: cloudflared
+    enabled: true
+    state: started
+  become: true

@@ -1,0 +1,10 @@
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Restart cloudflared
+  systemd:
+    name: cloudflared
+    state: restarted
+  become: true

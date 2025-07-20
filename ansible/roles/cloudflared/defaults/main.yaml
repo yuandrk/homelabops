@@ -1,0 +1,2 @@
+cloudflared_version: "2025.7.0"
+cloudflared_auto_upgrade: false
