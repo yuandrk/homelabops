@@ -1,4 +1,4 @@
-# .ansible-lint
+---
 profile: production
 skip_list:
   - yaml
@@ -10,5 +10,8 @@ warn_list:
   - risky-file-permissions
 
 exclude_paths:
-  - ansible/examples/
-  - Ansible/
+  - .cache/
+  - .git/
+  - .venv/
+  - tests/
+  - docs/
