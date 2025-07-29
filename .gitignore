@@ -18,3 +18,7 @@ directory_structure.md
 
 # ===== MacOS =====
 .DS_Store
+
+# ===== LLM =====
+CLAUDE.md
+Data

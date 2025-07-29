@@ -1,4 +1,3 @@
-# Outputs for all services
 output "tunnel_services" {
   description = "Information about all tunnel services"
   value = {
@@ -21,6 +20,11 @@ output "budget_url" {
   value       = "https://${module.tunnel_dns["budget"].hostname}"
 }
 
+output "n8n_url" {
+  description = "n8n public URL"
+  value       = "https://${module.tunnel_dns["n8n"].hostname}"
+}
+
 # Tunnel token for cloudflared daemon (sensitive)
 output "tunnel_token" {
   description = "Token for cloudflared daemon (same for all services)"
@@ -28,18 +32,19 @@ output "tunnel_token" {
   sensitive   = true
 }
 
-# List of all hostnames
+# List of all hostnames in the correct order
 output "all_hostnames" {
-  description = "List of all configured hostnames"
-  value       = [for service in module.tunnel_dns : service.hostname]
+  description = "List of all configured hostnames in priority order"
+  value       = [for service in local.tunnel_services : service.hostname]
 }
 
 # Tunnel config information
 output "tunnel_config" {
   description = "Tunnel configuration details"
   value = {
-    tunnel_id = local.tunnel_id
+    tunnel_id     = local.tunnel_id
     ingress_rules = length(local.tunnel_services)
-    services = keys(local.tunnel_services)
+    services      = [for service in local.tunnel_services : service.name]
+    order         = "priority-based (list order)"
   }
 }
