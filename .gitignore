@@ -9,6 +9,7 @@ plan.bin
 .terraformrc
 terraform.rc
 .terraform.lock.hcl
+terraform/kube/kubeconfig
 
 # ===== Keys =====
 Ansible/ssh/ssh_keys/id_rsa

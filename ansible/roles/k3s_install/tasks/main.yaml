@@ -1,0 +1,173 @@
+---
+# Ensure configuration directory exists
+- name: Create k3s configuration directory
+  file:
+    path: "{{ k3s_config_dir }}"
+    state: directory
+    mode: '0755'
+
+# Generate configuration checksum for change detection
+- name: Generate current configuration checksum
+  set_fact:
+    k3s_current_config: |
+      channel: {{ k3s_channel | default('') }}
+      version: {{ k3s_exact_version | default('') }}
+      server_args: {{ k3s_server_args | join(' ') }}
+      agent_args: {{ k3s_agent_args | join(' ') }}
+      cluster_cidr: {{ k3s_cluster_cidr }}
+      service_cidr: {{ k3s_service_cidr }}
+      tls_sans: {{ k3s_tls_sans | join(',') }}
+      api_endpoint: {{ k3s_api_endpoint }}
+
+- name: Calculate configuration checksum
+  set_fact:
+    k3s_config_checksum: "{{ k3s_current_config | hash('sha256') }}"
+
+- name: Check existing configuration checksum
+  stat:
+    path: "{{ k3s_checksum_file }}"
+  register: k3s_existing_checksum_file
+
+- name: Read existing checksum
+  slurp:
+    src: "{{ k3s_checksum_file }}"
+  register: k3s_existing_checksum_raw
+  when: k3s_existing_checksum_file.stat.exists
+
+- name: Set existing checksum fact
+  set_fact:
+    k3s_existing_checksum: "{{ (k3s_existing_checksum_raw.content | b64decode).strip() }}"
+  when: k3s_existing_checksum_file.stat.exists
+
+- name: Check if k3s is installed
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Detect configuration changes
+  set_fact:
+    k3s_config_changed: "{{ not k3s_existing_checksum_file.stat.exists or k3s_existing_checksum | default('') != k3s_config_checksum }}"
+
+# Uninstall k3s if configuration changed
+- name: Uninstall k3s server on configuration change
+  shell: /usr/local/bin/k3s-uninstall.sh
+  when: 
+    - k3s_binary.stat.exists
+    - k3s_config_changed
+    - inventory_hostname in groups['masters']
+  ignore_errors: yes
+
+- name: Uninstall k3s agent on configuration change  
+  shell: /usr/local/bin/k3s-agent-uninstall.sh
+  when: 
+    - k3s_binary.stat.exists
+    - k3s_config_changed
+    - inventory_hostname in groups['workers']
+  ignore_errors: yes
+
+- name: Wait for uninstall to complete
+  pause:
+    seconds: 5
+  when: k3s_config_changed and k3s_binary.stat.exists
+
+# Manage /etc/hosts entries
+- name: Add master hostname to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[groups['masters'][0]]['ansible_host'] }} {{ groups['masters'][0] }}"
+    regexp: "^{{ hostvars[groups['masters'][0]]['ansible_host'] }}.*{{ groups['masters'][0] }}"
+    state: present
+  when: k3s_manage_hosts
+  become: yes
+
+# Token management - fetch from master when needed
+- name: Get k3s token from master (for workers)
+  slurp:
+    src: "{{ k3s_token_file }}"
+  register: k3s_token_raw
+  delegate_to: "{{ groups['masters'][0] }}"
+  when: 
+    - inventory_hostname in groups['workers']
+    - groups['masters'] | length > 0
+  become: yes
+
+- name: Set k3s token fact for workers
+  set_fact:
+    k3s_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+  when: 
+    - inventory_hostname in groups['workers']
+    - k3s_token_raw is defined
+
+# Install k3s server
+- name: Install k3s server
+  shell: |
+    {% if k3s_exact_version != '' %}
+    export INSTALL_K3S_VERSION="{{ k3s_exact_version }}"
+    {% else %}
+    export INSTALL_K3S_CHANNEL="{{ k3s_channel }}"
+    {% endif %}
+    export INSTALL_K3S_EXEC="server {{ k3s_server_args | join(' ') }} --cluster-cidr={{ k3s_cluster_cidr }} --service-cidr={{ k3s_service_cidr }}{% for san in k3s_tls_sans %} --tls-san={{ san }}{% endfor %}"
+    curl -sfL {{ k3s_install_script_url }} | sh -
+  when: 
+    - inventory_hostname in groups['masters']
+    - not k3s_binary.stat.exists or k3s_config_changed
+  notify: 
+    - restart k3s
+    - save config checksum
+
+- name: Wait for k3s server to be ready
+  wait_for:
+    port: "{{ k3s_server_port }}"
+    host: "{{ k3s_api_endpoint }}"
+    timeout: 300
+  when: inventory_hostname in groups['masters']
+
+# Token should already be available from earlier fetch
+
+# Generate environment file for workers
+- name: Generate k3s environment file
+  template:
+    src: k3s-env.j2
+    dest: "{{ k3s_config_dir }}/k3s.env"
+    mode: '0600'
+  when: 
+    - inventory_hostname in groups['workers']
+    - k3s_token is defined
+  notify: restart k3s-agent
+
+# Install k3s agent
+- name: Install k3s agent
+  shell: |
+    {% if k3s_exact_version != '' %}
+    export INSTALL_K3S_VERSION="{{ k3s_exact_version }}"
+    {% else %}
+    export INSTALL_K3S_CHANNEL="{{ k3s_channel }}"
+    {% endif %}
+    export K3S_URL="https://{{ k3s_api_endpoint }}:{{ k3s_server_port }}"
+    export K3S_TOKEN="{{ k3s_token }}"
+    export INSTALL_K3S_EXEC="agent {{ k3s_agent_args | join(' ') }}"
+    curl -sfL {{ k3s_install_script_url }} | sh -
+  when: 
+    - inventory_hostname in groups['workers']
+    - k3s_token is defined
+    - not k3s_binary.stat.exists or k3s_config_changed
+  notify: 
+    - restart k3s-agent
+    - save config checksum
+
+# Start and enable services
+- name: Start and enable k3s server service
+  systemd:
+    name: k3s
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['masters']
+
+- name: Start and enable k3s agent service
+  systemd:
+    name: k3s-agent
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['workers']

@@ -1,0 +1,42 @@
+---
+- name: Bootstrap k3s cluster
+  hosts: all
+  become: yes
+  gather_facts: yes
+  roles:
+    - k3s_install
+
+- name: Extract kubeconfig from master
+  hosts: masters[0]
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Get raw kubeconfig from k3s
+      command: k3s kubectl config view --raw
+      register: kubeconfig_raw
+      changed_when: false
+
+    - name: Create terraform/kube directory on control machine
+      file:
+        path: "{{ playbook_dir }}/../terraform/kube"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      become: no
+
+    - name: Replace 127.0.0.1 with master IP in kubeconfig
+      set_fact:
+        kubeconfig_content: "{{ kubeconfig_raw.stdout | regex_replace('127\\.0\\.0\\.1', ansible_host) }}"
+
+    - name: Write kubeconfig to terraform/kube/kubeconfig
+      copy:
+        content: "{{ kubeconfig_content }}"
+        dest: "{{ playbook_dir }}/../terraform/kube/kubeconfig"
+        mode: '0600'
+      delegate_to: localhost
+      become: no
+
+    - name: Display kubeconfig location
+      debug:
+        msg: "Kubeconfig saved to {{ playbook_dir }}/../terraform/kube/kubeconfig"
+      delegate_to: localhost
