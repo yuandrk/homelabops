@@ -119,7 +119,7 @@ Deploys Cloudflared tunnel as systemd service:
 ### 🎯 `roles/k3s_install`
 Complete K3s cluster deployment and management:
 - Automatic token delegation between master and workers
-- IP-based connections using `k3s_api_endpoint`
+- IP-based connections using `k3s_install_api_endpoint`
 - Configuration change detection via SHA256 checksum
 - Clean uninstall/reinstall on config changes
 - Systemd integration with proper environment files

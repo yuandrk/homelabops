@@ -165,7 +165,7 @@ FallbackDNS=
 - **CNI**: Flannel VXLAN for pod networking
 - **Service Mesh**: ClusterIP services via kube-proxy
 - **Load Balancer**: Traefik for ingress traffic
-- **API Access**: Uses `k3s_api_endpoint: 10.10.0.1:6443` for reliability
+- **API Access**: Uses `k3s_install_api_endpoint: 10.10.0.1:6443` for reliability
 
 ---
 

@@ -30,7 +30,7 @@ External:        192.168.1.0/24 (Wi-Fi for internet access)
 
 ### Key Implementation Features
 - **Automatic Token Delegation**: Workers fetch tokens from master automatically
-- **IP-based Connections**: Uses `k3s_api_endpoint` (10.10.0.1:6443) for reliability
+- **IP-based Connections**: Uses `k3s_install_api_endpoint` (10.10.0.1:6443) for reliability
 - **Configuration Change Detection**: SHA256 checksum triggers clean uninstall/reinstall
 - **Safe Partial Runs**: `--limit workers` works correctly without manual token management
 - **Cross-node Communication**: Verified 7-11ms latency between pods across nodes

@@ -16,24 +16,24 @@ Idempotent Ansible role for installing and managing K3s clusters with automatic 
 
 ### Core Configuration
 ```yaml
-k3s_channel: stable                    # K3s release channel
-k3s_exact_version: ""                  # Override channel with specific version
-k3s_api_endpoint: "{{ master_ip }}"    # API endpoint for workers (auto-detected)
+k3s_install_channel: stable                    # K3s release channel
+k3s_install_exact_version: ""                  # Override channel with specific version
+k3s_install_api_endpoint: "{{ master_ip }}"    # API endpoint for workers (auto-detected)
 ```
 
 ### Network Configuration
 ```yaml
 # These internal networks operate at different layers and don't conflict with host LAN
-k3s_cluster_cidr: "10.42.0.0/16"      # Pod network (CNI overlay)
-k3s_service_cidr: "10.43.0.0/16"      # Service network (kube-proxy)
+k3s_install_cluster_cidr: "10.42.0.0/16"      # Pod network (CNI overlay)
+k3s_install_service_cidr: "10.43.0.0/16"      # Service network (kube-proxy)
 ```
 
 ### Optional Features
 ```yaml
-k3s_manage_hosts: false                # Manage /etc/hosts entries
-k3s_server_args: []                    # Additional server arguments
-k3s_agent_args: []                     # Additional agent arguments  
-k3s_tls_sans: ["{{ ansible_host }}"]   # TLS Subject Alternative Names
+k3s_install_manage_hosts: false                # Manage /etc/hosts entries
+k3s_install_server_args: []                    # Additional server arguments
+k3s_install_agent_args: []                     # Additional agent arguments  
+k3s_install_tls_sans: ["{{ ansible_host }}"]   # TLS Subject Alternative Names
 ```
 
 ## Network Architecture
@@ -67,7 +67,7 @@ These networks operate at different layers and don't conflict - host routing han
 ```yaml  
 - hosts: all
   vars:
-    k3s_manage_hosts: true
+    k3s_install_manage_hosts: true
   roles:
     - k3s_install
 ```
@@ -76,11 +76,11 @@ These networks operate at different layers and don't conflict - host routing han
 ```yaml
 - hosts: all
   vars:
-    k3s_exact_version: "v1.28.5+k3s1"
-    k3s_server_args: 
+    k3s_install_exact_version: "v1.28.5+k3s1"
+    k3s_install_server_args: 
       - "--disable=traefik"
       - "--disable=servicelb"
-    k3s_agent_args:
+    k3s_install_agent_args:
       - "--node-label=type=worker"
   roles:
     - k3s_install
@@ -123,12 +123,12 @@ ANSIBLE_BECOME_PASS=password ansible masters -m shell -a "/usr/local/bin/k3s-uni
 
 - `/etc/rancher/k3s/config.checksum` - Configuration change tracking
 - `/etc/rancher/k3s/k3s.env` - Environment file for workers (if using templates)
-- `/etc/hosts` - Hostname entries (if `k3s_manage_hosts: true`)
+- `/etc/hosts` - Hostname entries (if `k3s_install_manage_hosts: true`)
 
 ## Troubleshooting
 
 ### Worker Connection Issues
-1. Check API endpoint: `k3s_api_endpoint` should resolve from workers
+1. Check API endpoint: `k3s_install_api_endpoint` should resolve from workers
 2. Verify token: Role automatically fetches from master
 3. Check firewall: Port 6443 must be accessible
 
