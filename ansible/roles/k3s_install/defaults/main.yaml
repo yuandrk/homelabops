@@ -1,28 +1,28 @@
 ---
 # K3s installation defaults
-k3s_channel: stable
-k3s_exact_version: ""  # If set, overrides k3s_channel (e.g., "v1.28.5+k3s1")
-k3s_server_port: 6443
-k3s_token_file: /var/lib/rancher/k3s/server/node-token
-k3s_kubeconfig_file: /etc/rancher/k3s/k3s.yaml
-k3s_data_dir: /var/lib/rancher/k3s
+k3s_install_channel: stable
+k3s_install_exact_version: ""  # If set, overrides k3s_install_channel (e.g., "v1.28.5+k3s1")
+k3s_install_server_port: 6443
+k3s_install_token_file: /var/lib/rancher/k3s/server/node-token
+k3s_install_kubeconfig_file: /etc/rancher/k3s/k3s.yaml
+k3s_install_data_dir: /var/lib/rancher/k3s
 
 # Installation script
 k3s_install_script_url: https://get.k3s.io
 
 # API endpoint for worker nodes to connect to (defaults to first master's IP)
-k3s_api_endpoint: "{{ hostvars[groups['masters'][0]]['ansible_host'] }}"
+k3s_install_api_endpoint: "{{ hostvars[groups['masters'][0]]['ansible_host'] }}"
 
 # Server and agent configuration (will be joined into strings)
-k3s_server_args: []
-k3s_agent_args: []
+k3s_install_server_args: []
+k3s_install_agent_args: []
 
 # TLS SANs for API server certificate (defaults to ansible_host)
-k3s_tls_sans: 
+k3s_install_tls_sans: 
   - "{{ ansible_host }}"
 
 # Hostname management
-k3s_manage_hosts: false  # Set to true to manage /etc/hosts entries
+k3s_install_manage_hosts: false  # Set to true to manage /etc/hosts entries
 
 # Internal K3s cluster networks (do NOT overlap with host network 10.10.0.0/24)
 # These are internal overlay networks used by K3s for pod-to-pod and service communication
@@ -30,9 +30,9 @@ k3s_manage_hosts: false  # Set to true to manage /etc/hosts entries
 # - Host network (10.10.0.0/24): Physical/VM interfaces for node-to-node communication
 # - Pod network (10.42.0.0/16): Container-to-container communication via CNI
 # - Service network (10.43.0.0/16): Service discovery and load balancing
-k3s_cluster_cidr: "10.42.0.0/16"   # Pod network (internal container IPs)
-k3s_service_cidr: "10.43.0.0/16"   # Service network (internal service IPs)
+k3s_install_cluster_cidr: "10.42.0.0/16"   # Pod network (internal container IPs)
+k3s_install_service_cidr: "10.43.0.0/16"   # Service network (internal service IPs)
 
 # Configuration tracking
-k3s_config_dir: /etc/rancher/k3s
-k3s_checksum_file: "{{ k3s_config_dir }}/config.checksum"
+k3s_install_config_dir: /etc/rancher/k3s
+k3s_install_checksum_file: "{{ k3s_install_config_dir }}/config.checksum"

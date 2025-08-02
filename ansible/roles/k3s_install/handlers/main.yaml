@@ -1,20 +1,20 @@
 ---
-- name: restart k3s
+- name: Restart k3s
   systemd:
     name: k3s
     state: restarted
     daemon_reload: yes
   when: inventory_hostname in groups['masters']
 
-- name: restart k3s-agent
+- name: Restart k3s-agent
   systemd:
     name: k3s-agent
     state: restarted
     daemon_reload: yes
   when: inventory_hostname in groups['workers']
 
-- name: save config checksum
+- name: Save config checksum
   copy:
     content: "{{ k3s_config_checksum }}"
-    dest: "{{ k3s_checksum_file }}"
+    dest: "{{ k3s_install_checksum_file }}"
     mode: '0644'
