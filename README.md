@@ -1,27 +1,112 @@
 # HomeLab GitOps
 
-[![FluxCD](https://img.shields.io/badge/GitOps-FluxCD-blue)](https://fluxcd.io/)
-[![Kubernetes](https://img.shields.io/badge/k3s-v1.33-green)](https://k3s.io/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Kubernetes](https://img.shields.io/badge/k3s-v1.33.3-green)](https://k3s.io/)
+[![Ansible](https://img.shields.io/badge/Ansible-automated-red)](https://ansible.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-AWS%20%2B%20Cloudflare-purple)](https://terraform.io/)
+[![Status](https://img.shields.io/badge/Status-Operational-brightgreen)]()
 
-My personal homelab running on K3s with GitOps via FluxCD.
+My personal homelab infrastructure running K3s cluster with automated deployment and management.
 
 ## 📋 Overview
 
-This repository contains the declarative configuration for my homelab Kubernetes cluster. Changes pushed to `main` are automatically deployed by FluxCD.
+This repository contains Infrastructure as Code and documentation for my homelab K3s cluster. Infrastructure is managed via Ansible automation and Terraform for cloud resources.
 
-## 🏗️ Architecture
+## 🏗️ Current Architecture
 
-- **Cluster**: K3s on Ubuntu 24.04 LTS
-- **GitOps**: FluxCD v2
-- **Networking**: Cloudflare Tunnels + Traefik
-- **Storage**: Local-path provisioner
-- **Secrets**: Sealed Secrets / SOPS
+- **Cluster**: 3-node K3s cluster (1 master + 2 workers) on Ubuntu 24.04 LTS
+- **Automation**: Ansible for node configuration and cluster deployment
+- **Networking**: Dual network setup (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi)
+- **External Access**: Cloudflare Tunnels + Traefik ingress
+- **DNS**: Pi-hole (host) + CoreDNS (K3s)
+- **Database**: PostgreSQL on k3s-worker1 (Docker)
+- **Infrastructure**: Terraform for AWS backend + Cloudflare tunnels
 
 ## 📁 Repository Structure
 
-- `ansible/` - Node configuration management
-- `clusters/` - Kubernetes manifests organized by cluster
-- `terraform/` - Infrastructure as code for cloud resources
-- `scripts/` - Automation and utility scripts
-- `docs/` - Documentation and runbooks
+```
+homelabops/
+├── .github/workflows/    # CI/CD pipelines (planned)
+├── ansible/              # Node configuration and K3s deployment
+│   ├── inventory/        # Host inventory and group variables
+│   ├── playbooks/        # Ansible playbooks
+│   └── roles/            # Reusable roles (ssh_hardening, k3s_install, etc.)
+├── apps/                 # Application deployments (legacy FluxCD structure)
+├── clusters/             # Cluster configurations (for future FluxCD)
+├── docs/                 # 📚 Comprehensive documentation
+│   ├── Ansible/          # Ansible automation guides
+│   ├── Database/         # PostgreSQL setup and management
+│   ├── DevOps-Workflow/  # Git workflow, pre-commit, CI/CD
+│   ├── K3s/              # K3s deployment and troubleshooting
+│   ├── Network/          # Network architecture and performance
+│   ├── Planning/         # Future deployment plans
+│   └── Terraform/        # Infrastructure as Code documentation
+├── infrastructure/       # Core infrastructure configs
+├── monitoring/           # Observability stack (planned)
+├── scripts/              # Automation and utility scripts
+├── terraform/            # Infrastructure as Code
+│   ├── bootstrap/        # AWS S3 + DynamoDB backend
+│   ├── cloudflare/       # DNS and tunnel management
+│   └── modules/          # Reusable Terraform modules
+└── tools/                # Development tools
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- 3 Ubuntu 24.04 LTS nodes with SSH key access
+- Ansible installed locally
+- Terraform >= 1.8.0
+- AWS CLI configured for backend
+- Cloudflare API token
+
+### Deploy K3s Cluster
+```bash
+# Test connectivity
+ansible -i ansible/inventory/hosts.ini all -m ping
+
+# Deploy complete cluster
+ANSIBLE_BECOME_PASS=password ansible-playbook \
+  -i ansible/inventory/hosts.ini \
+  ansible/playbooks/cluster_bootstrap.yaml
+
+# Verify cluster
+kubectl --kubeconfig=terraform/kube/kubeconfig get nodes
+```
+
+### Manage Infrastructure
+```bash
+# Deploy Cloudflare tunnels
+cd terraform/cloudflare
+terraform init && terraform apply
+
+# Get tunnel token
+terraform output -raw tunnel_token
+```
+
+## 📊 Current Status
+
+### Cluster Health ✅
+- **3-node K3s cluster**: All nodes operational
+- **Version**: v1.33.3+k3s1 across all nodes
+- **Network**: Dual setup with gigabit LAN + Wi-Fi fallback
+- **External Access**: Pi-hole and Budget app via Cloudflare tunnels
+
+### Services Running
+- **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
+- **PostgreSQL**: Database on k3s-worker1 (Docker)
+- **Traefik**: K3s ingress controller
+- **CoreDNS**: K3s cluster DNS
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+- **[Network Architecture](docs/Network/Network-Architecture.md)** - Complete network setup and topology
+- **[K3s Deployment](docs/K3s/)** - Cluster deployment and troubleshooting guides  
+- **[Ansible Automation](docs/Ansible/Ansible-overview.md)** - Infrastructure automation
+- **[Database Setup](docs/Database/)** - PostgreSQL configuration
+- **[Terraform Infrastructure](docs/Terraform/)** - Cloud infrastructure management
+
+---
+
+*This homelab follows GitOps principles with infrastructure as code and automated deployment.*
