@@ -28,6 +28,33 @@ gh auth login
 - Authenticated with GitHub (`gh auth login`)
 - Admin permissions on the repository
 
+### `setup-repo-metadata.sh`
+**Purpose**: Configure GitHub repository About section and Topics
+
+**Usage**:
+```bash
+# First authenticate with GitHub CLI
+gh auth login
+
+# Run the setup script
+./tools/setup-repo-metadata.sh
+```
+
+**What it does**:
+- Sets repository description for the About section
+- Adds homepage URL (https://chat.yuandrk.net)
+- Adds comprehensive topics for discoverability:
+  - homelab, gitops, k3s, kubernetes
+  - fluxcd, terraform, ansible
+  - cloudflare-tunnel, infrastructure-as-code
+  - raspberry-pi, multi-arch, llm, open-webui
+  - self-hosted, pihole, mermaid-diagrams
+
+**Prerequisites**:
+- GitHub CLI installed (`brew install gh`)
+- Authenticated with GitHub (`gh auth login`)
+- Admin permissions on the repository
+
 ## Future Tools
 
 This directory can be extended with additional scripts for:

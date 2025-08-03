@@ -4,6 +4,7 @@
 [![FluxCD](https://img.shields.io/badge/FluxCD-v2.6.0-blue)](https://fluxcd.io/)
 [![Ansible](https://img.shields.io/badge/Ansible-automated-red)](https://ansible.com/)
 [![Terraform](https://img.shields.io/badge/Terraform-AWS%20%2B%20Cloudflare-purple)](https://terraform.io/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Operational-brightgreen)]()
 
 My personal homelab infrastructure running K3s cluster with automated deployment and management.
@@ -124,6 +125,14 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[FluxCD GitOps](docs/FluxCD/)** - GitOps deployment and troubleshooting
 - **[Database Setup](docs/Database/)** - PostgreSQL configuration
 - **[Terraform Infrastructure](docs/Terraform/)** - Cloud infrastructure management
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🏷️ Topics
+
+`homelab` `gitops` `k3s` `kubernetes` `fluxcd` `terraform` `ansible` `cloudflare-tunnel` `infrastructure-as-code` `raspberry-pi` `multi-arch` `llm` `open-webui` `self-hosted` `pihole` `mermaid-diagrams`
 
 ---
 
