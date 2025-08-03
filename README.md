@@ -120,6 +120,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 - **[Infrastructure Diagrams](docs/Architecture/Infrastructure-Diagrams.md)** - 🎨 Mermaid architecture diagrams
 - **[Network Architecture](docs/Network/Network-Architecture.md)** - Complete network setup and topology
+- **[Release Process](docs/Release/Release-Process.md)** - 🏷️ Versioning and release management
 - **[K3s Deployment](docs/K3s/)** - Cluster deployment and troubleshooting guides  
 - **[Ansible Automation](docs/Ansible/Ansible-overview.md)** - Infrastructure automation
 - **[FluxCD GitOps](docs/FluxCD/)** - GitOps deployment and troubleshooting

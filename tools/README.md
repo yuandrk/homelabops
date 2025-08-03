@@ -55,6 +55,35 @@ gh auth login
 - Authenticated with GitHub (`gh auth login`)
 - Admin permissions on the repository
 
+### `create-release.sh`
+**Purpose**: Create tagged releases with automated release notes
+
+**Usage**:
+```bash
+# Auto-generate next minor version
+./tools/create-release.sh
+
+# Specify version and release type
+./tools/create-release.sh v1.1.0 minor
+./tools/create-release.sh v1.0.1 patch  
+./tools/create-release.sh v2.0.0 major
+```
+
+**What it does**:
+- Auto-generates version numbers following SemVer
+- Creates annotated Git tags
+- Generates comprehensive release notes from commit history
+- Categorizes changes (features, fixes, docs, config)
+- Creates GitHub release with infrastructure status
+- Includes service URLs and architecture highlights
+- Provides deployment and verification steps
+
+**Prerequisites**:
+- GitHub CLI installed (`brew install gh`)
+- Authenticated with GitHub (`gh auth login`)
+- Admin permissions on the repository
+- On main branch with latest changes
+
 ## Future Tools
 
 This directory can be extended with additional scripts for:
