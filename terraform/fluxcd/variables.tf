@@ -7,7 +7,7 @@ variable "github_token" {
 variable "kubeconfig_path" {
   type        = string
   description = "Path to kubeconfig file."
-  default     = "~/kube/kubeconfig"
+  default     = "../kube/kubeconfig"
 }
 
 variable "github_owner" {
@@ -23,4 +23,10 @@ variable "repository_name" {
 variable "git_branch" {
   type    = string
   default = "main"
+}
+
+variable "flux_version" {
+  type        = string
+  description = "FluxCD version to install"
+  default     = "v2.6.0"
 }

@@ -1,6 +1,7 @@
 # HomeLab GitOps
 
 [![Kubernetes](https://img.shields.io/badge/k3s-v1.33.3-green)](https://k3s.io/)
+[![FluxCD](https://img.shields.io/badge/FluxCD-v2.6.0-blue)](https://fluxcd.io/)
 [![Ansible](https://img.shields.io/badge/Ansible-automated-red)](https://ansible.com/)
 [![Terraform](https://img.shields.io/badge/Terraform-AWS%20%2B%20Cloudflare-purple)](https://terraform.io/)
 [![Status](https://img.shields.io/badge/Status-Operational-brightgreen)]()
@@ -9,11 +10,12 @@ My personal homelab infrastructure running K3s cluster with automated deployment
 
 ## 📋 Overview
 
-This repository contains Infrastructure as Code and documentation for my homelab K3s cluster. Infrastructure is managed via Ansible automation and Terraform for cloud resources.
+This repository contains Infrastructure as Code and documentation for my homelab K3s cluster with GitOps automation. Infrastructure is managed via Ansible automation, Terraform for cloud resources, and FluxCD for continuous deployment.
 
 ## 🏗️ Current Architecture
 
 - **Cluster**: 3-node K3s cluster (1 master + 2 workers) on Ubuntu 24.04 LTS
+- **GitOps**: FluxCD v2.6.0 with automated deployment from Git
 - **Automation**: Ansible for node configuration and cluster deployment
 - **Networking**: Dual network setup (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi)
 - **External Access**: Cloudflare Tunnels + Traefik ingress
@@ -30,8 +32,8 @@ homelabops/
 │   ├── inventory/        # Host inventory and group variables
 │   ├── playbooks/        # Ansible playbooks
 │   └── roles/            # Reusable roles (ssh_hardening, k3s_install, etc.)
-├── apps/                 # Application deployments (legacy FluxCD structure)
-├── clusters/             # Cluster configurations (for future FluxCD)
+├── apps/                 # Application deployments (FluxCD HelmReleases)
+├── clusters/             # FluxCD cluster configurations
 ├── docs/                 # 📚 Comprehensive documentation
 │   ├── Ansible/          # Ansible automation guides
 │   ├── Database/         # PostgreSQL setup and management
@@ -46,6 +48,7 @@ homelabops/
 ├── terraform/            # Infrastructure as Code
 │   ├── bootstrap/        # AWS S3 + DynamoDB backend
 │   ├── cloudflare/       # DNS and tunnel management
+│   ├── fluxcd/           # FluxCD GitOps deployment
 │   └── modules/          # Reusable Terraform modules
 └── tools/                # Development tools
 ```
@@ -79,6 +82,10 @@ kubectl --kubeconfig=terraform/kube/kubeconfig get nodes
 cd terraform/cloudflare
 terraform init && terraform apply
 
+# Deploy FluxCD GitOps
+cd terraform/fluxcd
+terraform init && terraform apply
+
 # Get tunnel token
 terraform output -raw tunnel_token
 ```
@@ -92,10 +99,17 @@ terraform output -raw tunnel_token
 - **External Access**: Pi-hole and Budget app via Cloudflare tunnels
 
 ### Services Running
+- **FluxCD v2.6.0**: GitOps continuous deployment
 - **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
 - **PostgreSQL**: Database on k3s-worker1 (Docker)
 - **Traefik**: K3s ingress controller
 - **CoreDNS**: K3s cluster DNS
+
+### GitOps Status ✅
+- **FluxCD**: Deployed and monitoring Git repository
+- **Repository**: Connected via SSH deploy key
+- **Sync**: Automatic reconciliation every 1 minute
+- **Webhook**: External trigger available (`flux-webhook.yuandrk.net`)
 
 ## 📚 Documentation
 

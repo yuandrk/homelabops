@@ -1,0 +1,16 @@
+# FluxCD Terraform Configuration Examples
+# Copy this file to terraform.tfvars and fill in your values
+
+# GitHub configuration
+github_token = "github_pat_11AO5MT5Q0..."  # Your GitHub Personal Access Token
+github_owner = "yuandrk"                    # Your GitHub username or organization
+repository_name = "homelabops"              # Repository name
+
+# Kubernetes configuration  
+kubeconfig_path = "../kube/kubeconfig"      # Path to your kubeconfig file
+
+# Git configuration
+git_branch = "main"                         # Git branch for FluxCD to watch
+
+# FluxCD version
+flux_version = "v2.6.0"                     # FluxCD version to install
