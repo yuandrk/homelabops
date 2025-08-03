@@ -22,7 +22,7 @@ echo "Creating branch protection rule for dev branch..."
 
 gh api repos/"$REPO"/branches/dev/protection \
     --method PUT \
-    --field required_status_checks='{"strict":true,"contexts":[]}' \
+    --field required_status_checks=null \
     --field enforce_admins=true \
     --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true,"require_code_owner_reviews":false}' \
     --field restrictions=null \
