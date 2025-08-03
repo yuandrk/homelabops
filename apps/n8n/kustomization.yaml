@@ -1,7 +1,0 @@
-# n8n - Workflow automation (disabled for now)
-# 
-# apiVersion: kustomize.config.k8s.io/v1beta1
-# kind: Kustomization
-# resources:
-#   - helm-release.yaml
-#   - help-repository.yaml

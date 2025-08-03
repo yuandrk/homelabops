@@ -1,7 +1,0 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: headlamp
-  namespace: apps
-spec:
-  url: https://headlamp-k8s.github.io/headlamp/
