@@ -64,6 +64,7 @@ output "tunnel_token"  { value = "..." sensitive = true }            # Token for
 |---------|----------------|-----------------|--------|---------|
 | **Pi-hole** | `pihole.yuandrk.net` | `http://127.0.0.1:8081` | ✅ Active | Port changed from 80→8081 due to K3s Traefik |
 | **Budget App** | `budget.yuandrk.net` | K3s service | ✅ Active | Routed via K3s ingress |
+| **Open-WebUI** | `chat.yuandrk.net` | `http://k3s-master:80` | ✅ Active | LLM interface via Traefik ingress, amd64 node affinity |
 
 ### Tunnel Configuration
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1` (existing, imported)

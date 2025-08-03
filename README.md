@@ -100,7 +100,7 @@ terraform output -raw tunnel_token
 
 ### Services Running
 - **FluxCD v2.6.0**: GitOps continuous deployment
-- **open-webui**: LLM interface with Ollama integration
+- **open-webui**: LLM interface with Ollama integration (`chat.yuandrk.net`)
 - **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
 - **PostgreSQL**: Database on k3s-worker1 (Docker)
 - **Traefik**: K3s ingress controller

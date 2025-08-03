@@ -180,7 +180,7 @@ kubectl --kubeconfig=terraform/kube/kubeconfig get services --all-namespaces
 
 ### Cloudflare Tunnels
 - Tunnel ID: 4a6abf9a-d178-4a56-9586-a3d77907c5f1
-- Services: pihole.yuandrk.net, budget.yuandrk.net
+- Services: pihole.yuandrk.net, budget.yuandrk.net, chat.yuandrk.net
 - Managed via Terraform with reusable tunnel module
 
 ### FluxCD GitOps (Ready for Deployment)

@@ -191,6 +191,7 @@ FallbackDNS=
 |---------|------------------|-----------------|---------|
 | **Pi-hole** | `http://127.0.0.1:8081` | `pihole.yuandrk.net` | ✅ Active |
 | **Budget App** | K3s service | `budget.yuandrk.net` | ✅ Active |
+| **Open-WebUI** | `http://k3s-master:80` | `chat.yuandrk.net` | ✅ Active |
 
 ### Tunnel Management
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
