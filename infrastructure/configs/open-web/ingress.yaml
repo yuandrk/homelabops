@@ -8,10 +8,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ia.yuandrk.net
-      secretName: ia-ingress-prod
+        - chat.yuandrk.net
+      secretName: chat-ingress-prod
   rules:
-    - host: "ia.yuandrk.net"
+    - host: "chat.yuandrk.net"
       http:
         paths:
           - path: /
