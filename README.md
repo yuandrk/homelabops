@@ -100,6 +100,7 @@ terraform output -raw tunnel_token
 
 ### Services Running
 - **FluxCD v2.6.0**: GitOps continuous deployment
+- **open-webui**: LLM interface with Ollama integration
 - **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
 - **PostgreSQL**: Database on k3s-worker1 (Docker)
 - **Traefik**: K3s ingress controller
@@ -107,6 +108,7 @@ terraform output -raw tunnel_token
 
 ### GitOps Status ✅
 - **FluxCD**: Deployed and monitoring Git repository
+- **Applications**: Clean slate with only open-webui active
 - **Repository**: Connected via SSH deploy key
 - **Sync**: Automatic reconciliation every 1 minute
 - **Webhook**: External trigger available (`flux-webhook.yuandrk.net`)
@@ -118,6 +120,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[Network Architecture](docs/Network/Network-Architecture.md)** - Complete network setup and topology
 - **[K3s Deployment](docs/K3s/)** - Cluster deployment and troubleshooting guides  
 - **[Ansible Automation](docs/Ansible/Ansible-overview.md)** - Infrastructure automation
+- **[FluxCD GitOps](docs/FluxCD/)** - GitOps deployment and troubleshooting
 - **[Database Setup](docs/Database/)** - PostgreSQL configuration
 - **[Terraform Infrastructure](docs/Terraform/)** - Cloud infrastructure management
 
