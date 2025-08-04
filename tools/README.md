@@ -84,6 +84,39 @@ gh auth login
 - Admin permissions on the repository
 - On main branch with latest changes
 
+### `check-system-health.sh`
+**Purpose**: Comprehensive health check for K3s cluster, FluxCD, and applications
+
+**Usage**:
+```bash
+# Run complete system health check
+./tools/check-system-health.sh
+```
+
+**What it checks**:
+- K3s cluster connectivity and node status
+- FluxCD controller health and pod status
+- Git repository synchronization status
+- Kustomization application status
+- Helm release deployment status
+- Application pod health
+- Ingress and external service accessibility
+- Resource usage (CPU and memory)
+- External service HTTP response codes
+
+**Output Features**:
+- Color-coded status indicators (✅ ❌ ⚠️)
+- Detailed component status
+- Resource usage statistics
+- External service accessibility
+- Overall health summary
+- Exit codes for automation (0 = healthy, >0 = issues found)
+
+**Prerequisites**:
+- kubectl access to cluster
+- Kubeconfig file at correct path
+- curl for external service checks
+
 ## Future Tools
 
 This directory can be extended with additional scripts for:

@@ -124,6 +124,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[K3s Deployment](docs/K3s/)** - Cluster deployment and troubleshooting guides  
 - **[Ansible Automation](docs/Ansible/Ansible-overview.md)** - Infrastructure automation
 - **[FluxCD GitOps](docs/FluxCD/)** - GitOps deployment and troubleshooting
+- **[FluxCD Health Monitoring](docs/FluxCD/FluxCD-Health-Monitoring.md)** - 🔍 System health checks and monitoring
 - **[Database Setup](docs/Database/)** - PostgreSQL configuration
 - **[Terraform Infrastructure](docs/Terraform/)** - Cloud infrastructure management
 
