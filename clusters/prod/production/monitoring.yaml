@@ -6,17 +6,21 @@ metadata:
 spec:
   interval: 1h
   retryInterval: 1m
-  timeout: 5m
+  timeout: 10m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/prod/monitoring/controllers/kube-prometheus-stack
   prune: true
+  wait: true
   healthChecks:
   - apiVersion: apps/v1
     kind: Deployment
     name: kube-prometheus-stack-operator
     namespace: monitoring
+  - apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: podmonitors.monitoring.coreos.com
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -28,7 +32,7 @@ spec:
     - name: monitoring-controllers
   interval: 1h
   retryInterval: 1m
-  timeout: 3m
+  timeout: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
