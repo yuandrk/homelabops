@@ -98,13 +98,20 @@ spec:
 
 ## Access Methods
 
+### External Access (Recommended)
+```bash
+# Grafana via Cloudflare Tunnel
+# URL: https://grafana.yuandrk.net
+# Credentials: admin / flux
+```
+
 ### Port Forwarding (Local Access)
 ```bash
-# Grafana (recommended)
+# Grafana (local development)
 kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
 # Access: http://localhost:3000 (admin/flux)
 
-# Prometheus
+# Prometheus (internal only)
 kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
 # Access: http://localhost:9090
 ```

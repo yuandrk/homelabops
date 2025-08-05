@@ -29,6 +29,11 @@ locals {
       name     = "chat"
       hostname = "chat.yuandrk.net"
       service  = "http://k3s-master:80"
+    },
+    {
+      name     = "grafana"
+      hostname = "grafana.yuandrk.net"
+      service  = "http://k3s-master:80"
     }
   ]
   
