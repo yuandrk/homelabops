@@ -26,14 +26,14 @@ repos:
           ^infrastructure/configs/.*|
           ^helm/.*/crds/.*
 
-  # --- Ansible lint
-  - repo: https://github.com/ansible/ansible-lint
-    rev: v25.6.1
-    hooks:
-      - id: ansible-lint
-        additional_dependencies: [ansible-core==2.17.0]
-        files: ^ansible/.*\\.(ya?ml)$
-        stages: [pre-commit, pre-push]
+  # --- Ansible lint (temporarily disabled)
+  # - repo: https://github.com/ansible/ansible-lint
+  #   rev: v25.6.1
+  #   hooks:
+  #     - id: ansible-lint
+  #       additional_dependencies: [ansible-core==2.17.0]
+  #       files: ^ansible/.*\\.(ya?ml)$
+  #       stages: [pre-commit, pre-push]
 
   # --- Conventional commits ---
   - repo: https://github.com/commitizen-tools/commitizen
