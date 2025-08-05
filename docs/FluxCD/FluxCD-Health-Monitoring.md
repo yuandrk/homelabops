@@ -117,10 +117,12 @@ kubectl get kustomization -n flux-system
 
 **Expected Output (✅ Healthy):**
 ```
-NAME            AGE   READY   STATUS
-apps            34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
-flux-system     34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
-infra-configs   34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
+NAME                     AGE   READY   STATUS
+apps                     34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
+flux-system              34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
+infra-configs            34h   True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
+monitoring-controllers   1h    True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
+monitoring-configs       1h    True    Applied revision: main@sha1:8853290963e2c356b9fa1362bf303aaa9a52a676
 ```
 
 **Health Indicators:**
@@ -146,8 +148,9 @@ kubectl get helmrelease -A
 
 **Expected Output (✅ Healthy):**
 ```
-NAMESPACE   NAME         AGE   READY   STATUS
-apps        open-webui   34h   True    Helm upgrade succeeded for release apps/open-webui.v3 with chart open-webui@7.0.1
+NAMESPACE    NAME                    AGE   READY   STATUS
+apps         open-webui              34h   True    Helm upgrade succeeded for release apps/open-webui.v3 with chart open-webui@7.0.1
+monitoring   kube-prometheus-stack   1h    True    Helm upgrade succeeded for release monitoring/kube-prometheus-stack.v1 with chart kube-prometheus-stack@45.5.5
 ```
 
 **Health Indicators:**
@@ -167,6 +170,29 @@ open-webui-0                            1/1     Running   0          33h
 open-webui-ollama-5b5cf776c7-rx5pj      1/1     Running   0          33h
 open-webui-pipelines-5b6f5f9fc5-p29g9   1/1     Running   0          33h
 ```
+
+### Check Monitoring Stack
+```bash
+kubectl get pods -n monitoring
+```
+
+**Expected Output (✅ Healthy):**
+```
+NAME                                                       READY   STATUS    RESTARTS   AGE
+kube-prometheus-stack-grafana-58b9b4779d-5nkxr             3/3     Running   0          1h
+kube-prometheus-stack-kube-state-metrics-684f8c7558-wcjw6  1/1     Running   0          1h
+kube-prometheus-stack-operator-79bb455bdc-gm9zx            1/1     Running   0          1h
+kube-prometheus-stack-prometheus-node-exporter-4j56d       1/1     Running   0          1h
+kube-prometheus-stack-prometheus-node-exporter-5hlw7       1/1     Running   0          1h
+kube-prometheus-stack-prometheus-node-exporter-wz4xj       1/1     Running   0          1h
+prometheus-kube-prometheus-stack-prometheus-0              2/2     Running   0          1h
+```
+
+**Health Indicators:**
+- ✅ Grafana pod shows `READY 3/3` (main + 2 sidecars)
+- ✅ Node exporters running on all nodes (1 per node)
+- ✅ Prometheus pod shows `READY 2/2` (prometheus + config-reloader)
+- ✅ All pods have `STATUS Running`
 
 ### Check Ingress Status
 ```bash
