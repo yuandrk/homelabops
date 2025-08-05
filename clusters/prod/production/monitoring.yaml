@@ -1,23 +1,36 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: monitoring-all
+  name: monitoring-controllers
   namespace: flux-system
 spec:
   interval: 1h
   retryInterval: 1m
-  timeout: 3m
+  timeout: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/prod/monitoring
+  path: ./clusters/prod/monitoring/controllers/kube-prometheus-stack
   prune: true
   healthChecks:
   - apiVersion: apps/v1
     kind: Deployment
     name: kube-prometheus-stack-operator
     namespace: monitoring
-  - apiVersion: apps/v1
-    kind: Deployment
-    name: kube-prometheus-stack-grafana
-    namespace: monitoring
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring-configs
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: monitoring-controllers
+  interval: 1h
+  retryInterval: 1m
+  timeout: 3m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/prod/monitoring/configs
+  prune: true
