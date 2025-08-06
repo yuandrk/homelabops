@@ -1,0 +1,263 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-kube-state-metrics
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux-kube-state-metrics
+rules:
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - kustomize.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+      - image.toolkit.fluxcd.io
+    resources:
+      - gitrepositories
+      - buckets
+      - helmrepositories
+      - helmcharts
+      - ocirepositories
+      - kustomizations
+      - helmreleases
+      - alerts
+      - providers
+      - receivers
+      - imagerepositories
+      - imagepolicies
+      - imageupdateautomations
+    verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flux-kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: flux-kube-state-metrics
+    namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flux-kube-state-metrics-config
+  namespace: monitoring
+data:
+  config.yaml: |
+    spec:
+      resources:
+        - groupVersionKind:
+            group: kustomize.toolkit.fluxcd.io
+            version: v1
+            kind: Kustomization
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux Kustomization resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                revision: [ status, lastAppliedRevision ]
+                source_name: [ spec, sourceRef, name ]
+                customresource_kind: [ "Kustomization" ]
+        - groupVersionKind:
+            group: helm.toolkit.fluxcd.io
+            version: v2
+            kind: HelmRelease
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux HelmRelease resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                revision: [ status, history, "0", chartVersion ]
+                chart_name: [ status, history, "0", chartName ]
+                chart_app_version: [ status, history, "0", appVersion ]
+                chart_ref_name: [ spec, chartRef, name ]
+                chart_source_name: [ spec, chart, spec, sourceRef, name ]
+                customresource_kind: [ "HelmRelease" ]
+        - groupVersionKind:
+            group: source.toolkit.fluxcd.io
+            version: v1
+            kind: GitRepository
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux GitRepository resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                revision: [ status, artifact, revision ]
+                url: [ spec, url ]
+                customresource_kind: [ "GitRepository" ]
+        - groupVersionKind:
+            group: source.toolkit.fluxcd.io
+            version: v1
+            kind: HelmRepository
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux HelmRepository resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                revision: [ status, artifact, revision ]
+                url: [ spec, url ]
+                customresource_kind: [ "HelmRepository" ]
+        - groupVersionKind:
+            group: source.toolkit.fluxcd.io
+            version: v1
+            kind: Bucket
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux Bucket resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                customresource_kind: [ "Bucket" ]
+        - groupVersionKind:
+            group: source.toolkit.fluxcd.io
+            version: v1beta2
+            kind: OCIRepository
+          metricNamePrefix: gotk
+          metrics:
+            - name: "resource_info"
+              help: "The current state of a Flux OCIRepository resource."
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    name: [ metadata, name ]
+              labelsFromPath:
+                exported_namespace: [ metadata, namespace ]
+                ready: [ status, conditions, "[type=Ready]", status ]
+                suspended: [ spec, suspend ]
+                revision: [ status, artifact, revision ]
+                url: [ spec, url ]
+                customresource_kind: [ "OCIRepository" ]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flux-kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: flux-kube-state-metrics
+    app.kubernetes.io/component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flux-kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flux-kube-state-metrics
+        app.kubernetes.io/component: monitoring
+    spec:
+      serviceAccountName: flux-kube-state-metrics
+      containers:
+        - name: kube-state-metrics
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0
+          args:
+            - --custom-resource-state-only=true
+            - --custom-resource-state-config-file=/etc/config/config.yaml
+            - --port=8080
+            - --telemetry-port=8081
+          ports:
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: telemetry
+              containerPort: 8081
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/config
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: config
+          configMap:
+            name: flux-kube-state-metrics-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flux-kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: flux-kube-state-metrics
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-metrics
+      port: 8080
+      targetPort: http-metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: flux-kube-state-metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flux-kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: flux-kube-state-metrics
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flux-kube-state-metrics
+  endpoints:
+    - port: http-metrics
+      interval: 30s
+      path: /metrics

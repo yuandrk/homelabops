@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: monitoring
 resources:
 - podmonitor.yaml
+- flux-kube-state-metrics.yaml
 
 configMapGenerator:
 - name: flux-control-plane-dashboard
