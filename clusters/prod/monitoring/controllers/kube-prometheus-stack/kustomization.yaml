@@ -5,4 +5,3 @@ resources:
   - namespace.yaml
   - repository.yaml
   - release.yaml
-  - kube-state-metrics-config.yaml
