@@ -1,0 +1,178 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-monitoring-rules
+  namespace: monitoring
+  labels:
+    app: prometheus-operator
+    prometheus: kube-prometheus-stack-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: node.rules
+    rules:
+    - alert: NodeHighMemoryUtilization
+      expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage on node {{ $labels.instance }}"
+        description: "Node {{ $labels.instance }} has {{ $value | humanize }}% memory utilization for more than 5 minutes."
+    
+    - alert: NodeHighCPUUtilization
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on node {{ $labels.instance }}"
+        description: "Node {{ $labels.instance }} has {{ $value | humanize }}% CPU utilization for more than 10 minutes."
+    
+    - alert: NodeHighDiskUtilization
+      expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100) > 85
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High disk usage on node {{ $labels.instance }}"
+        description: "Node {{ $labels.instance }} root filesystem has {{ $value | humanize }}% disk utilization for more than 5 minutes."
+    
+    - alert: NodeHighInodeUtilization
+      expr: 100 - ((node_filesystem_files_free{mountpoint="/"} / node_filesystem_files{mountpoint="/"}) * 100) > 90
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High inode usage on node {{ $labels.instance }}"
+        description: "Node {{ $labels.instance }} has {{ $value | humanize }}% inode utilization for more than 5 minutes."
+    
+    - alert: NodeNotReady
+      expr: kube_node_status_condition{condition="Ready",status="false"} == 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node {{ $labels.node }} is not ready"
+        description: "Node {{ $labels.node }} has been in NotReady status for more than 5 minutes."
+    
+    - alert: NodeDiskPressure
+      expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node {{ $labels.node }} has disk pressure"
+        description: "Node {{ $labels.node }} is experiencing disk pressure."
+    
+    - alert: NodeMemoryPressure
+      expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node {{ $labels.node }} has memory pressure"
+        description: "Node {{ $labels.node }} is experiencing memory pressure."
+    
+    - alert: NodeDown
+      expr: up{job="node-exporter"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node exporter is down on {{ $labels.instance }}"
+        description: "Node exporter on {{ $labels.instance }} has been down for more than 1 minute."
+
+  - name: kubernetes.rules
+    rules:
+    - alert: PodsPending
+      expr: kube_pod_status_phase{phase="Pending"} > 0
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is pending"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in Pending status for more than 10 minutes."
+    
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+        description: "Pod {{ $labels.pod }} container {{ $labels.container }} in namespace {{ $labels.namespace }} is restarting frequently."
+    
+    - alert: PodHighCPUUsage
+      expr: (rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m]) * 100) > 80
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage in pod {{ $labels.pod }}"
+        description: "Pod {{ $labels.pod }} container {{ $labels.container }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }}% CPU for more than 10 minutes."
+    
+    - alert: PodHighMemoryUsage
+      expr: (container_memory_working_set_bytes{container!="",container!="POD"} / container_spec_memory_limit_bytes * 100) > 90
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage in pod {{ $labels.pod }}"
+        description: "Pod {{ $labels.pod }} container {{ $labels.container }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }}% of memory limit for more than 5 minutes."
+    
+    - alert: NamespaceHighCPUUsage
+      expr: sum(rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m])) by (namespace) * 100 > 200
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage in namespace {{ $labels.namespace }}"
+        description: "Namespace {{ $labels.namespace }} is using {{ $value | humanize }}% CPU for more than 15 minutes."
+    
+    - alert: NamespaceHighMemoryUsage
+      expr: sum(container_memory_working_set_bytes{container!="",container!="POD"}) by (namespace) / 1024 / 1024 / 1024 > 4
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage in namespace {{ $labels.namespace }}"
+        description: "Namespace {{ $labels.namespace }} is using {{ $value | humanize }}GB of memory for more than 10 minutes."
+    
+    - alert: PodNearCPULimit
+      expr: (kube_pod_container_resource_requests_cpu_cores / kube_pod_container_resource_limits_cpu_cores * 100) > 80
+      for: 5m
+      labels:
+        severity: info
+      annotations:
+        summary: "Pod {{ $labels.pod }} is near CPU limit"
+        description: "Pod {{ $labels.pod }} container {{ $labels.container }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }}% of CPU limit."
+    
+    - alert: PodNearMemoryLimit
+      expr: (kube_pod_container_resource_requests_memory_bytes / kube_pod_container_resource_limits_memory_bytes * 100) > 80
+      for: 5m
+      labels:
+        severity: info
+      annotations:
+        summary: "Pod {{ $labels.pod }} is near memory limit"
+        description: "Pod {{ $labels.pod }} container {{ $labels.container }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }}% of memory limit."
+
+  - name: flux.rules
+    rules:
+    - alert: FluxReconciliationFailure
+      expr: gotk_reconcile_condition{type="Ready",status="False"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Flux reconciliation failure"
+        description: "{{ $labels.kind }} {{ $labels.name }} in namespace {{ $labels.namespace }} reconciliation has been failing for more than 5 minutes."
+    
+    - alert: FluxSuspendedResource
+      expr: gotk_suspend_status == 1
+      for: 1m
+      labels:
+        severity: info
+      annotations:
+        summary: "Flux resource is suspended"
+        description: "{{ $labels.kind }} {{ $labels.name }} in namespace {{ $labels.namespace }} is suspended."
