@@ -258,6 +258,7 @@ metadata:
   labels:
     app.kubernetes.io/name: flux-kube-state-metrics
     app.kubernetes.io/component: monitoring
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
