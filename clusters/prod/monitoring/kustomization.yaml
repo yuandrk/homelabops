@@ -4,4 +4,3 @@ namespace: monitoring
 resources:
 - controllers/kube-prometheus-stack
 - configs
-- optional/alerts

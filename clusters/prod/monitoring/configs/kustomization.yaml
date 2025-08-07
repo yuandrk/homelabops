@@ -1,24 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: monitoring
-resources:
-- podmonitor.yaml
-- flux-kube-state-metrics.yaml
 
-configMapGenerator:
-- name: flux-control-plane-dashboard
-  files:
-  - control-plane.json=dashboards/control-plane.json
-  options:
-    labels:
-      grafana_dashboard: "1"
-      app.kubernetes.io/part-of: flux
-      app.kubernetes.io/component: monitoring
-- name: flux-cluster-dashboard
-  files:
-  - cluster.json=dashboards/cluster.json
-  options:
-    labels:
-      grafana_dashboard: "1"
-      app.kubernetes.io/part-of: flux
-      app.kubernetes.io/component: monitoring
+resources:
+- dashboards
+- flux-kube-state-metrics.yaml
+- podmonitor.yaml
+- node-exporter-dashboard.yaml
+- prometheus-rules.yaml
+
+namespace: monitoring
