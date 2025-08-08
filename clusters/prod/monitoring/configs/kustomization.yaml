@@ -6,6 +6,7 @@ resources:
 - flux-kube-state-metrics.yaml
 - podmonitor.yaml
 - node-exporter-dashboard.yaml
+- node-exporter-full-dashboard.yaml
 - prometheus-rules.yaml
 
 namespace: monitoring

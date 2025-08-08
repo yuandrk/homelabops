@@ -8,6 +8,9 @@ configMapGenerator:
 - name: flux-control-plane-dashboard  
   files:
   - control-plane.json
+- name: k3s-nodes-dashboard
+  files:
+  - nodes.json
 
 generatorOptions:
   disableNameSuffixHash: false
