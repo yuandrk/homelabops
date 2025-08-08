@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-datasource
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  postgres-datasource.yaml: |
+    apiVersion: 1
+    
+    datasources:
+    - name: PostgreSQL-Homelab
+      type: postgres
+      access: proxy
+      url: 10.10.0.2:5432
+      database: homelab
+      user: $__env{POSTGRES_USERNAME}
+      secureJsonData:
+        password: $__env{POSTGRES_PASSWORD}
+      jsonData:
+        sslmode: disable
+        maxOpenConns: 10
+        maxIdleConns: 2
+        connMaxLifetime: 14400
+      isDefault: false
+      editable: true

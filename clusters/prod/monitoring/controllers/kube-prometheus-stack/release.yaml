@@ -200,4 +200,22 @@ spec:
             app.kubernetes.io/component: monitoring
     grafana:
       defaultDashboardsEnabled: false
-      adminPassword: flux
+      admin:
+        existingSecret: grafana-admin-credentials
+        userKey: admin-user
+        passwordKey: admin-password
+      env:
+        POSTGRES_USERNAME:
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: username
+        POSTGRES_PASSWORD:
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+      sidecar:
+        datasources:
+          enabled: true
+          label: grafana_datasource
