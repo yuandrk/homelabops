@@ -4,3 +4,4 @@ resources:
 - apps.yaml
 - infrastructure.yaml
 - monitoring.yaml
+- monitoring-secrets.yaml

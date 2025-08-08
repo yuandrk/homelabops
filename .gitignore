@@ -17,6 +17,14 @@ Ansible/ssh/ssh_keys/id_rsa.pub
 directory_structure.md
 .venv/
 
+# ===== SOPS & Secrets =====
+age.key
+*.agekey
+*.key
+!*.enc.yaml
+*-decrypted.yaml
+.sops.yaml.bak
+
 # ===== MacOS =====
 .DS_Store
 

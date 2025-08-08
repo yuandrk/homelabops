@@ -38,3 +38,7 @@ spec:
     name: flux-system
   path: ./clusters/prod/monitoring/configs
   prune: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

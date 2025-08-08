@@ -1,0 +1,15 @@
+creation_rules:
+  # Encrypt secrets in all environments with .enc.yaml extension
+  - path_regex: .*\.enc\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age1hruxjkg7m9sgjwlf6xvz74cy8l8g8ye0p800uja87w6fhz5qs5yqa2y6xc
+  
+  # Specific rule for production secrets
+  - path_regex: clusters/prod/.*\.enc\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age1hruxjkg7m9sgjwlf6xvz74cy8l8g8ye0p800uja87w6fhz5qs5yqa2y6xc
+  
+  # Secrets in apps directory
+  - path_regex: apps/.*/secrets/.*\.enc\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age1hruxjkg7m9sgjwlf6xvz74cy8l8g8ye0p800uja87w6fhz5qs5yqa2y6xc
