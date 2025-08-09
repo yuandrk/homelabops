@@ -13,8 +13,8 @@ data:
     - name: PostgreSQL-Homelab
       type: postgres
       access: proxy
-      url: 10.10.0.2:5432
-      database: homelab
+      url: k3s-worker1:5432
+      database: postgres
       user: $__env{POSTGRES_USERNAME}
       secureJsonData:
         password: $__env{POSTGRES_PASSWORD}
