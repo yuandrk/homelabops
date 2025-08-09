@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: headlamp
-        namespace: flux-system
+        namespace: kube-system
   install:
     crds: Create
   upgrade:
