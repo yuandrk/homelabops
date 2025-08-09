@@ -204,17 +204,7 @@ spec:
         existingSecret: grafana-admin-credentials
         userKey: admin-user
         passwordKey: admin-password
-      env:
-        POSTGRES_USERNAME:
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: username
-        POSTGRES_PASSWORD:
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: password
+      envFromSecret: postgres-credentials
       sidecar:
         datasources:
           enabled: true

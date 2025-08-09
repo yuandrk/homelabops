@@ -15,9 +15,9 @@ data:
       access: proxy
       url: k3s-worker1:5432
       database: postgres
-      user: $__env{POSTGRES_USERNAME}
+      user: $__env{username}
       secureJsonData:
-        password: $__env{POSTGRES_PASSWORD}
+        password: $__env{password}
       jsonData:
         sslmode: disable
         maxOpenConns: 10
