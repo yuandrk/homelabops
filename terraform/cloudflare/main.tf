@@ -39,6 +39,11 @@ locals {
       name     = "headlamp"
       hostname = "headlamp.yuandrk.net"
       service  = "http://k3s-master:80"
+    },
+    {
+      name     = "uptime"
+      hostname = "uptime.yuandrk.net"
+      service  = "http://k3s-master:80"
     }
   ]
   
