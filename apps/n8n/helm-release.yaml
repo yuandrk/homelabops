@@ -72,8 +72,7 @@ spec:
       hosts:
         - host: n8n.yuandrk.net
           paths:
-            - path: /
-              pathType: Prefix
+            - /
     
     # Persistence for n8n data
     persistence:
