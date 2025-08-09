@@ -37,7 +37,7 @@ spec:
         - host: headlamp.yuandrk.net
           paths:
             - path: /
-              pathType: Prefix
+              type: ImplementationSpecific
     
     # Resources
     resources:
