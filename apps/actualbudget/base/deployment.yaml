@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actualbudget
+  namespace: apps
+  labels:
+    app: actualbudget
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: actualbudget
+  template:
+    metadata:
+      labels:
+        app: actualbudget
+    spec:
+      containers:
+      - name: actualbudget
+        image: actualbudget/actual-server:25.7.0
+        ports:
+        - containerPort: 5006
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        volumeMounts:
+        - name: actual-data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: actual-data
+        persistentVolumeClaim:
+          claimName: actualbudget-data
