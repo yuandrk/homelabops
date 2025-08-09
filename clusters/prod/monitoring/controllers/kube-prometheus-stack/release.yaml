@@ -29,6 +29,12 @@ spec:
       enabled: false
     nodeExporter:
       enabled: true
+      serviceMonitor:
+        attachMetadata:
+          node: true
+        relabelings:
+        - sourceLabels: [__meta_kubernetes_endpoint_node_name]
+          targetLabel: instance
     kubeStateMetrics:
       enabled: true
       rbac:
