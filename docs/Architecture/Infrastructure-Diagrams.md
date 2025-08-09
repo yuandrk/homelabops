@@ -57,6 +57,19 @@ graph TB
                 OpenWebUI[🤖 Open-WebUI<br/>chat.yuandrk.net<br/>50Gi Storage]
                 Ollama[🧠 Ollama<br/>LLM Backend]
                 Pipelines[🔗 Pipelines<br/>API Gateway]
+                ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net<br/>5Gi Storage]
+                UptimeKuma[📊 Uptime Kuma<br/>uptime.yuandrk.net<br/>2Gi Storage]
+            end
+            
+            subgraph "Infrastructure (kube-system namespace)"
+                Headlamp[🎛️ Headlamp<br/>headlamp.yuandrk.net<br/>K8s Dashboard]
+            end
+            
+            subgraph "Monitoring (monitoring namespace)"
+                Prometheus[📈 Prometheus<br/>Metrics DB<br/>10Gi Storage]
+                Grafana[📊 Grafana<br/>grafana.yuandrk.net<br/>Dashboards]
+                NodeExporter[📊 Node Exporter<br/>System Metrics]
+                FluxKubeState[📊 Flux Kube State<br/>GitOps Metrics]
             end
         end
     end
@@ -256,6 +269,9 @@ graph TB
         Chat[🤖 chat.yuandrk.net]
         Pihole[🛡️ pihole.yuandrk.net]
         Budget[💰 budget.yuandrk.net]
+        Headlamp[🎛️ headlamp.yuandrk.net]
+        Grafana[📊 grafana.yuandrk.net]
+        Uptime[📊 uptime.yuandrk.net]
         Webhook[🔗 flux-webhook.yuandrk.net]
     end
 

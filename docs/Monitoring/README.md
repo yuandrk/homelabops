@@ -18,6 +18,7 @@ This directory contains comprehensive documentation for the K3s homelab monitori
 ### **Specialized Guides**
 | File | Description | Use Case |
 |------|-------------|----------|
+| [Uptime-Kuma-Setup.md](Uptime-Kuma-Setup.md) | **🆕 Service Monitoring** - Uptime Kuma configuration and setup | Service status monitoring |
 | [FluxCD-Health-Monitoring.md](FluxCD-Health-Monitoring.md) | FluxCD-specific monitoring and health checks | GitOps monitoring |
 | [Flux-Dashboard-Troubleshooting.md](Flux-Dashboard-Troubleshooting.md) | Dashboard-specific issues | Dashboard problems |
 | [Monitoring-Troubleshooting.md](Monitoring-Troubleshooting.md) | General monitoring troubleshooting | Legacy issues |
@@ -39,6 +40,7 @@ This directory contains comprehensive documentation for the K3s homelab monitori
 ### ✅ **Working Components**
 - **Prometheus**: Collecting metrics from all sources
 - **Grafana**: https://grafana.yuandrk.net (admin/flux)
+- **Uptime Kuma**: https://uptime.yuandrk.net - Service status monitoring
 - **Node Monitoring**: 3 nodes with comprehensive metrics
 - **Flux Monitoring**: GitOps reconciliation and status
 - **Custom Alerts**: 17 alert rules covering critical scenarios
@@ -71,6 +73,7 @@ monitoring namespace:
 
 ### **External Access**
 - **Grafana**: https://grafana.yuandrk.net via Cloudflare Tunnel
+- **Uptime Kuma**: https://uptime.yuandrk.net via Cloudflare Tunnel
 - **Internal Prometheus**: http://10.43.40.155:9090
 
 ## 📚 Related Documentation
