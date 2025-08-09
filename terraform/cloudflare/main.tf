@@ -13,7 +13,7 @@ locals {
     {
       name     = "budget"
       hostname = "budget.yuandrk.net"
-      service  = "http://127.0.0.1:5006"
+      service  = "http://k3s-master:80"
     },
     {
       name     = "n8n"
