@@ -1,9 +1,0 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: n8n-charts
-  namespace: apps
-spec:
-  interval: 1h
-  type: oci
-  url: oci://8gears.container-registry.com/library
