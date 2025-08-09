@@ -9,5 +9,6 @@ resources:
 - node-exporter-dashboard.yaml
 - node-exporter-full-dashboard.yaml
 - prometheus-rules.yaml
+- grafana-ingress.yaml
 
 namespace: monitoring
