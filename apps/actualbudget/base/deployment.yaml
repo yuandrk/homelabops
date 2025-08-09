@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: actualbudget
-        image: actualbudget/actual-server:25.7.0
+        image: actualbudget/actual-server:25.8.0
         ports:
         - containerPort: 5006
           name: http
