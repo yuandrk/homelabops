@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
 - actualbudget/base
-- open-web
+- open-web/base
 
 namespace: apps

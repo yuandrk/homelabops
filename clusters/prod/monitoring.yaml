@@ -10,7 +10,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/prod/monitoring/controllers/kube-prometheus-stack
+  path: ./infrastructure/monitoring/base/controllers/kube-prometheus-stack
   prune: true
   wait: true
   healthChecks:
@@ -30,15 +30,12 @@ metadata:
 spec:
   dependsOn:
     - name: monitoring-controllers
+    - name: secrets
   interval: 1h
   retryInterval: 1m
   timeout: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/prod/monitoring/configs
+  path: ./infrastructure/monitoring/base/configs
   prune: true
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age

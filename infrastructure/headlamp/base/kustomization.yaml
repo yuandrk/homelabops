@@ -5,4 +5,5 @@ resources:
 - repository.yaml
 - release.yaml
 - rbac.yaml
-- token.enc.yaml
+
+namespace: kube-system

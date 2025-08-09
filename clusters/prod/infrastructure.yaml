@@ -1,19 +1,14 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: infra
----
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infra-configs
+  name: infrastructure
   namespace: flux-system
 spec:
-  interval: 1h
+  interval: 10m0s
   retryInterval: 1m
   timeout: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./infrastructure/configs
+  path: ./infrastructure
   prune: true
