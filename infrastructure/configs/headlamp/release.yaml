@@ -30,7 +30,7 @@ spec:
     # Ingress configuration
     ingress:
       enabled: true
-      className: traefik
+      ingressClassName: traefik
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
       hosts:
