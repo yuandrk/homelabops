@@ -5,5 +5,6 @@ resources:
 - actualbudget/base
 - open-web/base
 - uptime-kuma/base
+- pgadmin/base
 
 namespace: apps
