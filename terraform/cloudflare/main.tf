@@ -18,7 +18,7 @@ locals {
     {
       name     = "n8n"
       hostname = "n8n.yuandrk.net"
-      service  = "http://127.0.0.1:5678"
+      service  = "http://k3s-master:80"
     },
     {
       name     = "flux-webhook"
