@@ -142,28 +142,15 @@ spec:
                 operator: In
                 values: ["k3s-worker2"]
     
-    service:
-      enabled: true
-      type: ClusterIP
-      port: 80
-      name: http
-      protocol: TCP
-      annotations: {}
-    
     ingress:
       enabled: false
     
     serviceAccount:
       create: true
-      annotations: {}
-      name: ""
     
     persistence:
       enabled: true
-      storageClass: ""
-      accessMode: ReadWriteOnce
       size: 1Gi
-      annotations: {}
   
   valuesFrom:
     - kind: Secret
