@@ -26,58 +26,27 @@ spec:
     keepHistory: false
   values:
     authentik:
-      secret_key: "${SECRET_KEY}"
+      secret_key: "placeholder"
       error_reporting:
         enabled: true
       postgresql:
         host: "10.10.0.2"
         port: 5432
-        name: "authentik"
+        name: "authentik" 
         user: "authentik_user"
-        password: "${POSTGRES_PASSWORD}"
-        use_pgbouncer: false
-      redis:
-        host: "authentik-redis-master"
-        password: ""
+        password: "placeholder"
     
     postgresql:
       enabled: false
     
     redis:
       enabled: true
-      architecture: standalone
       auth:
         enabled: false
-      master:
-        persistence:
-          enabled: false
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 256Mi
     
     server:
-      name: server
-      replicas: 1
-      image:
-        repository: ghcr.io/goauthentik/server
-        tag: "2025.6.4"
-        pullPolicy: IfNotPresent
-      
-      resources:
-        requests:
-          cpu: 200m
-          memory: 512Mi
-        limits:
-          cpu: 1000m
-          memory: 2Gi
-      
       nodeSelector:
         kubernetes.io/arch: arm64
-      
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -87,9 +56,6 @@ spec:
               - key: kubernetes.io/hostname
                 operator: In
                 values: ["k3s-worker2"]
-      
-      tolerations: []
-      
       env:
         - name: AUTHENTIK_SECRET_KEY
           valueFrom:
@@ -107,31 +73,10 @@ spec:
             secretKeyRef:
               name: authentik-credentials
               key: postgres_password
-        - name: AUTHENTIK_REDIS__HOST
-          value: "authentik-redis-master"
-      
-      volumes: []
-      volumeMounts: []
     
     worker:
-      name: worker
-      replicas: 1
-      image:
-        repository: ghcr.io/goauthentik/server
-        tag: "2025.6.4"
-        pullPolicy: IfNotPresent
-      
-      resources:
-        requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
-          memory: 1Gi
-      
       nodeSelector:
         kubernetes.io/arch: arm64
-      
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -141,16 +86,6 @@ spec:
               - key: kubernetes.io/hostname
                 operator: In
                 values: ["k3s-worker2"]
-    
-    ingress:
-      enabled: false
-    
-    serviceAccount:
-      create: true
-    
-    persistence:
-      enabled: true
-      size: 1Gi
   
   valuesFrom:
     - kind: Secret
