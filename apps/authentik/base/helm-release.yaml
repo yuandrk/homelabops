@@ -47,15 +47,6 @@ spec:
     server:
       nodeSelector:
         kubernetes.io/arch: arm64
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: kubernetes.io/hostname
-                operator: In
-                values: ["k3s-worker1"]
       env:
         - name: AUTHENTIK_SECRET_KEY
           valueFrom:
@@ -77,15 +68,6 @@ spec:
     worker:
       nodeSelector:
         kubernetes.io/arch: arm64
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: kubernetes.io/hostname
-                operator: In
-                values: ["k3s-worker1"]
   
   valuesFrom:
     - kind: Secret
