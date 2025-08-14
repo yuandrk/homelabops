@@ -66,6 +66,7 @@ spec:
               key: postgres_password
     
     worker:
+      replicas: 0
       nodeSelector:
         kubernetes.io/arch: arm64
   
