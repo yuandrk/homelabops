@@ -64,6 +64,8 @@ spec:
             secretKeyRef:
               name: authentik-credentials
               key: postgres_password
+        - name: AUTHENTIK_DOMAIN
+          value: "auth.yuandrk.net"
     
     worker:
       replicas: 0
