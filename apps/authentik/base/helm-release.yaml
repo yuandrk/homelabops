@@ -55,7 +55,7 @@ spec:
               matchExpressions:
               - key: kubernetes.io/hostname
                 operator: In
-                values: ["k3s-worker2"]
+                values: ["k3s-worker1"]
       env:
         - name: AUTHENTIK_SECRET_KEY
           valueFrom:
@@ -85,7 +85,7 @@ spec:
               matchExpressions:
               - key: kubernetes.io/hostname
                 operator: In
-                values: ["k3s-worker2"]
+                values: ["k3s-worker1"]
   
   valuesFrom:
     - kind: Secret
