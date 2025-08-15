@@ -68,17 +68,9 @@ spec:
           value: "auth.yuandrk.net"
     
     worker:
-      replicas: 1
+      replicas: 0
       nodeSelector:
         kubernetes.io/arch: arm64
-      volumes:
-        - name: shared-memory
-          emptyDir:
-            medium: Memory
-            sizeLimit: 100Mi
-      volumeMounts:
-        - name: shared-memory
-          mountPath: /dev/shm
   
   valuesFrom:
     - kind: Secret
