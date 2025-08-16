@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2025.6.4"
+      version: "2024.8.3"
       sourceRef:
         kind: HelmRepository
         name: authentik
@@ -30,47 +30,39 @@ spec:
       error_reporting:
         enabled: true
       postgresql:
-        host: "10.10.0.2"
-        port: 5432
-        name: "authentik" 
-        user: "authentik_user"
         password: "placeholder"
     
+    server:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        hosts:
+          - host: auth.yuandrk.net
+            paths:
+              - path: /
+                pathType: Prefix
+    
+    worker:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+    
     postgresql:
-      enabled: false
+      enabled: true
+      auth:
+        password: "placeholder"
+      primary:
+        nodeSelector:
+          kubernetes.io/arch: arm64
     
     redis:
       enabled: true
       auth:
         enabled: false
-    
-    server:
-      nodeSelector:
-        kubernetes.io/arch: arm64
-      env:
-        - name: AUTHENTIK_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: authentik-credentials
-              key: secret_key
-        - name: AUTHENTIK_POSTGRESQL__HOST
-          value: "10.10.0.2"
-        - name: AUTHENTIK_POSTGRESQL__NAME
-          value: "authentik"
-        - name: AUTHENTIK_POSTGRESQL__USER
-          value: "authentik_user"
-        - name: AUTHENTIK_POSTGRESQL__PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: authentik-credentials
-              key: postgres_password
-        - name: AUTHENTIK_DOMAIN
-          value: "auth.yuandrk.net"
-    
-    worker:
-      replicas: 0
-      nodeSelector:
-        kubernetes.io/arch: arm64
+      master:
+        nodeSelector:
+          kubernetes.io/arch: arm64
   
   valuesFrom:
     - kind: Secret
@@ -81,3 +73,7 @@ spec:
       name: authentik-credentials  
       valuesKey: postgres_password
       targetPath: authentik.postgresql.password
+    - kind: Secret
+      name: authentik-credentials  
+      valuesKey: postgres_password
+      targetPath: postgresql.auth.password
