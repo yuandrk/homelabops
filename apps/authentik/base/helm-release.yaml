@@ -36,6 +36,11 @@ spec:
     server:
       nodeSelector:
         kubernetes.io/arch: arm64
+      env:
+        - name: AUTHENTIK_WEB__TRUSTED_PROXIES
+          value: "*"
+        - name: AUTHENTIK_WEB__CSRF_TRUSTED_ORIGINS
+          value: "https://auth.yuandrk.net"
       ingress:
         enabled: true
         ingressClassName: traefik
