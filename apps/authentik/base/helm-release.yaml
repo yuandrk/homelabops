@@ -39,10 +39,7 @@ spec:
         enabled: true
         ingressClassName: traefik
         hosts:
-          - host: auth.yuandrk.net
-            paths:
-              - path: /
-                pathType: Prefix
+          - auth.yuandrk.net
     
     worker:
       nodeSelector:
