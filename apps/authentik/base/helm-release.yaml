@@ -43,6 +43,8 @@ spec:
           value: "https://auth.yuandrk.net"
         - name: AUTHENTIK_WEB__USE_X_FORWARDED_PROTO
           value: "true"
+        - name: AUTHENTIK_DISABLE_CSRF
+          value: "true"
       ingress:
         enabled: true
         ingressClassName: traefik
