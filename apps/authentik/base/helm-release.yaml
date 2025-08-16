@@ -27,6 +27,7 @@ spec:
   values:
     authentik:
       secret_key: "placeholder"
+      log_level: info
       error_reporting:
         enabled: true
       postgresql:
