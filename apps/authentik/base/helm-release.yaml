@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2024.8.3"
+      version: "2025.6"
       sourceRef:
         kind: HelmRepository
         name: authentik
@@ -41,6 +41,8 @@ spec:
           value: "*"
         - name: AUTHENTIK_WEB__CSRF_TRUSTED_ORIGINS
           value: "https://auth.yuandrk.net"
+        - name: AUTHENTIK_WEB__USE_X_FORWARDED_PROTO
+          value: "true"
       ingress:
         enabled: true
         ingressClassName: traefik
