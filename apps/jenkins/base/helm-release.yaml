@@ -68,7 +68,6 @@ spec:
         hostName: jenkins.yuandrk.net
         annotations:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
       
       # Disable Jenkins setup wizard (we'll use configuration as code)
       JCasC:
