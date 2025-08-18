@@ -108,9 +108,7 @@ spec:
           cpu: "1000m"
           memory: "2048Mi"
     
-    # Backup configuration disabled for now
-    backup:
-      enabled: false
+    # Note: backup configuration removed as it's deprecated in v5.7.16
     
     # RBAC configuration
     rbac:
