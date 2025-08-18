@@ -46,17 +46,10 @@ spec:
       
       # Jenkins plugins to install
       installPlugins:
-        - kubernetes:4298.v1e13597c046b_
-        - workflow-aggregator:596.v8c21c963d92d
-        - git:5.4.1
-        - configuration-as-code:1836.vccda_4a_122a_a_e
-        - blueocean:1.27.14
-        - pipeline-stage-view:2.34
-        - credentials-binding:681.vf91669a_32e45
-        - ssh-slaves:2.973.v0fa_9c0dea_f9f
-        - build-timeout:1.35
-        - timestamper:1.27
-        - ws-cleanup:0.47
+        - kubernetes:4246.v5a_12b_1fe120e
+        - workflow-aggregator:590.v6a_d052e5a_a_b_5
+        - git:5.2.1
+        - configuration-as-code:1810.v9b_c30a_249a_4c
       
       # Service account configuration
       serviceAccount:
