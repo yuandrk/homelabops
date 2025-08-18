@@ -44,12 +44,8 @@ spec:
       # Java options for better performance
       javaOpts: "-Xms512m -Xmx2048m"
       
-      # Jenkins plugins to install
-      installPlugins:
-        - kubernetes:4246.v5a_12b_1fe120e
-        - workflow-aggregator:590.v6a_d052e5a_a_b_5
-        - git:5.2.1
-        - configuration-as-code:1810.v9b_c30a_249a_4c
+      # Jenkins plugins to install - none for initial deployment
+      installPlugins: []
       
       # Service account configuration
       serviceAccount:
