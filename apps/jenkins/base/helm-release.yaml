@@ -1,0 +1,128 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: jenkins
+      version: "5.7.16"
+      sourceRef:
+        kind: HelmRepository
+        name: jenkins
+        namespace: jenkins
+      interval: 12h
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controller:
+      # Jenkins admin user configuration
+      admin:
+        existingSecret: "jenkins-credentials"
+        userKey: admin_user
+        passwordKey: admin_password
+      
+      # Resource configuration
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "256Mi"
+        limits:
+          cpu: "2000m"
+          memory: "4096Mi"
+      
+      # Java options for better performance
+      javaOpts: "-Xms512m -Xmx2048m"
+      
+      # Jenkins plugins to install
+      installPlugins:
+        - kubernetes:4298.v1e13597c046b_
+        - workflow-aggregator:596.v8c21c963d92d
+        - git:5.4.1
+        - configuration-as-code:1836.vccda_4a_122a_a_e
+        - blueocean:1.27.14
+        - pipeline-stage-view:2.34
+        - credentials-binding:681.vf91669a_32e45
+        - ssh-slaves:2.973.v0fa_9c0dea_f9f
+        - build-timeout:1.35
+        - timestamper:1.27
+        - ws-cleanup:0.47
+      
+      # Service account configuration
+      serviceAccount:
+        create: true
+        name: jenkins
+      
+      # Security context
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      
+      # Service configuration
+      serviceType: ClusterIP
+      
+      # Ingress configuration for Traefik
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        hostName: jenkins.yuandrk.net
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+      
+      # Disable Jenkins setup wizard (we'll use configuration as code)
+      JCasC:
+        defaultConfig: true
+        configScripts:
+          welcome-message: |
+            jenkins:
+              systemMessage: |
+                Welcome to your Jenkins homelab instance!
+                This instance is managed via Configuration as Code.
+    
+    # Persistent storage configuration
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "local-path"
+    
+    # Agent configuration
+    agent:
+      enabled: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "256Mi"
+        limits:
+          cpu: "1000m"
+          memory: "2048Mi"
+    
+    # Backup configuration disabled for now
+    backup:
+      enabled: false
+    
+    # RBAC configuration
+    rbac:
+      create: true
+      readSecrets: true
+  
+  valuesFrom:
+    - kind: Secret
+      name: jenkins-credentials
+      valuesKey: admin_user
+      targetPath: controller.admin.username
+    - kind: Secret
+      name: jenkins-credentials
+      valuesKey: admin_password
+      targetPath: controller.admin.password

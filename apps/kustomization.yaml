@@ -7,5 +7,6 @@ resources:
 - uptime-kuma/base
 - pgadmin/base
 - n8n/base
+- jenkins/base
 
 namespace: apps
