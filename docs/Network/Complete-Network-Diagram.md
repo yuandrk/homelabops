@@ -90,8 +90,8 @@ graph TB
     end
     
     subgraph "Host Services (Outside K3s)"
-        PiHole[🛡️ Pi-hole FTL<br/>10.10.0.1:53 (DNS)<br/>10.10.0.1:8081 (Web)]
-        PostgreSQL[🐘 PostgreSQL<br/>10.10.0.2:5432<br/>(Docker Container)]
+        PiHole[🛡️ Pi-hole FTL<br/>10.10.0.1:53 - DNS<br/>10.10.0.1:8081 - Web]
+        PostgreSQL[🐘 PostgreSQL<br/>10.10.0.2:5432<br/>Docker Container]
     end
     
     subgraph "External Service Access"
