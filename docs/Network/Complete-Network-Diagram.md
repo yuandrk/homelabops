@@ -43,7 +43,7 @@ graph TB
             MacBookWiFi[💻 MacBook<br/>192.168.1.x]
         end
         
-        Switch[🔀 Unmanaged Gigabit Switch<br/>No IP (Layer 2)]
+        Switch[🔀 Unmanaged Gigabit Switch<br/>No IP - Layer 2]
         
         subgraph "Wired LAN (High Performance)"
             MasterLAN[🖥️ k3s-master<br/>enp0s31f6: 10.10.0.1/24<br/>⚡ 1Gbps]
