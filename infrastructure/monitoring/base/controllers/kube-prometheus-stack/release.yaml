@@ -29,6 +29,7 @@ spec:
       enabled: false
     nodeExporter:
       enabled: true
+    prometheus-node-exporter:
       serviceMonitor:
         attachMetadata:
           node: true
