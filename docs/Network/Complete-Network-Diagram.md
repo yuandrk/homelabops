@@ -400,9 +400,9 @@ SSH: 2222 (TCP, all nodes)
 - **Centralized DNS**: Pi-hole provides ad-blocking and custom domains
 
 ### ⚠️ **Trade-offs**
-- **Wi-Fi Dependency**: Internet access relies on Wi-Fi stability
+- **Wi-Fi Dependency**: Internet access relies on Wi-Fi stability  
 - **Split Architecture**: Applications must be designed for dual networking
-- **Master Bottleneck**: Control plane traffic limited by Wi-Fi speeds
+- ~~**Master Bottleneck**: Control plane traffic limited by Wi-Fi speeds~~ ✅ **RESOLVED**
 - **No Load Balancing**: Single tunnel endpoint for external services
 
 ---
@@ -416,3 +416,58 @@ SSH: 2222 (TCP, all nodes)
 - **Redundancy**: Secondary Pi-hole for DNS redundancy
 - **IPv6**: Enable IPv6 support for future-proofing
 - **Service Mesh**: Consider Istio/Linkerd for advanced traffic management
+
+---
+
+## 🔧 K3s Network Configuration Changes
+
+### ✅ **Implementation Completed (September 2025)**
+
+**Issue Resolved**: K3s nodes were previously registering with Wi-Fi IP addresses (192.168.1.x) as `INTERNAL-IP`, causing:
+- Prometheus/Grafana dashboards to show Wi-Fi IPs instead of node names
+- All cluster-internal communication routing through Wi-Fi (slower)
+- Inconsistent network performance and monitoring display
+
+**Solution Applied**: Root-level K3s configuration to force use of wired LAN IPs:
+
+#### K3s Configuration Files Created:
+```yaml
+# /etc/rancher/k3s/config.yaml on each node
+
+# k3s-master
+node-ip: 10.10.0.1
+node-external-ip: 192.168.1.223
+flannel-iface: enp0s31f6
+
+# k3s-worker1  
+node-ip: 10.10.0.2
+node-external-ip: 192.168.1.137
+flannel-iface: eth0
+
+# k3s-worker2
+node-ip: 10.10.0.4
+node-external-ip: 192.168.1.70
+flannel-iface: eth0
+```
+
+#### Results Achieved:
+- **Node Registration**: All nodes now use `INTERNAL-IP: 10.10.0.x` (wired LAN)
+- **External Access**: `EXTERNAL-IP: 192.168.1.x` (Wi-Fi) maintained for internet
+- **Performance**: Cluster traffic now uses Gigabit wired connections
+- **Monitoring**: Prometheus targets show 10.10.0.x:9100 instead of 192.168.1.x:9100
+- **Grafana**: Node Exporter dashboards display consistent LAN IP addresses
+
+#### Backup Created:
+Recovery instructions and cluster state backup saved in: `/Users/yuandrk/k3s-backup-20250903-212156/`
+
+#### Recovery Process (if needed):
+```bash
+# Remove config files to revert to original behavior
+ssh main "sudo rm -f /etc/rancher/k3s/config.yaml && sudo systemctl restart k3s"
+ssh k3s-worker1 "sudo rm -f /etc/rancher/k3s/config.yaml && sudo systemctl restart k3s-agent"  
+ssh k3s-worker2 "sudo rm -f /etc/rancher/k3s/config.yaml && sudo systemctl restart k3s-agent"
+```
+
+**Date Implemented**: September 3, 2025  
+**Status**: ✅ Production - All services verified working  
+**Impact**: Improved cluster performance and consistent monitoring display
