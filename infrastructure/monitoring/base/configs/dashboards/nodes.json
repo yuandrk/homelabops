@@ -85,7 +85,7 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "up{job=\"node-exporter\", instance=~\"$node\"}",
+          "expr": "up{job=\"node-exporter\"} * on(instance) group_right(nodename) node_uname_info{nodename=~\"$node\"}",
           "refId": "A"
         }
       ],
@@ -165,8 +165,8 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$node\"}[5m])) * 100)",
-          "legendFormat": "{{instance}} CPU",
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * on(instance) group_right(nodename) node_uname_info{nodename=~\"$node\"} * 100)",
+          "legendFormat": "{{nodename}} CPU",
           "refId": "A"
         }
       ],
@@ -246,8 +246,8 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$node\"} / node_memory_MemTotal_bytes{instance=~\"$node\"})) * 100",
-          "legendFormat": "{{instance}} Memory",
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * on(instance) group_right(nodename) node_uname_info{nodename=~\"$node\"} * 100",
+          "legendFormat": "{{nodename}} Memory",
           "refId": "A"
         }
       ],
@@ -306,7 +306,7 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$node\",mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{instance=~\"$node\",mountpoint=\"/\",fstype!=\"rootfs\"})",
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\"}) * on(instance) group_right(nodename) node_uname_info{nodename=~\"$node\"}",
           "refId": "A"
         }
       ],
@@ -364,14 +364,14 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "node_uname_info{instance=~\"$node\"}",
+          "expr": "node_uname_info{nodename=~\"$node\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
         },
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "node_boot_time_seconds{instance=~\"$node\"}",
+          "expr": "node_boot_time_seconds * on(instance) group_right(nodename) node_uname_info{nodename=~\"$node\"}",
           "format": "table",
           "instant": true,
           "refId": "B"
@@ -454,14 +454,14 @@
           "value": ["$__all"]
         },
         "datasource": "${DS_PROMETHEUS}",
-        "definition": "label_values(node_uname_info, instance)",
+        "definition": "label_values(node_uname_info, nodename)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "node",
         "options": [],
         "query": {
-          "query": "label_values(node_uname_info, instance)",
+          "query": "label_values(node_uname_info, nodename)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
