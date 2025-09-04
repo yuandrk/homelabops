@@ -2,41 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 configMapGenerator:
-# L0 - Overview Dashboard (Home)
-- name: homelab-l0-overview-dashboard
-  files:
-  - l0-overview.json
-
-# L1 - Service Dashboards (Golden Signals)  
-- name: homelab-l1-actualbudget-dashboard
-  files:
-  - l1-actualbudget-service.json
-- name: homelab-l1-openwebui-dashboard
-  files:
-  - l1-openwebui-service.json
-- name: homelab-l1-n8n-dashboard
-  files:
-  - l1-n8n-service.json
-- name: homelab-l1-pgadmin-dashboard
-  files:
-  - l1-pgadmin-service.json
-- name: homelab-l1-uptimekuma-dashboard
-  files:
-  - l1-uptimekuma-service.json
-- name: homelab-l1-headlamp-dashboard
-  files:
-  - l1-headlamp-service.json
-
-# L2 - Platform/Infrastructure Dashboards
 - name: flux-cluster-dashboard
   files:
   - cluster.json
 - name: flux-control-plane-dashboard  
   files:
   - control-plane.json
-- name: flux-unhealthy-resources-dashboard
-  files:
-  - l2-flux-unhealthy-resources.json
 - name: k3s-nodes-dashboard
   files:
   - nodes.json
