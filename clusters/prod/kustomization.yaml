@@ -4,6 +4,5 @@ resources:
 - flux-system
 - secrets.yaml
 - apps.yaml
-- authentik.yaml
 - infrastructure.yaml
 - monitoring.yaml
