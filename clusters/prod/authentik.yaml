@@ -12,5 +12,3 @@ spec:
     name: flux-system
   path: ./apps/authentik/base
   prune: true
-  dependsOn:
-    - name: secrets
