@@ -22,10 +22,10 @@ data:
           }
         ]
       },
-      "description": "Node Exporter metrics for K3s homelab cluster - CPU, Memory, Disk usage per node",
+      "description": "Node Exporter metrics for K3s homelab cluster - CPU, Memory, Disk usage per node (with nodename + filters)",
       "editable": true,
       "gnetId": null,
-      "graphTooltip": 0,
+      "graphTooltip": 1,
       "id": null,
       "links": [],
       "panels": [
@@ -35,37 +35,17 @@ data:
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
+          "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
           "fill": 1,
           "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
           "hiddenSeries": false,
           "id": 1,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
+          "legend": { "show": true },
           "lines": true,
           "linewidth": 1,
           "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
+          "options": { "alertThreshold": true },
           "percentage": false,
           "pluginVersion": "7.5.7",
           "pointradius": 2,
@@ -77,61 +57,24 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "expr": "(100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[5m])) * 100)) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "interval": "",
-              "legendFormat": "{{instance}} CPU Usage %",
+              "legendFormat": "{{nodename}} CPU %",
               "refId": "A"
             }
           ],
           "thresholds": [
-            {
-              "colorMode": "critical",
-              "fill": true,
-              "line": true,
-              "op": "gt",
-              "value": 80,
-              "yAxis": "left"
-            }
+            { "colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 80, "yAxis": "left" }
           ],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
           "title": "CPU Usage by Node",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
+          "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
           "type": "graph",
-          "xAxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
+          "xAxis": { "mode": "time", "show": true, "values": [] },
           "yAxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
+            { "format": "percent", "logBase": 1, "max": 100, "min": 0, "show": true },
+            { "format": "short", "logBase": 1, "show": true }
           ],
-          "yAxis": {
-            "align": false,
-            "alignLevel": null
-          }
+          "yAxis": { "align": false }
         },
         {
           "aliasColors": {},
@@ -139,37 +82,17 @@ data:
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
+          "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
           "fill": 1,
           "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "hiddenSeries": false,
           "id": 2,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
+          "legend": { "show": true },
           "lines": true,
           "linewidth": 1,
           "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
+          "options": { "alertThreshold": true },
           "percentage": false,
           "pluginVersion": "7.5.7",
           "pointradius": 2,
@@ -181,61 +104,24 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+              "expr": "((1 - (node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "interval": "",
-              "legendFormat": "{{instance}} Memory Usage %",
+              "legendFormat": "{{nodename}} Memory %",
               "refId": "A"
             }
           ],
           "thresholds": [
-            {
-              "colorMode": "critical",
-              "fill": true,
-              "line": true,
-              "op": "gt",
-              "value": 90,
-              "yAxis": "left"
-            }
+            { "colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 90, "yAxis": "left" }
           ],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
           "title": "Memory Usage by Node",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
+          "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
           "type": "graph",
-          "xAxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
+          "xAxis": { "mode": "time", "show": true, "values": [] },
           "yAxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
+            { "format": "percent", "logBase": 1, "max": 100, "min": 0, "show": true },
+            { "format": "short", "logBase": 1, "show": true }
           ],
-          "yAxis": {
-            "align": false,
-            "alignLevel": null
-          }
+          "yAxis": { "align": false }
         },
         {
           "aliasColors": {},
@@ -243,37 +129,17 @@ data:
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
+          "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
           "fill": 1,
           "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 8
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
           "hiddenSeries": false,
           "id": 3,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
+          "legend": { "show": true },
           "lines": true,
           "linewidth": 1,
           "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
+          "options": { "alertThreshold": true },
           "percentage": false,
           "pluginVersion": "7.5.7",
           "pointradius": 2,
@@ -285,61 +151,24 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100)",
+              "expr": "(100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",instance=~\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\",instance=~\"$instance\"}) * 100)) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "interval": "",
-              "legendFormat": "{{instance}} Root Disk Usage %",
+              "legendFormat": "{{nodename}} Root Disk %",
               "refId": "A"
             }
           ],
           "thresholds": [
-            {
-              "colorMode": "critical",
-              "fill": true,
-              "line": true,
-              "op": "gt",
-              "value": 85,
-              "yAxis": "left"
-            }
+            { "colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 85, "yAxis": "left" }
           ],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
           "title": "Disk Usage by Node (Root Filesystem)",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
+          "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
           "type": "graph",
-          "xAxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
+          "xAxis": { "mode": "time", "show": true, "values": [] },
           "yAxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
+            { "format": "percent", "logBase": 1, "max": 100, "min": 0, "show": true },
+            { "format": "short", "logBase": 1, "show": true }
           ],
-          "yAxis": {
-            "align": false,
-            "alignLevel": null
-          }
+          "yAxis": { "align": false }
         },
         {
           "aliasColors": {},
@@ -347,37 +176,17 @@ data:
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
+          "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
           "fill": 1,
           "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 8
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
           "hiddenSeries": false,
           "id": 4,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
+          "legend": { "show": true },
           "lines": true,
           "linewidth": 1,
           "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
+          "options": { "alertThreshold": true },
           "percentage": false,
           "pluginVersion": "7.5.7",
           "pointradius": 2,
@@ -389,120 +198,62 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "100 - ((node_filesystem_files_free{mountpoint=\"/\"} / node_filesystem_files{mountpoint=\"/\"}) * 100)",
+              "expr": "(100 - ((node_filesystem_files_free{mountpoint=\"/\",instance=~\"$instance\"} / node_filesystem_files{mountpoint=\"/\",instance=~\"$instance\"}) * 100)) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "interval": "",
-              "legendFormat": "{{instance}} Inode Usage %",
+              "legendFormat": "{{nodename}} Inode %",
               "refId": "A"
             }
           ],
           "thresholds": [
-            {
-              "colorMode": "critical",
-              "fill": true,
-              "line": true,
-              "op": "gt",
-              "value": 90,
-              "yAxis": "left"
-            }
+            { "colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 90, "yAxis": "left" }
           ],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
           "title": "Inode Usage by Node",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
+          "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
           "type": "graph",
-          "xAxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
+          "xAxis": { "mode": "time", "show": true, "values": [] },
           "yAxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
+            { "format": "percent", "logBase": 1, "max": 100, "min": 0, "show": true },
+            { "format": "short", "logBase": 1, "show": true }
           ],
-          "yAxis": {
-            "align": false,
-            "alignLevel": null
-          }
+          "yAxis": { "align": false }
         },
         {
           "columns": [],
           "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
+          "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
           "fontSize": "100%",
-          "gridPos": {
-            "h": 6,
-            "w": 24,
-            "x": 0,
-            "y": 16
-          },
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
           "id": 5,
           "pageSize": null,
           "showHeader": true,
-          "sort": {
-            "col": 0,
-            "desc": true
-          },
+          "sort": { "col": 0, "desc": false },
           "styles": [
             {
-              "alias": "Instance",
+              "alias": "Node",
               "align": "auto",
               "colorMode": null,
-              "colors": [
-                "rgba(245, 54, 54, 0.9)",
-                "rgba(237, 129, 40, 0.89)",
-                "rgba(50, 172, 45, 0.97)"
-              ],
               "dateFormat": "YYYY-MM-DD HH:mm:ss",
               "decimals": 2,
               "mappingType": 1,
-              "pattern": "instance",
+              "pattern": "nodename",
               "thresholds": [],
               "type": "string",
               "unit": "short"
             },
             {
+              "alias": "",
+              "pattern": "instance",
+              "type": "hidden"
+            },
+            {
               "alias": "CPU %",
               "align": "auto",
               "colorMode": "cell",
-              "colors": [
-                "rgba(50, 172, 45, 0.97)",
-                "rgba(237, 129, 40, 0.89)",
-                "rgba(245, 54, 54, 0.9)"
-              ],
-              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
               "decimals": 1,
               "mappingType": 1,
               "pattern": "Value #A",
-              "thresholds": [
-                "70",
-                "90"
-              ],
+              "thresholds": ["70","90"],
               "type": "number",
               "unit": "percent"
             },
@@ -510,19 +261,11 @@ data:
               "alias": "Memory %",
               "align": "auto",
               "colorMode": "cell",
-              "colors": [
-                "rgba(50, 172, 45, 0.97)",
-                "rgba(237, 129, 40, 0.89)",
-                "rgba(245, 54, 54, 0.9)"
-              ],
-              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
               "decimals": 1,
               "mappingType": 1,
               "pattern": "Value #B",
-              "thresholds": [
-                "80",
-                "95"
-              ],
+              "thresholds": ["80","95"],
               "type": "number",
               "unit": "percent"
             },
@@ -530,40 +273,32 @@ data:
               "alias": "Disk %",
               "align": "auto",
               "colorMode": "cell",
-              "colors": [
-                "rgba(50, 172, 45, 0.97)",
-                "rgba(237, 129, 40, 0.89)",
-                "rgba(245, 54, 54, 0.9)"
-              ],
-              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
               "decimals": 1,
               "mappingType": 1,
               "pattern": "Value #C",
-              "thresholds": [
-                "75",
-                "90"
-              ],
+              "thresholds": ["75","90"],
               "type": "number",
               "unit": "percent"
             }
           ],
           "targets": [
             {
-              "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "expr": "(100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[5m])) * 100)) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "format": "table",
               "instant": true,
               "intervalFactor": 1,
               "refId": "A"
             },
             {
-              "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+              "expr": "((1 - (node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "format": "table",
               "instant": true,
               "intervalFactor": 1,
               "refId": "B"
             },
             {
-              "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100)",
+              "expr": "(100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",instance=~\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\",instance=~\"$instance\"}) * 100)) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "format": "table",
               "instant": true,
               "intervalFactor": 1,
@@ -578,21 +313,37 @@ data:
       "refresh": "30s",
       "schemaVersion": 27,
       "style": "dark",
-      "tags": [
-        "node-exporter",
-        "homelab",
-        "k3s"
-      ],
+      "tags": ["node-exporter","homelab","k3s"],
       "templating": {
-        "list": []
+        "list": [
+          {
+            "name": "node",
+            "type": "query",
+            "datasource": "prometheus",
+            "refresh": 2,
+            "includeAll": true,
+            "multi": true,
+            "label": "Node",
+            "query": "label_values(node_uname_info, nodename)",
+            "current": { "text": "All", "value": ".*" }
+          },
+          {
+            "name": "instance",
+            "type": "query",
+            "datasource": "prometheus",
+            "refresh": 2,
+            "includeAll": true,
+            "multi": true,
+            "label": "Instance",
+            "query": "label_values(node_uname_info{nodename=~\"$node\"}, instance)",
+            "current": { "text": "All", "value": ".*" }
+          }
+        ]
       },
-      "time": {
-        "from": "now-1h",
-        "to": "now"
-      },
+      "time": { "from": "now-1h", "to": "now" },
       "timepicker": {},
       "timezone": "",
-      "title": "Node Exporter - K3s Homelab",
+      "title": "Node Exporter - K3s Homelab (Improved)",
       "uid": "node-exporter-homelab",
-      "version": 1
+      "version": 2
     }
