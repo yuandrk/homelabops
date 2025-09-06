@@ -11,9 +11,6 @@ configMapGenerator:
 - name: k3s-nodes-dashboard
   files:
   - nodes.json
-- name: k3s-nodes-optimized-dashboard
-  files:
-  - nodes-optimized.json
 
 generatorOptions:
   disableNameSuffixHash: false
