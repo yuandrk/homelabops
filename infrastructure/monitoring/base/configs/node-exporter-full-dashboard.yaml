@@ -113,13 +113,13 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(node_network_receive_bytes_total{instance=~\"$node\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Receive",
+              "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Receive",
               "refId": "A"
             },
             {
-              "expr": "rate(node_network_transmit_bytes_total{instance=~\"$node\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Transmit",
+              "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Transmit",
               "refId": "B"
             }
           ],
@@ -211,13 +211,13 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(node_disk_read_bytes_total{instance=~\"$node\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Read",
+              "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Read",
               "refId": "A"
             },
             {
-              "expr": "rate(node_disk_written_bytes_total{instance=~\"$node\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Write",
+              "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Write",
               "refId": "B"
             }
           ],
@@ -304,18 +304,18 @@ data:
           },
           "targets": [
             {
-              "expr": "node_load1{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} Load 1m",
+              "expr": "node_load1{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} Load 1m",
               "refId": "A"
             },
             {
-              "expr": "node_load5{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} Load 5m",
+              "expr": "node_load5{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} Load 5m",
               "refId": "B"
             },
             {
-              "expr": "node_load15{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} Load 15m",
+              "expr": "node_load15{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} Load 15m",
               "refId": "C"
             }
           ],
@@ -402,8 +402,8 @@ data:
           },
           "targets": [
             {
-              "expr": "node_hwmon_temp_celsius{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} {{chip}} {{sensor}}",
+              "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{chip}} {{sensor}}",
               "refId": "A"
             }
           ],
@@ -482,13 +482,13 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(node_disk_reads_completed_total{instance=~\"$node\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Reads",
+              "expr": "rate(node_disk_reads_completed_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Reads",
               "refId": "A"
             },
             {
-              "expr": "rate(node_disk_writes_completed_total{instance=~\"$node\"}[5m])",
-              "legendFormat": "{{instance}} {{device}} Writes",
+              "expr": "rate(node_disk_writes_completed_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{device}} Writes",
               "refId": "B"
             }
           ],
@@ -567,13 +567,13 @@ data:
           },
           "targets": [
             {
-              "expr": "node_procs_running{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} Running Processes",
+              "expr": "node_procs_running{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} Running Processes",
               "refId": "A"
             },
             {
-              "expr": "node_procs_blocked{instance=~\"$node\"}",
-              "legendFormat": "{{instance}} Blocked Processes",
+              "expr": "node_procs_blocked{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} Blocked Processes",
               "refId": "B"
             }
           ],
@@ -588,25 +588,32 @@ data:
       "templating": {
         "list": [
           {
-            "allValue": ".*",
-            "current": {
-              "selected": true,
-              "text": ["All"],
-              "value": ["$__all"]
-            },
+            "name": "node",
+            "label": "Node",
+            "type": "query",
             "datasource": "prometheus",
-            "definition": "label_values(node_uname_info, instance)",
-            "hide": 0,
             "includeAll": true,
             "multi": true,
-            "name": "node",
-            "options": [],
-            "query": "label_values(node_uname_info, instance)",
-            "refresh": 1,
-            "regex": "",
+            "refresh": 2,
+            "query": "label_values(node_uname_info, nodename)",
+            "current": { "text": "All", "value": ".*" },
+            "hide": 0,
             "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
+            "sort": 0
+          },
+          {
+            "name": "instance",
+            "label": "Instance",
+            "type": "query",
+            "datasource": "prometheus",
+            "includeAll": true,
+            "multi": true,
+            "refresh": 2,
+            "query": "label_values(node_uname_info{nodename=~\"$node\"}, instance)",
+            "current": { "text": "All", "value": ".*" },
+            "hide": 0,
+            "skipUrlSync": false,
+            "sort": 0
           }
         ]
       },
@@ -616,8 +623,8 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "Node Exporter Full - K3s Detailed Monitoring",
+      "title": "Node Exporter Full - K3s Detailed Monitoring (Improved)",
       "uid": "k3s-nodes-full",
-      "version": 1,
+      "version": 2,
       "weekStart": ""
     }
