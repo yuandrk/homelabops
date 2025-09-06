@@ -165,7 +165,7 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "100 - (avg by (nodename) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"}) * 100)",
+          "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"}) by (nodename) * 100)",
           "legendFormat": "{{nodename}} CPU",
           "refId": "A"
         }
@@ -246,7 +246,7 @@
       "targets": [
         {
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "(1 - (node_memory_MemAvailable_bytes * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"} / node_memory_MemTotal_bytes * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"})) * 100",
+          "expr": "(1 - (node_memory_MemAvailable_bytes * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"}) / (node_memory_MemTotal_bytes * on(instance) group_left(nodename) node_uname_info{nodename=~\"$node\"})) * 100",
           "legendFormat": "{{nodename}} Memory",
           "refId": "A"
         }
