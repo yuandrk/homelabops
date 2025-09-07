@@ -54,6 +54,7 @@ locals {
       name     = "auth"
       hostname = "auth.yuandrk.net"
       service  = "https://k3s-master:443"
+      noTLSVerify = true
     },
   ]
   
@@ -62,6 +63,7 @@ locals {
     for service in local.tunnel_services : service.name => {
       hostname = service.hostname
       service  = service.service
+      noTLSVerify = try(service.noTLSVerify, null)
     }
   }
   
@@ -89,10 +91,17 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab" {
   config = {
     ingress = concat(
       [
-        for service in local.tunnel_services : {
-          hostname = service.hostname
-          service  = service.service
-        }
+        for service in local.tunnel_services : merge(
+          {
+            hostname = service.hostname
+            service  = service.service
+          },
+          try(service.noTLSVerify, false) ? {
+            origin_request = {
+              no_tls_verify = service.noTLSVerify
+            }
+          } : {}
+        )
       ],
       [{
         service = "http_status:404"
