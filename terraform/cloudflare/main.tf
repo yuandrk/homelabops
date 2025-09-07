@@ -53,7 +53,7 @@ locals {
     {
       name     = "auth"
       hostname = "auth.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "https://k3s-master:443"
     },
   ]
   
