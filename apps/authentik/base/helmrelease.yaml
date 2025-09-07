@@ -31,6 +31,9 @@ spec:
     authentik:
       error_reporting:
         enabled: false
+      env:
+        AUTHENTIK_HOST: "https://auth.yuandrk.net"
+        AUTHENTIK_HOST_BROWSER: "https://auth.yuandrk.net"
       postgresql:
         host: "k3s-worker1"
         port: 5432
