@@ -72,7 +72,7 @@ locals {
 
 # DNS records for each service
 module "tunnel_dns" {
-  source   = "../modules/tunnel"
+  source   = "../../../modules/tunnel"
   for_each = local.tunnel_services_map
 
   account_id = var.cloudflare_account_id
