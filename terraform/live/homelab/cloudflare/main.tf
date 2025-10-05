@@ -26,8 +26,8 @@ locals {
       service  = "http://k3s-worker1:30080"
     },
     {
-      name     = "chat"
-      hostname = "chat.yuandrk.net"
+      name     = "llm"
+      hostname = "llm.yuandrk.net"
       service  = "http://k3s-master:80"
     },
     {

@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: chat.yuandrk.net
+  - host: llm.yuandrk.net
     http:
       paths:
       - path: /
