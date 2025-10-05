@@ -73,7 +73,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform/live/homelab/${{ matrix.root }}
-        run: terraform init
+        run: terraform init -backend-config=backend.hcl
 
       - name: Terraform Format Check
         working-directory: terraform/live/homelab/${{ matrix.root }}
