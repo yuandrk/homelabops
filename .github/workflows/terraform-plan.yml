@@ -1,19 +1,23 @@
-name: Terraform Plan
+name: Terraform Plan (cloudflare only)
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - 'terraform/live/**'
+      - 'terraform/live/homelab/cloudflare/**'
       - 'terraform/modules/**'
       - '.github/workflows/terraform-plan.yml'
-  workflow_dispatch:  # Manual trigger for testing
+  workflow_dispatch: {}
 
 permissions:
   contents: read
   id-token: write
   pull-requests: write
   actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   plan:
@@ -25,14 +29,6 @@ jobs:
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-    strategy:
-      fail-fast: false
-      matrix:
-        root:
-          - cloudflare
-          - fluxcd
-          # aws-bootstrap and aws-oidc are managed separately (bootstrap)
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -43,98 +39,45 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-2
 
-      - name: Show AWS caller identity
-        run: aws sts get-caller-identity
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.1.2
         with:
           terraform_version: "1.13.3"
 
-      - name: Install TFLint
-        uses: terraform-linters/setup-tflint@v6.1.0
-        with:
-          cache: true
-
-      - name: TFLint Init
-        working-directory: terraform/live/homelab/${{ matrix.root }}
-        run: |
-          tflint --init
-
-      - name: TFLint
-        working-directory: terraform/live/homelab/${{ matrix.root }}
-        run: |
-          tflint -f compact
-        continue-on-error: true
-
-      - name: tfsec Security Scan
-        if: ${{ always() }}
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with:
-          working_directory: terraform/live/homelab/${{ matrix.root }}
-          soft_fail: true
-
       - name: Terraform Init
-        working-directory: terraform/live/homelab/${{ matrix.root }}
+        working-directory: terraform/live/homelab/cloudflare
         run: terraform init -backend-config=backend.hcl
 
-      - name: Terraform Format Check
-        working-directory: terraform/live/homelab/${{ matrix.root }}
-        run: terraform fmt -check -recursive
-        continue-on-error: true
-
       - name: Terraform Validate
-        working-directory: terraform/live/homelab/${{ matrix.root }}
+        working-directory: terraform/live/homelab/cloudflare
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        working-directory: terraform/live/homelab/${{ matrix.root }}
+        working-directory: terraform/live/homelab/cloudflare
         run: terraform plan -no-color -out=plan.tfplan
-        continue-on-error: true
 
-      - name: Save plan artifact
+      - name: Upload plan artifact
         if: steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: plan-${{ matrix.root }}
-          path: terraform/live/homelab/${{ matrix.root }}/plan.tfplan
+          name: plan-cloudflare
+          path: terraform/live/homelab/cloudflare/plan.tfplan
           retention-days: 5
 
       - name: Comment PR with plan summary
         if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: actions/github-script@v7
         env:
-          ROOT_DIR: terraform/live/homelab/${{ matrix.root }}
-          MATRIX_ROOT: ${{ matrix.root }}
+          ROOT_DIR: terraform/live/homelab/cloudflare
         with:
           script: |
             const { execSync } = require('child_process');
-
-            const cwd = process.env.ROOT_DIR;
-            const planOutput = execSync('terraform show -no-color plan.tfplan', { cwd, encoding: 'utf-8' });
-
-            const truncated = planOutput.length > 60000
-              ? planOutput.substring(0, 60000) + '\n...(truncated)'
-              : planOutput;
-
-            const body = `### Terraform Plan: \`${process.env.MATRIX_ROOT}\`
-
-            <details>
-            <summary>Show Plan Output</summary>
-
-            \`\`\`terraform
-            ${truncated}
-            \`\`\`
-
-            </details>
-
-            **Artifact:** \`plan-${process.env.MATRIX_ROOT}\`
-            **Status:** success`;
-
-            github.rest.issues.createComment({
+            const out = execSync('terraform show -no-color plan.tfplan', { cwd: process.env.ROOT_DIR, encoding: 'utf-8' });
+            const truncated = out.length > 60000 ? out.slice(0,60000) + '\n...(truncated)' : out;
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body
+              body: `### Terraform Plan: \`cloudflare\`\n\n<details><summary>Show Plan Output</summary>\n\n\`\`\`terraform\n${truncated}\n\`\`\`\n</details>\n\n**Artifact:** \`plan-cloudflare\``
             });

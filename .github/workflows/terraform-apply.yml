@@ -1,0 +1,49 @@
+name: Terraform Apply (cloudflare)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/live/homelab/cloudflare/**'
+      - 'terraform/modules/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: homelab
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-2
+
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: "1.13.3"
+
+      - name: Init
+        working-directory: terraform/live/homelab/cloudflare
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Safety plan
+        working-directory: terraform/live/homelab/cloudflare
+        run: terraform plan -no-color -out=plan.tfplan
+
+      - name: Apply (after env approval)
+        working-directory: terraform/live/homelab/cloudflare
+        run: terraform apply -auto-approve plan.tfplan
