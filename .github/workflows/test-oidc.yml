@@ -1,0 +1,33 @@
+name: Test OIDC Authentication
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+jobs:
+  test-oidc:
+    name: Test AWS OIDC Authentication
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-2
+
+      - name: Verify AWS identity
+        run: |
+          echo "✅ OIDC Authentication successful!"
+          echo ""
+          echo "AWS Identity:"
+          aws sts get-caller-identity
+          echo ""
+          echo "Assumed Role ARN:"
+          aws sts get-caller-identity --query Arn --output text

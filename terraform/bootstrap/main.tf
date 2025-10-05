@@ -14,22 +14,8 @@ resource "aws_s3_bucket_public_access_block" "tf_state" {
   restrict_public_buckets = true
 }
 
-# DynamoDB for lock-files
-resource "aws_dynamodb_table" "tf_lock" {
-  name         = "terraform-homelab-lock"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name        = "Terraform Lock"
-    Environment = "homelab"
-  }
-}
+# DynamoDB table removed - using S3 native locking instead
+# S3 native locking is enabled via use_lockfile = true in backend configuration
 
 # Versions
 resource "aws_s3_bucket_versioning" "tf_state" {
