@@ -107,10 +107,5 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab" {
         service = "http_status:404"
       }]
     )
-
-    # Fix for Cloudflare provider v5.x unknown value bug
-    warp_routing = {
-      enabled = false
-    }
   }
 }
