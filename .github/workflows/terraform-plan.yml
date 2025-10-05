@@ -21,7 +21,6 @@ jobs:
     env:
       TF_IN_AUTOMATION: "true"
       TF_INPUT: "false"
-      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tfplugin-cache
 
     strategy:
       fail-fast: false
