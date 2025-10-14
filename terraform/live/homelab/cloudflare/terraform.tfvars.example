@@ -1,0 +1,7 @@
+# Cloudflare Terraform Configuration Examples
+# Copy this file to terraform.tfvars and fill in your values
+# NOTE: CI/CD uses GitHub Secrets instead of this file
+
+cloudflare_api_token = "your_cloudflare_api_token_here"
+cloudflare_zone_id = "your_zone_id_here"
+cloudflare_account_id = "your_account_id_here"

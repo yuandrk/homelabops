@@ -1,0 +1,9 @@
+# AWS OIDC Terraform Configuration Examples
+# Copy this file to terraform.tfvars and fill in your values
+
+terraform_state_bucket = "terraform-state-homelab-yuandrk"
+aws_region             = "eu-west-2"
+
+github_repos_branches = [
+  "yuandrk/homelabops:ref:refs/heads/main"
+]
