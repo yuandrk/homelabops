@@ -1,5 +1,5 @@
 data "cloudflare_zone" "root" {
-  zone_id = var.cloudflare_zone_id      
+  zone_id = var.cloudflare_zone_id
 }
 
 locals {
@@ -51,22 +51,22 @@ locals {
       service  = "http://k3s-master:80"
     },
     {
-      name     = "auth"
-      hostname = "auth.yuandrk.net"
-      service  = "https://k3s-master:443"
+      name        = "auth"
+      hostname    = "auth.yuandrk.net"
+      service     = "https://k3s-master:443"
       noTLSVerify = true
     },
   ]
-  
+
   #
   tunnel_services_map = {
     for service in local.tunnel_services : service.name => {
-      hostname = service.hostname
-      service  = service.service
+      hostname    = service.hostname
+      service     = service.service
       noTLSVerify = try(service.noTLSVerify, null)
     }
   }
-  
+
   tunnel_id = "4a6abf9a-d178-4a56-9586-a3d77907c5f1"
 }
 
@@ -80,7 +80,6 @@ module "tunnel_dns" {
 
   existing_tunnel_id = local.tunnel_id
   hostname           = each.value.hostname
-  service            = each.value.service
 }
 
 # Tunnel configuration - use the list directly

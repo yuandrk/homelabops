@@ -1,5 +1,3 @@
-# modules/tunnel/main.tf - ВИПРАВЛЕНА ВЕРСІЯ
-
 locals {
   tunnel_id = var.existing_tunnel_id
 }
@@ -9,9 +7,9 @@ locals {
 ###############
 resource "cloudflare_dns_record" "this" {
   zone_id = var.zone_id
-  name    = split(".", var.hostname)[0]  # "pihole" or "budget" ... 
+  name    = split(".", var.hostname)[0] # "pihole" or "budget" ... 
   content = "${local.tunnel_id}.cfargotunnel.com"
-  type    = "CNAME"  
+  type    = "CNAME"
   ttl     = 1
   proxied = true
 }

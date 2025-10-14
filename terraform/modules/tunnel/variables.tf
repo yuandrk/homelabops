@@ -14,12 +14,7 @@ variable "existing_tunnel_id" {
   default     = "4a6abf9a-d178-4a56-9586-a3d77907c5f1"
 }
 
-variable "hostname" { 
+variable "hostname" {
   type        = string
   description = "Public hostname (e.g., pihole.yuandrk.net)"
-}
-
-variable "service" { 
-  type        = string
-  description = "Backend service URL (e.g., http://10.0.0.5:80)"
 }
