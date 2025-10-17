@@ -21,12 +21,12 @@ spec:
   values:
     image:
       tag: "v0.26.0"
-    
+
     # Service configuration
     service:
       type: ClusterIP
       port: 80
-    
+
     # Ingress configuration
     ingress:
       enabled: true
@@ -38,7 +38,7 @@ spec:
           paths:
             - path: /
               type: ImplementationSpecific
-    
+
     # Resources
     resources:
       requests:
@@ -47,11 +47,21 @@ spec:
       limits:
         cpu: 500m
         memory: 512Mi
-    
-    # Enable plugins
+
+    # Enable plugins and OIDC authentication
     config:
       pluginsDir: "/headlamp/plugins"
-    
+      oidc:
+        clientID: ""
+        clientSecret: ""
+        issuerURL: ""
+        scopes: "openid email profile groups"
+        secret:
+          create: false
+        externalSecret:
+          enabled: true
+          name: headlamp-oidc
+
     # Security context
     securityContext:
       runAsNonRoot: true
