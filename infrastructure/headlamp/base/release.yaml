@@ -18,6 +18,23 @@ spec:
   upgrade:
     crds: CreateReplace
   targetNamespace: kube-system
+  valuesFrom:
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: clientID
+      targetPath: config.oidc.clientID
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: clientSecret
+      targetPath: config.oidc.clientSecret
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: issuerURL
+      targetPath: config.oidc.issuerURL
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: scopes
+      targetPath: config.oidc.scopes
   values:
     image:
       tag: "v0.26.0"
@@ -48,19 +65,9 @@ spec:
         cpu: 500m
         memory: 512Mi
 
-    # Enable plugins and OIDC authentication
+    # Enable plugins
     config:
       pluginsDir: "/headlamp/plugins"
-      oidc:
-        clientID: ""
-        clientSecret: ""
-        issuerURL: ""
-        scopes: "openid email profile groups"
-        secret:
-          create: false
-        externalSecret:
-          enabled: true
-          name: headlamp-oidc
 
     # Security context
     securityContext:
