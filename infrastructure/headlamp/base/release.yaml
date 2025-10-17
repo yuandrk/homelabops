@@ -22,22 +22,22 @@ spec:
     - kind: Secret
       name: headlamp-oidc
       valuesKey: clientID
-      targetPath: config.oidc.clientID
+      targetPath: env[0].value
       optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: clientSecret
-      targetPath: config.oidc.clientSecret
+      targetPath: env[1].value
       optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: issuerURL
-      targetPath: config.oidc.issuerURL
+      targetPath: env[2].value
       optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: scopes
-      targetPath: config.oidc.scopes
+      targetPath: env[3].value
       optional: false
   values:
     image:
@@ -60,6 +60,17 @@ spec:
             - path: /
               type: ImplementationSpecific
 
+    # Environment variables for OIDC (values injected via valuesFrom)
+    env:
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_SCOPES
+        value: ""
+
     # Resources
     resources:
       requests:
@@ -69,15 +80,9 @@ spec:
         cpu: 500m
         memory: 512Mi
 
-    # Enable plugins and OIDC
+    # Enable plugins
     config:
       pluginsDir: "/headlamp/plugins"
-      oidc:
-        # Values injected via valuesFrom from headlamp-oidc secret
-        clientID: ""
-        clientSecret: ""
-        issuerURL: ""
-        scopes: ""
 
     # Security context
     securityContext:
