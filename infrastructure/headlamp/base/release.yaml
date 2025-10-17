@@ -23,18 +23,22 @@ spec:
       name: headlamp-oidc
       valuesKey: clientID
       targetPath: config.oidc.clientID
+      optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: clientSecret
       targetPath: config.oidc.clientSecret
+      optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: issuerURL
       targetPath: config.oidc.issuerURL
+      optional: false
     - kind: Secret
       name: headlamp-oidc
       valuesKey: scopes
       targetPath: config.oidc.scopes
+      optional: false
   values:
     image:
       tag: "v0.26.0"
