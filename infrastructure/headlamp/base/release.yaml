@@ -69,9 +69,15 @@ spec:
         cpu: 500m
         memory: 512Mi
 
-    # Enable plugins
+    # Enable plugins and OIDC
     config:
       pluginsDir: "/headlamp/plugins"
+      oidc:
+        # Values injected via valuesFrom from headlamp-oidc secret
+        clientID: ""
+        clientSecret: ""
+        issuerURL: ""
+        scopes: ""
 
     # Security context
     securityContext:
