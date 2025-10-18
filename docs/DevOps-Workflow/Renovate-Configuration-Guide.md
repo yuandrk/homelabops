@@ -168,4 +168,3 @@ Ensure branch protection rules allow Renovate to merge (if automerge is enabled)
 ## Related Documentation
 
 - `docs/Terraform/Terraform-Infrastructure-Guide.md` - Terraform dependency management
-- `CLAUDE.md` - Development workflow and GitOps practices

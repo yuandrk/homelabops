@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
 - repository.yaml
+- secret-oidc.enc.yaml
 - release.yaml
 - rbac.yaml
 
