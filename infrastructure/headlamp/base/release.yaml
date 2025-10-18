@@ -73,8 +73,6 @@ spec:
         value: ""
       - name: HEADLAMP_CONFIG_OIDC_SCOPES
         value: ""
-      - name: HEADLAMP_CONFIG_OIDC_CALLBACK_URL
-        value: "https://headlamp.yuandrk.net/oidc-callback"
 
     # Resources
     resources:
