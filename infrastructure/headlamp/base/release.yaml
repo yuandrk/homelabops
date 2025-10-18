@@ -38,7 +38,7 @@ spec:
 
     ingress:
       enabled: true
-      ingressClassName: traefik
+      className: traefik
       annotations:
         # Ensure Traefik forwards original scheme from Cloudflare (https)
         # (Traefik usually does; this stays as a reminder—no TLS at origin)
@@ -47,5 +47,5 @@ spec:
         - host: headlamp.yuandrk.net
           paths:
             - path: /
-              pathType: Prefix
+              type: Prefix
       # Do NOT set TLS here since origin is plain HTTP (Cloudflare terminates TLS)
