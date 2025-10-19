@@ -2,50 +2,90 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: headlamp
-  namespace: kube-system
+  namespace: flux-system
 spec:
-  interval: 10m
+  interval: 1h
   chart:
     spec:
       chart: headlamp
-      version: "0.36.0"
+      version: ">=0.21.0"
       sourceRef:
         kind: HelmRepository
         name: headlamp
         namespace: kube-system
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
+  targetNamespace: kube-system
+  valuesFrom:
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: clientID
+      targetPath: env[0].value
+      optional: false
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: clientSecret
+      targetPath: env[1].value
+      optional: false
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: issuerURL
+      targetPath: env[2].value
+      optional: false
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: scopes
+      targetPath: env[3].value
+      optional: false
   values:
-    # Run in-cluster mode
-    config:
-      inCluster: true
-      # OIDC config (Headlamp consumes these and exposes /oidc-callback)
-      oidc:
-        clientID: "ajHFJaJnVpaj09shHyQeaTHpi9Llg2wbKi8fxqTF"
-        issuerURL: "https://auth.yuandrk.net/application/o/headlamp/"
-        scopes: "openid,profile,email"
+    image:
+      tag: "v0.26.0"
 
-    # Pull clientSecret from a Secret, via extraEnv (robust across chart versions)
-    extraEnv:
-      - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
-        valueFrom:
-          secretKeyRef:
-            name: headlamp-oidc
-            key: clientSecret
-
-    # Service/Ingress (Traefik, HTTP at origin; Cloudflare does HTTPS at edge)
+    # Service configuration
     service:
       type: ClusterIP
       port: 80
 
+    # Ingress configuration
     ingress:
       enabled: true
-      className: traefik
+      ingressClassName: traefik
       annotations:
-        # Ensure Traefik forwards original scheme from Cloudflare (https)
-        # (Traefik usually does; this stays as a reminder—no TLS at origin)
-        traefik.ingress.kubernetes.io/router.entrypoints: "web"
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
       hosts:
         - host: headlamp.yuandrk.net
           paths:
             - path: /
-              type: Prefix
-      # Do NOT set TLS here since origin is plain HTTP (Cloudflare terminates TLS)
+              type: ImplementationSpecific
+
+    # Environment variables for OIDC (values injected via valuesFrom)
+    env:
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
+        value: ""
+      - name: HEADLAMP_CONFIG_OIDC_SCOPES
+        value: ""
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Enable plugins
+    config:
+      pluginsDir: "/headlamp/plugins"
+
+    # Security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 100
+      runAsGroup: 101
