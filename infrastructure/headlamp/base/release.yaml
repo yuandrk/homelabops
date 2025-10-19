@@ -18,30 +18,31 @@ spec:
   upgrade:
     crds: CreateReplace
   targetNamespace: kube-system
-  valuesFrom:
-    - kind: Secret
-      name: headlamp-oidc
-      valuesKey: clientID
-      targetPath: env[0].value
-      optional: false
-    - kind: Secret
-      name: headlamp-oidc
-      valuesKey: clientSecret
-      targetPath: env[1].value
-      optional: false
-    - kind: Secret
-      name: headlamp-oidc
-      valuesKey: issuerURL
-      targetPath: env[2].value
-      optional: false
-    - kind: Secret
-      name: headlamp-oidc
-      valuesKey: scopes
-      targetPath: env[3].value
-      optional: false
   values:
     image:
       tag: "v0.26.0"
+
+    # Init container to install Flux plugin
+    initContainers:
+      - name: flux-plugin
+        image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:latest
+        command:
+          - sh
+          - -c
+          - "mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build"
+        volumeMounts:
+          - name: plugins
+            mountPath: /build
+
+    # Volume for plugins (using emptyDir for simplicity)
+    volumes:
+      - name: plugins
+        emptyDir: {}
+
+    # Mount plugins volume to main container
+    volumeMounts:
+      - name: plugins
+        mountPath: /headlamp/plugins
 
     # Service configuration
     service:
@@ -59,17 +60,6 @@ spec:
           paths:
             - path: /
               type: ImplementationSpecific
-
-    # Environment variables for OIDC (values injected via valuesFrom)
-    env:
-      - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
-        value: ""
-      - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
-        value: ""
-      - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
-        value: ""
-      - name: HEADLAMP_CONFIG_OIDC_SCOPES
-        value: ""
 
     # Resources
     resources:
