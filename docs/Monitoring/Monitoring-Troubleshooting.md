@@ -6,8 +6,8 @@ This guide provides solutions for common issues with the monitoring stack deploy
 
 ### Essential Health Check Commands
 ```bash
-# Set kubeconfig
-export KUBECONFIG=/Users/yuandrk/Nextcloud/github/homelabops/terraform/kube/kubeconfig
+# Set kubeconfig (adjust to your local path)
+export KUBECONFIG=${KUBECONFIG:-"./terraform/kube/kubeconfig"}
 
 # Check monitoring Kustomizations
 kubectl get kustomizations -n flux-system | grep monitoring
@@ -310,7 +310,7 @@ kubectl annotate kustomization flux-system -n flux-system reconcile.fluxcd.io/re
 echo "🔍 Monitoring Stack Health Check"
 echo "================================"
 
-export KUBECONFIG=/Users/yuandrk/Nextcloud/github/homelabops/terraform/kube/kubeconfig
+export KUBECONFIG=${KUBECONFIG:-"./terraform/kube/kubeconfig"}
 
 echo "📊 Monitoring Kustomizations:"
 kubectl get kustomizations -n flux-system | grep monitoring | while read name age ready status; do

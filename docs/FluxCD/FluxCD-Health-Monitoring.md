@@ -6,8 +6,8 @@ This document provides comprehensive commands and procedures for monitoring Flux
 
 ### Essential FluxCD Status Commands
 ```bash
-# Set kubeconfig path (adjust path as needed)
-export KUBECONFIG=/Users/yuandrk/Nextcloud/github/homelabops/terraform/kube/kubeconfig
+# Set kubeconfig path (adjust to your local path)
+export KUBECONFIG=${KUBECONFIG:-"./terraform/kube/kubeconfig"}
 
 # Quick overview of all FluxCD resources
 kubectl get all -n flux-system
@@ -260,8 +260,8 @@ Create a monitoring script for regular health checks:
 echo "🔍 FluxCD Health Check - $(date)"
 echo "================================"
 
-# Set kubeconfig
-export KUBECONFIG=/path/to/your/kubeconfig
+# Set kubeconfig (adjust to your local path)
+export KUBECONFIG=${KUBECONFIG:-"./terraform/kube/kubeconfig"}
 
 echo ""
 echo "📊 FluxCD Controllers Status:"

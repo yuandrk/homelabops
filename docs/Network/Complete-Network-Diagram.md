@@ -458,7 +458,7 @@ flannel-iface: eth0
 - **Grafana**: Node Exporter dashboards display consistent LAN IP addresses
 
 #### Backup Created:
-Recovery instructions and cluster state backup saved in: `/Users/yuandrk/k3s-backup-20250903-212156/`
+Recovery instructions and cluster state backup saved in: `./k3s-backup-20250903-212156/` (historical backup location)
 
 #### Recovery Process (if needed):
 ```bash
