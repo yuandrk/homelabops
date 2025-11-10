@@ -16,16 +16,16 @@ spec:
       version: 8.10.0
   values:
     nodeSelector:
-      kubernetes.io/arch: amd64
+      kubernetes.io/hostname: k3s-worker3
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
-                - key: kubernetes.io/arch
+                - key: kubernetes.io/hostname
                   operator: In
                   values:
-                    - amd64
+                    - k3s-worker3
     persistence:
       enabled: true
       size: 50Gi
