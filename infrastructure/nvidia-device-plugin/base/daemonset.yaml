@@ -28,13 +28,16 @@ spec:
           - name: FAIL_ON_INIT_ERROR
             value: "false"
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
+          privileged: true
         volumeMounts:
         - name: device-plugin
           mountPath: /var/lib/kubelet/device-plugins
+        - name: dev
+          mountPath: /dev
       volumes:
       - name: device-plugin
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      - name: dev
+        hostPath:
+          path: /dev
