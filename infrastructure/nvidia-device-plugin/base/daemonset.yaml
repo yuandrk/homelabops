@@ -33,14 +33,14 @@ spec:
           - "--fail-on-init-error=false"
           - "--pass-device-specs=true"
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
+          privileged: true
         volumeMounts:
         - name: device-plugin
           mountPath: /var/lib/kubelet/device-plugins
         - name: nvidia-driver
           mountPath: /usr/local/nvidia
+        - name: dev
+          mountPath: /dev
       volumes:
       - name: device-plugin
         hostPath:
@@ -48,3 +48,6 @@ spec:
       - name: nvidia-driver
         hostPath:
           path: /usr
+      - name: dev
+        hostPath:
+          path: /dev
