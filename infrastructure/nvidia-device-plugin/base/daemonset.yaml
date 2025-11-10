@@ -24,6 +24,9 @@ spec:
       containers:
       - image: nvcr.io/nvidia/k8s-device-plugin:v0.16.2
         name: nvidia-device-plugin-ctr
+        env:
+          - name: DEVICE_DISCOVERY_STRATEGY
+            value: "nvml"
         args:
           - "--fail-on-init-error=false"
           - "--pass-device-specs=true"
