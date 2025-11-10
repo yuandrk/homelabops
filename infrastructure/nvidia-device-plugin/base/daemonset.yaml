@@ -20,20 +20,17 @@ spec:
         effect: NoSchedule
       nodeSelector:
         nvidia.com/gpu: "true"
-      priorityClassName: system-node-critical
+      priorityClassName: "system-node-critical"
       containers:
       - image: nvcr.io/nvidia/k8s-device-plugin:v0.16.2
         name: nvidia-device-plugin-ctr
         env:
-          - name: NVIDIA_VISIBLE_DEVICES
-            value: "all"
-          - name: NVIDIA_DRIVER_CAPABILITIES
-            value: "compute,utility"
-        args:
-          - "--fail-on-init-error=false"
-          - "--pass-device-specs=true"
+          - name: FAIL_ON_INIT_ERROR
+            value: "false"
         securityContext:
-          privileged: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         volumeMounts:
         - name: device-plugin
           mountPath: /var/lib/kubelet/device-plugins
