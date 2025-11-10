@@ -30,7 +30,7 @@ spec:
     # CDI support requires version 0.18.0+
 
     # Fail on init error set to false for graceful handling
-    failOnInitError: false
+    failOnInitError: "false"
 
     # Resource limits for the plugin
     resources:
