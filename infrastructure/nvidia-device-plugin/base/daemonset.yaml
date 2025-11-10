@@ -27,6 +27,8 @@ spec:
         env:
           - name: DEVICE_DISCOVERY_STRATEGY
             value: "nvml"
+          - name: LD_LIBRARY_PATH
+            value: "/usr/local/nvidia/lib64:/usr/lib/x86_64-linux-gnu"
         args:
           - "--fail-on-init-error=false"
           - "--pass-device-specs=true"
@@ -37,7 +39,12 @@ spec:
         volumeMounts:
         - name: device-plugin
           mountPath: /var/lib/kubelet/device-plugins
+        - name: nvidia-driver
+          mountPath: /usr/local/nvidia
       volumes:
       - name: device-plugin
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      - name: nvidia-driver
+        hostPath:
+          path: /usr
