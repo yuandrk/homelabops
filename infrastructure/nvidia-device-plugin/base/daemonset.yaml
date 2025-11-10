@@ -34,6 +34,11 @@ spec:
           mountPath: /var/lib/kubelet/device-plugins
         - name: dev
           mountPath: /dev
+        - name: sys
+          mountPath: /sys
+        - name: nvidia-libs
+          mountPath: /usr/lib/x86_64-linux-gnu
+          readOnly: true
       volumes:
       - name: device-plugin
         hostPath:
@@ -41,3 +46,9 @@ spec:
       - name: dev
         hostPath:
           path: /dev
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: nvidia-libs
+        hostPath:
+          path: /usr/lib/x86_64-linux-gnu
