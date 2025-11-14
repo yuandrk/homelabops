@@ -32,3 +32,22 @@ spec:
       accessModes:
         - ReadWriteOnce
       storageClass: local-path
+
+    ollama:
+      enabled: true
+      fullnameOverride: "open-webui-ollama"
+      gpu:
+        enabled: true
+        type: 'nvidia'
+        number: 1
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+        requests:
+          nvidia.com/gpu: 1
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker3
+      persistence:
+        enabled: true
+        size: 30Gi
+        storageClass: local-path
