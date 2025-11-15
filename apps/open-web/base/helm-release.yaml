@@ -36,6 +36,7 @@ spec:
     ollama:
       enabled: true
       fullnameOverride: "open-webui-ollama"
+      runtimeClassName: nvidia
       gpu:
         enabled: true
         type: 'nvidia'
