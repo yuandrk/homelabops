@@ -34,7 +34,7 @@ spec:
             - name: DB_TYPE
               value: "postgresdb"
             - name: DB_POSTGRESDB_HOST
-              value: "k3s-worker3"
+              value: "10.10.0.5"
             - name: DB_POSTGRESDB_PORT
               value: "5432"
             - name: DB_POSTGRESDB_DATABASE
