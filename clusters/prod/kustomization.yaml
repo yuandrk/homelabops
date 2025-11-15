@@ -6,4 +6,3 @@ resources:
 - apps.yaml
 - infrastructure.yaml
 - monitoring.yaml
-- authentik.yaml

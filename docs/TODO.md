@@ -11,13 +11,11 @@ This document tracks all documentation improvements, additions, and fixes needed
 
 ### Immediate Fixes (Week 1)
 
-- [ ] **Fix filename typo**: Rename `docs/Network/Device shatpshoot.md` → `docs/Network/Device-Snapshot.md`
-- [ ] **Fix hardcoded paths** in 3 files:
-  - [ ] `docs/Monitoring/Monitoring-Troubleshooting.md` - Replace `/Users/yuandrk/Nextcloud/github/homelabops/terraform/kube/kubeconfig`
-  - [ ] `docs/FluxCD/FluxCD-Health-Monitoring.md` - Replace hardcoded kubeconfig path
-  - [ ] `docs/Network/Complete-Network-Diagram.md` - Replace hardcoded path
-  - Use environment variable `${KUBECONFIG}` or relative path instead
-- [ ] **Update README.md** - Add complete service list including all deployed applications
+- [x] **Fix filename typo**: Rename `docs/Network/Device shatpshoot.md` → `docs/Network/Device-Snapshot.md`
+- [x] **Fix hardcoded paths** - Using `${KUBECONFIG:-"./terraform/kube/kubeconfig"}` pattern
+  - [x] `docs/Monitoring/Monitoring-Troubleshooting.md` - Uses environment variable pattern
+  - [x] `docs/FluxCD/FluxCD-Health-Monitoring.md` - Uses environment variable pattern
+  - [x] `docs/Network/Complete-Network-Diagram.md` - No hardcoded paths found
 
 ### Missing Service Documentation (Week 1)
 
@@ -28,21 +26,11 @@ This document tracks all documentation improvements, additions, and fixes needed
   - [ ] Webhook configuration
   - [ ] Backup/restore procedures
   - [ ] Common workflows/examples
-- [ ] **Document pgAdmin** - Create `docs/Database/pgAdmin-Setup.md`
-  - [ ] Access URL and credentials
-  - [ ] PostgreSQL connection configuration
-  - [ ] Server group setup
-  - [ ] Security considerations
 - [ ] **Document ActualBudget** - Create `docs/Applications/ActualBudget-Setup.md`
   - [ ] Access URL
   - [ ] Initial setup
   - [ ] Backup configuration
   - [ ] Data import/export
-- [ ] **Complete Authentik Documentation** - Create `docs/Authentication/Authentik-Setup.md`
-  - [ ] Full deployment guide
-  - [ ] Provider configuration (OIDC/SAML)
-  - [ ] Application integration examples
-  - [ ] User/group management
 
 ---
 
@@ -50,6 +38,7 @@ This document tracks all documentation improvements, additions, and fixes needed
 
 ### Operations Documentation (Week 2)
 
+- [ ] **Migration databases to another node** find approach
 - [ ] **Create `docs/Operations/` directory**
 - [ ] **Backup Strategy** - Create `docs/Operations/Backup-Strategy.md`
   - [ ] What's backed up (databases, configs, PVs)
@@ -236,13 +225,13 @@ This document tracks all documentation improvements, additions, and fixes needed
 
 These can be completed in under 30 minutes and provide immediate value:
 
-1. [ ] Rename `Device shatpshoot.md` → `Device-Snapshot.md` (2 min)
-2. [ ] Fix 3 hardcoded paths (10 min)
-3. [ ] Update README.md service list (5 min)
-4. [ ] Create `docs/Applications/` directory structure (2 min)
-5. [ ] Create `docs/README.md` index skeleton (10 min)
+1. [x] Rename `Device shatpshoot.md` → `Device-Snapshot.md` (2 min) ✅
+2. [x] Fix 3 hardcoded paths (10 min) ✅
+3. [ ] Create `docs/Applications/` directory structure (2 min)
+4. [ ] Create `docs/README.md` index skeleton (10 min)
+5. [ ] Add "Last Updated" dates to undated documentation files (15 min)
 
-**Estimated Total: ~30 minutes**
+**Estimated Remaining: ~27 minutes**
 
 ---
 
@@ -250,13 +239,13 @@ These can be completed in under 30 minutes and provide immediate value:
 
 ### Overall Completion Status
 
-- **Critical Priority**: 0/12 items completed (0%)
+- **Critical Priority**: 5/10 items completed (50%)
 - **High Priority**: 0/12 items completed (0%)
 - **Medium Priority**: 0/16 items completed (0%)
 - **Improvements**: 0/10 items completed (0%)
-- **Quick Wins**: 0/5 items completed (0%)
+- **Quick Wins**: 2/5 items completed (40%)
 
-**Total**: 0/55 items completed
+**Total**: 7/53 items completed
 
 ---
 

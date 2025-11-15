@@ -91,7 +91,6 @@ use_lockfile = true  # S3 native locking
 | Headlamp | `headlamp.yuandrk.net` | `http://k3s-master:80` | K8s dashboard |
 | Uptime Kuma | `uptime.yuandrk.net` | `http://k3s-master:80` | Status page |
 | pgAdmin | `pgadmin.yuandrk.net` | `http://k3s-master:80` | PostgreSQL admin |
-| Authentik | `auth.yuandrk.net` | `https://k3s-master:443` | SSO (noTLSVerify) |
 
 **Tunnel Configuration**:
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`

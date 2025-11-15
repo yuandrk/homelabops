@@ -50,12 +50,6 @@ locals {
       hostname = "pgadmin.yuandrk.net"
       service  = "http://k3s-master:80"
     },
-    {
-      name        = "auth"
-      hostname    = "auth.yuandrk.net"
-      service     = "https://k3s-master:443"
-      noTLSVerify = true
-    },
   ]
 
   #
