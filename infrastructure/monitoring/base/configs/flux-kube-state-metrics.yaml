@@ -203,7 +203,7 @@ spec:
       serviceAccountName: flux-kube-state-metrics
       containers:
         - name: kube-state-metrics
-          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0
           args:
             - --custom-resource-state-only=true
             - --custom-resource-state-config-file=/etc/config/config.yaml
