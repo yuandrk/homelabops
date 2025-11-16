@@ -5,14 +5,64 @@
   ],
   "timezone": "Europe/London",
   "schedule": ["every weekend"],
-  "prConcurrentLimit": 3,
+  "prConcurrentLimit": 5,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
+  "kubernetes": {
+    "fileMatch": [
+      "apps/.+\\.yaml$",
+      "infrastructure/.+\\.yaml$",
+      "clusters/.+\\.yaml$"
+    ]
+  },
+  "flux": {
+    "fileMatch": [
+      "apps/.+\\.yaml$",
+      "infrastructure/.+\\.yaml$",
+      "clusters/.+\\.yaml$"
+    ]
+  },
   "packageRules": [
     {
       "description": "Require manual approval for all updates",
       "matchUpdateTypes": ["major", "minor", "patch"],
       "automerge": false
+    },
+    {
+      "description": "Group all app Docker image updates",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["apps/**"],
+      "groupName": "app-images",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Group all infrastructure Docker image updates",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["infrastructure/**"],
+      "groupName": "infrastructure-images",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Group Helm chart updates",
+      "matchDatasources": ["helm"],
+      "groupName": "helm-charts",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Pin headlamp-plugin-flux to specific version (avoid :latest)",
+      "matchPackageNames": ["ghcr.io/headlamp-k8s/headlamp-plugin-flux"],
+      "pinDigests": true
+    },
+    {
+      "description": "Automerge patch updates for stable apps",
+      "matchUpdateTypes": ["patch"],
+      "matchPackageNames": [
+        "actualbudget/actual-server",
+        "louislam/uptime-kuma",
+        "dpage/pgadmin4"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
     }
   ]
 }

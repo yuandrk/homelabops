@@ -14,14 +14,56 @@ The `renovate.json` file in the repository root contains the Renovate configurat
   "extends": ["config:recommended"],
   "timezone": "Europe/London",
   "schedule": ["every weekend"],
-  "prConcurrentLimit": 3,
+  "prConcurrentLimit": 5,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
+  "kubernetes": {
+    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$", "clusters/.+\\.yaml$"]
+  },
+  "flux": {
+    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$", "clusters/.+\\.yaml$"]
+  },
   "packageRules": [
     {
       "description": "Require manual approval for all updates",
       "matchUpdateTypes": ["major", "minor", "patch"],
       "automerge": false
+    },
+    {
+      "description": "Group all app Docker image updates",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["apps/**"],
+      "groupName": "app-images",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Group all infrastructure Docker image updates",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["infrastructure/**"],
+      "groupName": "infrastructure-images",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Group Helm chart updates",
+      "matchDatasources": ["helm"],
+      "groupName": "helm-charts",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Pin headlamp-plugin-flux to specific version (avoid :latest)",
+      "matchPackageNames": ["ghcr.io/headlamp-k8s/headlamp-plugin-flux"],
+      "pinDigests": true
+    },
+    {
+      "description": "Automerge patch updates for stable apps",
+      "matchUpdateTypes": ["patch"],
+      "matchPackageNames": [
+        "actualbudget/actual-server",
+        "louislam/uptime-kuma",
+        "dpage/pgadmin4"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
     }
   ]
 }
@@ -37,22 +79,47 @@ The `renovate.json` file in the repository root contains the Renovate configurat
 
 ### Pull Request Management
 
-- **`prConcurrentLimit: 3`** - Maximum 3 open PRs at once to avoid overwhelming the review queue
+- **`prConcurrentLimit: 5`** - Maximum 5 open PRs at once (increased from 3 for better app monitoring)
 - **`labels: ["dependencies", "renovate"]`** - Automatically adds these labels to all Renovate PRs
 - **`assignees: ["yuandrk"]`** - Assigns all PRs to yuandrk for review
 
-### Update Policy
+### File Matching
 
-- **`automerge: false`** - All updates require manual review and approval (safe default for homelab)
+- **`kubernetes.fileMatch`** - Explicitly scans `apps/`, `infrastructure/`, and `clusters/` directories for Kubernetes manifests
+- **`flux.fileMatch`** - Detects FluxCD HelmRelease resources in the same directories
+
+### Update Policy & Grouping
+
+- **Default: Manual approval** - All major/minor/patch updates require review
+- **App Docker images grouped** - All Docker image updates in `apps/` bundled into "app-images" PRs
+- **Infrastructure images grouped** - Infrastructure Docker images bundled into "infrastructure-images" PRs
+- **Helm charts grouped** - All Helm chart updates bundled into "helm-charts" PRs
+- **Patch automerge** - Patch updates for ActualBudget, Uptime Kuma, and pgAdmin auto-merge after CI passes
+- **Pin :latest tags** - Headlamp Flux plugin pinned to digest to avoid :latest drift
 
 ## Detected Dependencies
 
 Renovate automatically monitors:
 
-- **FluxCD components** (`clusters/prod/flux-system/gotk-components.yaml`)
-- **GitHub Actions** (`.github/workflows/*.yml`)
-- **Terraform providers and modules** (`terraform/**/*.tf`)
-- **Helm charts** (`apps/**/helm-release.yaml`)
+### Applications (Docker Images)
+- **ActualBudget** - `actualbudget/actual-server:25.8.0`
+- **Uptime Kuma** - `louislam/uptime-kuma:1.23.15`
+- **pgAdmin** - `dpage/pgadmin4:8.12`
+- **n8n** - `n8nio/n8n:1.120.3`
+
+### Infrastructure (Docker Images)
+- **NVIDIA Device Plugin** - `nvcr.io/nvidia/k8s-device-plugin:v0.16.2`
+- **Kube State Metrics** - `registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0`
+- **Headlamp Flux Plugin** - `ghcr.io/headlamp-k8s/headlamp-plugin-flux` (pinned digest)
+
+### Helm Charts
+- **open-webui** - Chart version `8.10.0`
+- **Headlamp** - Chart version `>=0.21.0`, image `v0.26.0`
+
+### Other
+- **FluxCD components** - `clusters/prod/flux-system/gotk-components.yaml`
+- **GitHub Actions** - `.github/workflows/*.yml`
+- **Terraform providers/modules** - `terraform/**/*.tf`
 
 ## How It Works
 
