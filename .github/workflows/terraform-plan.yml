@@ -59,7 +59,7 @@ jobs:
 
       - name: Upload plan artifact
         if: steps.plan.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: plan-cloudflare
           path: terraform/live/homelab/cloudflare/plan.tfplan
