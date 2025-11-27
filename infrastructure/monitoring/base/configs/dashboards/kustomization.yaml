@@ -11,9 +11,6 @@ configMapGenerator:
 - name: k3s-nodes-dashboard
   files:
   - nodes.json
-- name: homelab-overview-dashboard
-  files:
-  - homelab-overview.json
 
 generatorOptions:
   disableNameSuffixHash: false
