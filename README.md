@@ -13,16 +13,108 @@ My personal homelab infrastructure running K3s cluster with automated deployment
 
 This repository contains Infrastructure as Code and documentation for my homelab K3s cluster with GitOps automation. Infrastructure is managed via Ansible automation, Terraform for cloud resources, and FluxCD for continuous deployment.
 
-## 🏗️ Current Architecture
+## 🏗️ Architecture Overview
 
-- **Cluster**: 3-node K3s cluster (1 master + 2 workers) on Ubuntu 24.04 LTS
+```mermaid
+flowchart TB
+    subgraph Internet["🌐 Internet"]
+        User["Users"]
+    end
+
+    subgraph Cloudflare["☁️ Cloudflare"]
+        DNS["DNS: *.yuandrk.net"]
+        Tunnel["Tunnel: 4a6abf9a..."]
+    end
+
+    subgraph GitHub["📦 GitHub"]
+        Repo["homelabops repo"]
+        Actions["GitHub Actions"]
+        Renovate["Renovate Bot"]
+    end
+
+    subgraph AWS["☁️ AWS"]
+        S3["S3: Terraform State"]
+    end
+
+    subgraph HomeLab["🏠 HomeLab Network (10.10.0.0/24)"]
+        subgraph Master["k3s-master (10.10.0.1)<br/>Intel i3-7100U | 15GB RAM"]
+            Traefik["Traefik Ingress"]
+            FluxCD["FluxCD"]
+            PiHole["Pi-hole DNS"]
+            Cloudflared["cloudflared"]
+        end
+
+        subgraph Worker1["k3s-worker1 (10.10.0.2)<br/>Raspberry Pi 4 | 4GB RAM"]
+            PostgreSQL["PostgreSQL<br/>(Docker 15.13)"]
+        end
+
+        subgraph Worker2["k3s-worker2 (10.10.0.4)<br/>Raspberry Pi 4 | 4GB RAM"]
+            Apps2["Workloads"]
+        end
+
+        subgraph Worker3["k3s-worker3 (10.10.0.5)<br/>x86_64 + NVIDIA MX130 (2GB)"]
+            Ollama["Ollama (LLM)"]
+            OpenWebUI["Open-WebUI"]
+        end
+
+        subgraph K8sApps["📱 Applications"]
+            Grafana["Grafana"]
+            UptimeKuma["Uptime Kuma"]
+            ActualBudget["ActualBudget"]
+            N8N["n8n"]
+            Headlamp["Headlamp"]
+            PgAdmin["pgAdmin"]
+        end
+
+        subgraph Monitoring["📊 Monitoring"]
+            Prometheus["Prometheus (10Gi)"]
+            NodeExporter["Node Exporters<br/>(4 nodes)"]
+        end
+    end
+
+    User --> DNS
+    DNS --> Tunnel
+    Tunnel --> Cloudflared
+    Cloudflared --> Traefik
+    Traefik --> K8sApps
+    Traefik --> OpenWebUI
+    Traefik --> Grafana
+
+    Repo -->|GitOps| FluxCD
+    FluxCD -->|Deploys| K8sApps
+    FluxCD -->|Manages| Monitoring
+
+    Actions -->|Terraform Apply| Tunnel
+    Actions -->|OIDC Auth| S3
+    Renovate -->|PRs| Repo
+
+    Prometheus --> Grafana
+    NodeExporter --> Prometheus
+
+    OpenWebUI --> Ollama
+    N8N --> PostgreSQL
+    PgAdmin --> PostgreSQL
+
+    style Master fill:#e1f5ff
+    style Worker1 fill:#fff4e1
+    style Worker2 fill:#fff4e1
+    style Worker3 fill:#f0e1ff
+    style PostgreSQL fill:#ff9999
+    style Ollama fill:#99ff99
+```
+
+### Infrastructure Details
+
+- **Cluster**: 4-node K3s cluster (1 master + 3 workers) on Ubuntu 24.04 LTS
 - **GitOps**: FluxCD v2.6.0 with automated deployment from Git
 - **Automation**: Ansible for node configuration and cluster deployment
 - **Networking**: Dual network setup (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi)
-- **External Access**: Cloudflare Tunnels + Traefik ingress
+- **External Access**: Cloudflare Tunnels + Traefik ingress (9 public services)
 - **DNS**: Pi-hole (host) + CoreDNS (K3s)
-- **Database**: PostgreSQL on k3s-worker1 (Docker)
+- **Database**: PostgreSQL 15.13 on k3s-worker1 (Docker)
+- **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (Ollama LLM workloads)
 - **Infrastructure**: Terraform for AWS backend + Cloudflare tunnels
+- **Storage**: 76Gi total (local-path provisioner)
 
 ## 📁 Repository Structure
 
@@ -94,10 +186,11 @@ terraform output -raw tunnel_token
 ## 📊 Current Status
 
 ### Cluster Health ✅
-- **3-node K3s cluster**: All nodes operational
-- **Version**: v1.33.3+k3s1 across all nodes
+- **4-node K3s cluster**: All nodes operational (1 master + 3 workers)
+- **Version**: v1.33.3-v1.33.5+k3s1 (minor version skew on workers)
 - **Network**: Dual setup with gigabit LAN + Wi-Fi fallback
-- **External Access**: Pi-hole and Budget app via Cloudflare tunnels
+- **External Access**: 9 services via Cloudflare Tunnels
+- **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (CUDA 12.2)
 
 ### Services Running
 - **FluxCD v2.6.0**: GitOps continuous deployment
