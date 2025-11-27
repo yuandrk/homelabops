@@ -21,7 +21,7 @@ data:
           }
         ]
       },
-      "description": "Comprehensive Node Exporter metrics for K3s homelab - Network, Disk I/O, Load, Temperature",
+      "description": "Essential infrastructure metrics: Network, Disk I/O, Load, Filesystem",
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
@@ -93,7 +93,7 @@ data:
             ]
           },
           "gridPos": {
-            "h": 8,
+            "h": 10,
             "w": 12,
             "x": 0,
             "y": 0
@@ -113,12 +113,12 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\",device=~\"eth.*|enp.*|eno.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "legendFormat": "{{nodename}} {{device}} Receive",
               "refId": "A"
             },
             {
-              "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|docker.*|flannel.*|cni.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\",device=~\"eth.*|enp.*|eno.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
               "legendFormat": "{{nodename}} {{device}} Transmit",
               "refId": "B"
             }
@@ -191,7 +191,7 @@ data:
             ]
           },
           "gridPos": {
-            "h": 8,
+            "h": 10,
             "w": 12,
             "x": 12,
             "y": 0
@@ -284,10 +284,10 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 10,
             "w": 12,
             "x": 0,
-            "y": 8
+            "y": 10
           },
           "id": 3,
           "options": {
@@ -369,23 +369,23 @@ data:
                   },
                   {
                     "color": "yellow",
-                    "value": 60
+                    "value": 70
                   },
                   {
                     "color": "red",
-                    "value": 80
+                    "value": 85
                   }
                 ]
               },
-              "unit": "celsius"
+              "unit": "percent"
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 10,
             "w": 12,
             "x": 12,
-            "y": 8
+            "y": 10
           },
           "id": 4,
           "options": {
@@ -402,182 +402,12 @@ data:
           },
           "targets": [
             {
-              "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
-              "legendFormat": "{{nodename}} {{chip}} {{sensor}}",
+              "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$instance\",mountpoint=\"/\",fstype!=\"rootfs\"} / node_filesystem_size_bytes{instance=~\"$instance\",mountpoint=\"/\"}) * 100) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
+              "legendFormat": "{{nodename}} {{mountpoint}}",
               "refId": "A"
             }
           ],
-          "title": "Hardware Temperature",
-          "type": "timeseries"
-        },
-        {
-          "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "ops"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 16
-          },
-          "id": 5,
-          "options": {
-            "legend": {
-              "calcs": ["mean", "lastNotNull"],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "expr": "rate(node_disk_reads_completed_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
-              "legendFormat": "{{nodename}} {{device}} Reads",
-              "refId": "A"
-            },
-            {
-              "expr": "rate(node_disk_writes_completed_total{instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
-              "legendFormat": "{{nodename}} {{device}} Writes",
-              "refId": "B"
-            }
-          ],
-          "title": "Disk IOPS",
-          "type": "timeseries"
-        },
-        {
-          "datasource": "prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 16
-          },
-          "id": 6,
-          "options": {
-            "legend": {
-              "calcs": ["mean", "lastNotNull"],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "expr": "node_procs_running{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
-              "legendFormat": "{{nodename}} Running Processes",
-              "refId": "A"
-            },
-            {
-              "expr": "node_procs_blocked{instance=~\"$instance\"} * on(instance) group_left(nodename) (node_uname_info{instance=~\"$instance\",nodename=~\"$node\"})",
-              "legendFormat": "{{nodename}} Blocked Processes",
-              "refId": "B"
-            }
-          ],
-          "title": "Process Status",
+          "title": "Filesystem Usage %",
           "type": "timeseries"
         }
       ],
@@ -623,7 +453,7 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "Node Exporter Full - K3s Detailed Monitoring (Improved)",
+      "title": "Node Exporter - K3s Infrastructure",
       "uid": "k3s-nodes-full",
       "version": 2,
       "weekStart": ""
