@@ -1,65 +1,60 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "timezone": "Europe/London",
   "schedule": ["every weekend"],
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 3,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
+
+  "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3"],
+
   "kubernetes": {
-    "fileMatch": [
-      "apps/.+\\.yaml$",
-      "infrastructure/.+\\.yaml$",
-      "clusters/.+\\.yaml$"
-    ]
+    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
   },
   "flux": {
-    "fileMatch": [
-      "apps/.+\\.yaml$",
-      "infrastructure/.+\\.yaml$",
-      "clusters/.+\\.yaml$"
-    ]
+    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
   },
+
   "packageRules": [
     {
-      "description": "Require manual approval for all updates",
-      "matchUpdateTypes": ["major", "minor", "patch"],
-      "automerge": false
+      "description": "Disable GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "enabled": false
     },
     {
-      "description": "Group all app Docker image updates",
+      "description": "Disable Terraform updates",
+      "matchManagers": ["terraform", "terraform-version"],
+      "enabled": false
+    },
+    {
+      "description": "Disable FluxCD system components",
+      "matchFileNames": ["clusters/prod/flux-system/**"],
+      "enabled": false
+    },
+    {
+      "description": "Group app Docker images",
       "matchDatasources": ["docker"],
       "matchFileNames": ["apps/**"],
-      "groupName": "app-images",
-      "separateMinorPatch": true
+      "groupName": "app-images"
     },
     {
-      "description": "Group all infrastructure Docker image updates",
+      "description": "Group infrastructure Docker images",
       "matchDatasources": ["docker"],
       "matchFileNames": ["infrastructure/**"],
-      "groupName": "infrastructure-images",
-      "separateMinorPatch": true
+      "groupName": "infra-images"
     },
     {
-      "description": "Group Helm chart updates",
+      "description": "Group Helm charts",
       "matchDatasources": ["helm"],
-      "groupName": "helm-charts",
-      "separateMinorPatch": true
-    },
-    {
-      "description": "Pin headlamp-plugin-flux to specific version (avoid :latest)",
-      "matchPackageNames": ["ghcr.io/headlamp-k8s/headlamp-plugin-flux"],
-      "pinDigests": true
+      "groupName": "helm-charts"
     },
     {
       "description": "Automerge patch updates for stable apps",
       "matchUpdateTypes": ["patch"],
       "matchPackageNames": [
         "actualbudget/actual-server",
-        "louislam/uptime-kuma",
-        "dpage/pgadmin4"
+        "louislam/uptime-kuma"
       ],
       "automerge": true,
       "automergeType": "pr"
