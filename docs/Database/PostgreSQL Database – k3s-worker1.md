@@ -1,11 +1,20 @@
-> **Host**: `k3s-worker1`  
-> **OS**: Ubuntu 24.04 LTS  
-> **Arch**: ARM64 (Raspberry Pi 4)  
-> **RAM**: 3.7 GiB  
-> **Storage**: 954 GiB USB-SSD  
-> **IP (LAN)**: `10.10.0.2`  
-> **Deployment**: Docker Compose (not K3s-managed)  
-> **Status**: PostgreSQL-only (pgAdmin removed for resource optimization)
+# PostgreSQL Database (k3s-worker1) - ARCHIVED
+
+> **⚠️ MIGRATION NOTICE**: PostgreSQL has been migrated to k3s-worker3 (Native installation)
+> **Status**: ❌ ARCHIVED - This document is for historical reference only
+> **Migration Date**: November 2025
+> **Current Location**: See [PostgreSQL-Migration-to-Worker3.md](PostgreSQL-Migration-to-Worker3.md)
+>
+> **Old Configuration (k3s-worker1 - DECOMMISSIONED)**:
+> **Host**: `k3s-worker1`
+> **OS**: Ubuntu 24.04 LTS
+> **Arch**: ARM64 (Raspberry Pi 4)
+> **RAM**: 3.7 GiB
+> **Storage**: 954 GiB USB-SSD
+> **IP (LAN)**: `10.10.0.2`
+> **Deployment**: Docker Compose (not K3s-managed)
+> **PostgreSQL Version**: 15.13
+> **Status**: DECOMMISSIONED (pgAdmin removed for resource optimization)
 
 ---
 ## 📦 Services
