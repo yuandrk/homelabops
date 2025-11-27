@@ -1,8 +1,8 @@
 # 🌐 Homelab Network Architecture (August 2025)
 
-**Status**: ✅ K3s cluster operational with dual networking setup  
-**Last Updated**: August 2, 2025  
-**Cluster**: 3-node K3s cluster (1 master + 2 workers)
+**Status**: ✅ K3s cluster operational with dual networking setup
+**Last Updated**: November 27, 2025
+**Cluster**: 4-node K3s cluster (1 master + 3 workers)
 
 ---
 
@@ -26,13 +26,15 @@
 | Node | Hostname | Host LAN IP | Wi-Fi IP | Role | Key Services |
 |------|----------|-------------|----------|------|--------------|
 | **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | Pi-hole DNS, K3s Server, Traefik |
-| **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Worker Node | PostgreSQL (Docker), K3s Agent |
+| **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Worker Node | K3s Agent |
 | **Worker 2** | `k3s-worker2` | 10.10.0.4/24 | 192.168.1.70 | Worker Node | K3s Agent |
+| **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), Ollama, K3s Agent, GPU |
 
 ### Hardware Specs
 - **k3s-master**: Intel i3-7100U, 15 GiB RAM, 931 GiB NVMe (x86-64)
-- **k3s-worker1**: ARM64 RPi 4, 3.7 GiB RAM, 954 GiB USB-SSD 
+- **k3s-worker1**: ARM64 RPi 4, 3.7 GiB RAM, 954 GiB USB-SSD
 - **k3s-worker2**: ARM64 RPi 4, 3.7 GiB RAM, 15 GiB eMMC
+- **k3s-worker3**: x86_64, NVIDIA GeForce MX130 (2GB VRAM), CUDA 12.2
 
 ---
 

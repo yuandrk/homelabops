@@ -57,8 +57,9 @@ This directory contains comprehensive documentation for the K3s homelab monitori
 ### **Cluster Architecture**
 ```
 k3s-master  (10.10.0.1) - Control plane + monitoring
-k3s-worker1 (10.10.0.2) - Worker + PostgreSQL  
+k3s-worker1 (10.10.0.2) - Worker
 k3s-worker2 (10.10.0.4) - Worker
+k3s-worker3 (10.10.0.5) - Worker + PostgreSQL + GPU (NVIDIA MX130)
 ```
 
 ### **Monitoring Stack**

@@ -45,7 +45,7 @@ flowchart TB
         end
 
         subgraph Worker1["k3s-worker1 (10.10.0.2)<br/>Raspberry Pi 4 | 4GB RAM"]
-            PostgreSQL["PostgreSQL<br/>(Docker 15.13)"]
+            Apps1["Workloads"]
         end
 
         subgraph Worker2["k3s-worker2 (10.10.0.4)<br/>Raspberry Pi 4 | 4GB RAM"]
@@ -55,6 +55,7 @@ flowchart TB
         subgraph Worker3["k3s-worker3 (10.10.0.5)<br/>x86_64 + NVIDIA MX130 (2GB)"]
             Ollama["Ollama (LLM)"]
             OpenWebUI["Open-WebUI"]
+            PostgreSQL["PostgreSQL 15<br/>(Native)"]
         end
 
         subgraph K8sApps["📱 Applications"]
@@ -111,7 +112,7 @@ flowchart TB
 - **Networking**: Dual network setup (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi)
 - **External Access**: Cloudflare Tunnels + Traefik ingress (9 public services)
 - **DNS**: Pi-hole (host) + CoreDNS (K3s)
-- **Database**: PostgreSQL 15.13 on k3s-worker1 (Docker)
+- **Database**: PostgreSQL 15 on k3s-worker3 (Native)
 - **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (Ollama LLM workloads)
 - **Infrastructure**: Terraform for AWS backend + Cloudflare tunnels
 - **Storage**: 76Gi total (local-path provisioner)
@@ -196,7 +197,7 @@ terraform output -raw tunnel_token
 - **FluxCD v2.6.0**: GitOps continuous deployment
 - **open-webui**: LLM interface with Ollama integration (`chat.yuandrk.net`)
 - **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
-- **PostgreSQL**: Database on k3s-worker1 (Docker)
+- **PostgreSQL**: Database on k3s-worker3 (Native)
 - **Traefik**: K3s ingress controller
 - **CoreDNS**: K3s cluster DNS
 

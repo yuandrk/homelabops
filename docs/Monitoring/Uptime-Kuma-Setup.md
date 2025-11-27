@@ -44,7 +44,8 @@ Pi-hole: https://pihole.yuandrk.net (HTTP, 60s interval)
 K3s Master: k3s-master:6443 (TCP, 60s interval)
 K3s Worker 1: k3s-worker1:22 (TCP, 300s interval)
 K3s Worker 2: k3s-worker2:22 (TCP, 300s interval)
-PostgreSQL: k3s-worker1:5432 (TCP, 300s interval)
+K3s Worker 3: k3s-worker3:22 (TCP, 300s interval)
+PostgreSQL: k3s-worker3:5432 (TCP, 300s interval)
 ```
 
 #### External Dependencies
