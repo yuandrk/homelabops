@@ -505,7 +505,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{ready=\"True\",type=\"Kustomization\"})",
+          "expr": "count(gotk_resource_info{customresource_kind=\"Kustomization\",ready=\"True\"})",
           "refId": "A"
         }
       ],
@@ -568,7 +568,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{ready=\"False\",type=\"Kustomization\"})",
+          "expr": "count(gotk_resource_info{customresource_kind=\"Kustomization\",ready!=\"True\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -631,7 +631,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{ready=\"True\",type=\"HelmRelease\"})",
+          "expr": "count(gotk_resource_info{customresource_kind=\"HelmRelease\",ready=\"True\"})",
           "refId": "A"
         }
       ],
@@ -694,7 +694,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(gotk_resource_info{ready=\"False\",type=\"HelmRelease\"})",
+          "expr": "count(gotk_resource_info{customresource_kind=\"HelmRelease\",ready!=\"True\"}) or vector(0)",
           "refId": "A"
         }
       ],
