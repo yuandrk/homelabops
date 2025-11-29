@@ -13,7 +13,7 @@ spec:
         kind: HelmRepository
         name: open-webui
         namespace: apps
-      version: 8.10.0
+      version: 8.18.0
   values:
     nodeSelector:
       kubernetes.io/hostname: k3s-worker3
