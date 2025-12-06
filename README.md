@@ -2,58 +2,59 @@
 
 [![Kubernetes](https://img.shields.io/badge/K3s-v1.33-326CE5?logo=kubernetes&logoColor=white)](https://k3s.io/) [![FluxCD](https://img.shields.io/badge/FluxCD-v2.6.0-5468FF?logo=flux&logoColor=white)](https://fluxcd.io/) [![Terraform](https://img.shields.io/badge/Terraform-1.13+-7B42BC?logo=terraform&logoColor=white)](https://terraform.io/) [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Terraform Plan](https://github.com/yuandrk/homelabops/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/yuandrk/homelabops/actions/workflows/terraform-plan.yml) [![Terraform Apply](https://github.com/yuandrk/homelabops/actions/workflows/terraform-apply.yml/badge.svg)](https://github.com/yuandrk/homelabops/actions/workflows/terraform-apply.yml)
 
-My personal homelab infrastructure running K3s cluster with automated deployment and management.
+Production-grade homelab infrastructure running K3s with GitOps automation, Infrastructure as Code, and full observability.
+
+---
+
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [Services](#-services)
+- [Current Status](#-current-status)
+- [Repository Structure](#-repository-structure)
+- [Documentation](#-documentation)
+- [License](#-license)
+
+---
 
 ## 📋 Overview
 
-This repository contains Infrastructure as Code and documentation for my homelab K3s cluster with GitOps automation. Infrastructure is managed via Ansible automation, Terraform for cloud resources, and FluxCD for continuous deployment.
+This repository contains Infrastructure as Code and documentation for a 4-node K3s cluster with GitOps automation. Infrastructure is managed via Ansible, Terraform for cloud resources, and FluxCD for continuous deployment.
 
-## 🏗️ Architecture Overview
+## 🛠 Tech Stack
+
+| Category | Technologies |
+|----------|-------------|
+| **Container Orchestration** | ![Kubernetes](https://img.shields.io/badge/K3s-326CE5?logo=kubernetes&logoColor=white) ![Helm](https://img.shields.io/badge/Helm-0F1689?logo=helm&logoColor=white) |
+| **GitOps & CD** | ![FluxCD](https://img.shields.io/badge/FluxCD-5468FF?logo=flux&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white) |
+| **Infrastructure as Code** | ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white) ![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white) |
+| **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) |
+| **Networking** | ![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white) ![Traefik](https://img.shields.io/badge/Traefik-24A1C1?logo=traefikproxy&logoColor=white) |
+| **Database** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) |
+| **Security** | ![SOPS](https://img.shields.io/badge/SOPS-encrypted-green) ![OIDC](https://img.shields.io/badge/AWS_OIDC-FF9900?logo=amazonaws&logoColor=white) |
+
+## 🏗 Architecture
 
 ![HomeLab Architecture](docs/Architecture/architecture_overview.png)
 
-### Infrastructure Details
+<details>
+<summary><b>Infrastructure Details</b></summary>
 
-- **Cluster**: 4-node K3s cluster (1 master + 3 workers) on Ubuntu 24.04 LTS
-- **GitOps**: FluxCD v2.6.0 with automated deployment from Git
-- **Automation**: Ansible for node configuration and cluster deployment
-- **Networking**: Dual network setup (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi)
-- **External Access**: Cloudflare Tunnels + Traefik ingress (9 public services)
-- **DNS**: Pi-hole (host) + CoreDNS (K3s)
-- **Database**: PostgreSQL 15 on k3s-worker3 (Native)
-- **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (Ollama LLM workloads)
-- **Infrastructure**: Terraform for AWS backend + Cloudflare tunnels
-- **Storage**: 76Gi total (local-path provisioner)
+| Component | Details |
+|-----------|---------|
+| **Cluster** | 4-node K3s (1 master + 3 workers) on Ubuntu 24.04 LTS |
+| **GitOps** | FluxCD v2.6.0 with automatic reconciliation |
+| **Networking** | Dual network (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi) |
+| **External Access** | Cloudflare Tunnels + Traefik ingress |
+| **DNS** | Pi-hole (host) + CoreDNS (cluster) |
+| **Database** | PostgreSQL 15 on k3s-worker3 |
+| **GPU** | NVIDIA GeForce MX130 (Ollama LLM workloads) |
+| **Storage** | 76Gi total (local-path provisioner) |
 
-## 📁 Repository Structure
-
-```
-homelabops/
-├── .github/workflows/    # CI/CD pipelines (Terraform plan/apply, Renovate)
-├── ansible/              # Node configuration and K3s deployment
-│   ├── inventory/        # Host inventory and group variables
-│   ├── playbooks/        # Ansible playbooks
-│   └── roles/            # Reusable roles (ssh_hardening, k3s_install, etc.)
-├── apps/                 # Application deployments (FluxCD HelmReleases)
-├── clusters/             # FluxCD cluster configurations
-├── docs/                 # 📚 Comprehensive documentation
-│   ├── Ansible/          # Ansible automation guides
-│   ├── Database/         # PostgreSQL setup and management
-│   ├── DevOps-Workflow/  # Git workflow, pre-commit, CI/CD
-│   ├── K3s/              # K3s deployment and troubleshooting
-│   ├── Network/          # Network architecture and performance
-│   ├── Planning/         # Future deployment plans
-│   └── Terraform/        # Infrastructure as Code documentation
-├── infrastructure/       # Core infrastructure configs
-│   └── monitoring/       # Prometheus, Grafana, dashboards, alerts
-├── scripts/              # Automation and utility scripts
-├── terraform/            # Infrastructure as Code
-│   └── live/homelab/     # Environment-specific configs
-│       ├── aws-bootstrap/  # S3 backend (one-time setup)
-│       ├── aws-oidc/       # GitHub OIDC provider
-│       └── cloudflare/     # DNS and tunnel management
-└── tools/                # Development tools
-```
+</details>
 
 ## 🚀 Quick Start
 
@@ -72,21 +73,12 @@ kubectl get helmreleases -A                # All deployed
 flux get all -A
 ```
 
-**Detailed Guides:** [K3s Deployment](docs/K3s/) · [Ansible Automation](docs/Ansible/Ansible-overview.md) · [Terraform Infrastructure](docs/Terraform/) · [FluxCD GitOps](docs/FluxCD/)
+📖 **Detailed Guides:** [K3s Deployment](docs/K3s/) · [Ansible](docs/Ansible/Ansible-overview.md) · [Terraform](docs/Terraform/) · [FluxCD](docs/FluxCD/)
 
-## 📊 Current Status
+## 🌐 Services
 
-### Cluster Health ✅
-- **4-node K3s cluster**: All nodes operational (1 master + 3 workers)
-- **Version**: v1.33.3-v1.33.5+k3s1 (minor version skew on workers)
-- **Network**: Dual setup with gigabit LAN + Wi-Fi fallback
-- **External Access**: 9 services via Cloudflare Tunnels
-- **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (CUDA 12.2)
-
-### Services Running
 | Service | Description | URL |
 |---------|-------------|-----|
-| **FluxCD v2.6.0** | GitOps continuous deployment | `flux-webhook.yuandrk.net` |
 | **open-webui** | LLM interface with Ollama | `chat.yuandrk.net` |
 | **Grafana** | Monitoring dashboards | `grafana.yuandrk.net` |
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
@@ -95,51 +87,70 @@ flux get all -A
 | **pgAdmin** | PostgreSQL admin | `pgadmin.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
 | **Pi-hole** | DNS + ad-blocking | `pihole.yuandrk.net` |
+| **FluxCD** | GitOps webhook | `flux-webhook.yuandrk.net` |
 
-**Infrastructure**: PostgreSQL 15, Traefik ingress, CoreDNS, Prometheus
+## 📊 Current Status
 
-### GitOps Status ✅
-- **FluxCD**: Deployed and monitoring Git repository
-- **Applications**: 6 Kustomizations, 3 HelmReleases active
-- **Repository**: Connected via SSH deploy key
+### Cluster Health ✅
+
+| Component | Status |
+|-----------|--------|
+| K3s Nodes | 4/4 Ready (v1.33.x) |
+| Kustomizations | 6 reconciled |
+| HelmReleases | 3 deployed |
+| External Services | 9 via Cloudflare Tunnels |
+
+### GitOps ✅
 - **Sync**: Automatic reconciliation every 1 minute
-- **Webhook**: External trigger available (`flux-webhook.yuandrk.net`)
+- **Repository**: Connected via SSH deploy key
+- **Webhook**: External trigger enabled
 
-### Monitoring Stack ✅
-- **Prometheus**: Metrics collection with 15-day retention (10Gi storage)
-- **Grafana**: Dashboards for Flux, nodes, and cluster health
-- **Alerting**: 36 active PrometheusRules for cluster monitoring
-- **Node Exporter**: System metrics from all K3s nodes
-- **Kube State Metrics**: Kubernetes and Flux resource metrics
+### Monitoring ✅
+- **Prometheus**: 15-day retention, 10Gi storage
+- **Grafana**: Flux, node, and cluster dashboards
+- **Alerts**: 36 active PrometheusRules
 
-### CI/CD Pipeline ✅
-- **Terraform Plan**: Automatic plan on PRs with comment output
-- **Terraform Apply**: Auto-deploy on merge with environment protection
-- **GitHub OIDC**: Secure AWS authentication (no long-lived credentials)
-- **Renovate**: Automated dependency updates for Helm charts and images
+### CI/CD ✅
+- **Terraform Plan**: Auto-comment on PRs
+- **Terraform Apply**: Auto-deploy with environment protection
+- **GitHub OIDC**: Secure AWS authentication
+- **Renovate**: Automated dependency updates
+
+## 📁 Repository Structure
+
+```
+homelabops/
+├── .github/workflows/    # CI/CD (Terraform plan/apply, Renovate)
+├── ansible/              # Node configuration and K3s deployment
+├── apps/                 # Application deployments (FluxCD)
+├── clusters/             # FluxCD cluster configurations
+├── docs/                 # Comprehensive documentation
+├── infrastructure/       # Core infrastructure + monitoring
+├── scripts/              # Automation utilities
+├── terraform/            # Infrastructure as Code
+│   └── live/homelab/     # AWS OIDC, Cloudflare tunnels
+└── tools/                # Development tools
+```
 
 ## 📚 Documentation
 
-Comprehensive documentation is available in the [`docs/`](docs/) directory:
-
-- **[Infrastructure Diagrams](docs/Architecture/Infrastructure-Diagrams.md)** - 🎨 Mermaid architecture diagrams
-- **[Network Architecture](docs/Network/Network-Architecture.md)** - Complete network setup and topology
-- **[Release Process](docs/Release/Release-Process.md)** - 🏷️ Versioning and release management
-- **[K3s Deployment](docs/K3s/)** - Cluster deployment and troubleshooting guides  
-- **[Ansible Automation](docs/Ansible/Ansible-overview.md)** - Infrastructure automation
-- **[FluxCD GitOps](docs/FluxCD/)** - GitOps deployment and troubleshooting
-- **[FluxCD Health Monitoring](docs/FluxCD/FluxCD-Health-Monitoring.md)** - 🔍 System health checks and monitoring
-- **[Database Setup](docs/Database/)** - PostgreSQL configuration
-- **[Terraform Infrastructure](docs/Terraform/)** - Cloud infrastructure management
+| Topic | Description |
+|-------|-------------|
+| [Architecture Diagrams](docs/Architecture/Infrastructure-Diagrams.md) | Mermaid infrastructure diagrams |
+| [Network Architecture](docs/Network/Network-Architecture.md) | Network topology and setup |
+| [K3s Deployment](docs/K3s/) | Cluster deployment guides |
+| [FluxCD GitOps](docs/FluxCD/) | GitOps setup and troubleshooting |
+| [Monitoring](docs/Monitoring/) | Prometheus/Grafana stack |
+| [Terraform](docs/Terraform/) | Cloud infrastructure management |
+| [Ansible](docs/Ansible/Ansible-overview.md) | Infrastructure automation |
+| [Database](docs/Database/) | PostgreSQL configuration |
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🏷️ Topics
-
-`homelab` `gitops` `k3s` `kubernetes` `fluxcd` `terraform` `ansible` `cloudflare-tunnel` `infrastructure-as-code` `raspberry-pi` `multi-arch` `llm` `open-webui` `self-hosted` `pihole` `mermaid-diagrams`
-
 ---
 
-*This homelab follows GitOps principles with infrastructure as code and automated deployment.*
+<p align="center">
+  <i>Built with GitOps principles · Infrastructure as Code · Automated deployment</i>
+</p>
