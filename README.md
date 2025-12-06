@@ -1,11 +1,6 @@
 # HomeLab GitOps
 
-[![Kubernetes](https://img.shields.io/badge/k3s-v1.33.3-green)](https://k3s.io/)
-[![FluxCD](https://img.shields.io/badge/FluxCD-v2.6.0-blue)](https://fluxcd.io/)
-[![Ansible](https://img.shields.io/badge/Ansible-automated-red)](https://ansible.com/)
-[![Terraform](https://img.shields.io/badge/Terraform-AWS%20%2B%20Cloudflare-purple)](https://terraform.io/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Operational-brightgreen)]()
+[![Kubernetes](https://img.shields.io/badge/K3s-v1.33-326CE5?logo=kubernetes&logoColor=white)](https://k3s.io/) [![FluxCD](https://img.shields.io/badge/FluxCD-v2.6.0-5468FF?logo=flux&logoColor=white)](https://fluxcd.io/) [![Terraform](https://img.shields.io/badge/Terraform-1.13+-7B42BC?logo=terraform&logoColor=white)](https://terraform.io/) [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Terraform Plan](https://github.com/yuandrk/homelabops/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/yuandrk/homelabops/actions/workflows/terraform-plan.yml) [![Terraform Apply](https://github.com/yuandrk/homelabops/actions/workflows/terraform-apply.yml/badge.svg)](https://github.com/yuandrk/homelabops/actions/workflows/terraform-apply.yml)
 
 My personal homelab infrastructure running K3s cluster with automated deployment and management.
 
