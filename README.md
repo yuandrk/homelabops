@@ -57,40 +57,22 @@ homelabops/
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- 3 Ubuntu 24.04 LTS nodes with SSH key access
-- Ansible installed locally
-- Terraform >= 1.8.0
-- AWS CLI configured for backend
-- Cloudflare API token
+**Prerequisites:** `kubectl`, `flux`, `terraform`, `ansible` | Ubuntu 24.04 nodes with SSH access
 
-### Deploy K3s Cluster
 ```bash
-# Test connectivity
-ansible -i ansible/inventory/hosts.ini all -m ping
+# Clone repository
+git clone git@github.com:yuandrk/homelabops.git && cd homelabops
 
-# Deploy complete cluster
-ANSIBLE_BECOME_PASS=password ansible-playbook \
-  -i ansible/inventory/hosts.ini \
-  ansible/playbooks/cluster_bootstrap.yaml
+# Verify cluster health
+kubectl get nodes                          # All nodes Ready
+kubectl get kustomizations -n flux-system  # All reconciled
+kubectl get helmreleases -A                # All deployed
 
-# Verify cluster
-kubectl --kubeconfig=terraform/kube/kubeconfig get nodes
+# Check FluxCD status
+flux get all -A
 ```
 
-### Manage Infrastructure
-```bash
-# Deploy Cloudflare tunnels
-cd terraform/cloudflare
-terraform init && terraform apply
-
-# Deploy FluxCD GitOps
-cd terraform/fluxcd
-terraform init && terraform apply
-
-# Get tunnel token
-terraform output -raw tunnel_token
-```
+**Detailed Guides:** [K3s Deployment](docs/K3s/) · [Ansible Automation](docs/Ansible/Ansible-overview.md) · [Terraform Infrastructure](docs/Terraform/) · [FluxCD GitOps](docs/FluxCD/)
 
 ## 📊 Current Status
 
