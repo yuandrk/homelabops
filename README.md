@@ -34,7 +34,7 @@ This repository contains Infrastructure as Code and documentation for my homelab
 
 ```
 homelabops/
-├── .github/workflows/    # CI/CD pipelines (planned)
+├── .github/workflows/    # CI/CD pipelines (Terraform plan/apply, Renovate)
 ├── ansible/              # Node configuration and K3s deployment
 │   ├── inventory/        # Host inventory and group variables
 │   ├── playbooks/        # Ansible playbooks
@@ -50,13 +50,13 @@ homelabops/
 │   ├── Planning/         # Future deployment plans
 │   └── Terraform/        # Infrastructure as Code documentation
 ├── infrastructure/       # Core infrastructure configs
-├── monitoring/           # Observability stack (planned)
+│   └── monitoring/       # Prometheus, Grafana, dashboards, alerts
 ├── scripts/              # Automation and utility scripts
 ├── terraform/            # Infrastructure as Code
-│   ├── bootstrap/        # AWS S3 + DynamoDB backend
-│   ├── cloudflare/       # DNS and tunnel management
-│   ├── fluxcd/           # FluxCD GitOps deployment
-│   └── modules/          # Reusable Terraform modules
+│   └── live/homelab/     # Environment-specific configs
+│       ├── aws-bootstrap/  # S3 backend (one-time setup)
+│       ├── aws-oidc/       # GitHub OIDC provider
+│       └── cloudflare/     # DNS and tunnel management
 └── tools/                # Development tools
 ```
 
@@ -107,19 +107,39 @@ terraform output -raw tunnel_token
 - **GPU**: NVIDIA GeForce MX130 on k3s-worker3 (CUDA 12.2)
 
 ### Services Running
-- **FluxCD v2.6.0**: GitOps continuous deployment
-- **open-webui**: LLM interface with Ollama integration (`chat.yuandrk.net`)
-- **Pi-hole**: DNS server with ad-blocking (`pihole.yuandrk.net`)
-- **PostgreSQL**: Database on k3s-worker3 (Native)
-- **Traefik**: K3s ingress controller
-- **CoreDNS**: K3s cluster DNS
+| Service | Description | URL |
+|---------|-------------|-----|
+| **FluxCD v2.6.0** | GitOps continuous deployment | `flux-webhook.yuandrk.net` |
+| **open-webui** | LLM interface with Ollama | `chat.yuandrk.net` |
+| **Grafana** | Monitoring dashboards | `grafana.yuandrk.net` |
+| **ActualBudget** | Financial management | `budget.yuandrk.net` |
+| **Uptime Kuma** | Service monitoring | `uptime.yuandrk.net` |
+| **n8n** | Workflow automation | `n8n.yuandrk.net` |
+| **pgAdmin** | PostgreSQL admin | `pgadmin.yuandrk.net` |
+| **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
+| **Pi-hole** | DNS + ad-blocking | `pihole.yuandrk.net` |
+
+**Infrastructure**: PostgreSQL 15, Traefik ingress, CoreDNS, Prometheus
 
 ### GitOps Status ✅
 - **FluxCD**: Deployed and monitoring Git repository
-- **Applications**: Clean slate with only open-webui active
+- **Applications**: 6 Kustomizations, 3 HelmReleases active
 - **Repository**: Connected via SSH deploy key
 - **Sync**: Automatic reconciliation every 1 minute
 - **Webhook**: External trigger available (`flux-webhook.yuandrk.net`)
+
+### Monitoring Stack ✅
+- **Prometheus**: Metrics collection with 15-day retention (10Gi storage)
+- **Grafana**: Dashboards for Flux, nodes, and cluster health
+- **Alerting**: 36 active PrometheusRules for cluster monitoring
+- **Node Exporter**: System metrics from all K3s nodes
+- **Kube State Metrics**: Kubernetes and Flux resource metrics
+
+### CI/CD Pipeline ✅
+- **Terraform Plan**: Automatic plan on PRs with comment output
+- **Terraform Apply**: Auto-deploy on merge with environment protection
+- **GitHub OIDC**: Secure AWS authentication (no long-lived credentials)
+- **Renovate**: Automated dependency updates for Helm charts and images
 
 ## 📚 Documentation
 
