@@ -15,4 +15,5 @@ metadata:
   namespace: monitoring
 spec:
   interval: 1h
+  timeout: 3m
   url: https://grafana.github.io/helm-charts
