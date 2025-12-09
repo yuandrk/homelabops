@@ -1,0 +1,54 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: alloy
+      version: ">=1.5.0"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: monitoring
+  values:
+    alloy:
+      configMap:
+        content: |
+          // Discover pods
+          discovery.kubernetes "pods" {
+            role = "pod"
+          }
+
+          // Relabel to add k8s metadata
+          discovery.relabel "pods" {
+            targets = discovery.kubernetes.pods.targets
+
+            rule {
+              source_labels = ["__meta_kubernetes_namespace"]
+              target_label  = "namespace"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_name"]
+              target_label  = "pod"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_container_name"]
+              target_label  = "container"
+            }
+          }
+
+          // Collect logs from pods
+          loki.source.kubernetes "pods" {
+            targets    = discovery.relabel.pods.output
+            forward_to = [loki.write.default.receiver]
+          }
+
+          // Ship to Loki
+          loki.write "default" {
+            endpoint {
+              url = "http://loki:3100/loki/api/v1/push"
+            }
+          }
