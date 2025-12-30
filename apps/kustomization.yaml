@@ -7,5 +7,6 @@ resources:
 - uptime-kuma/base
 - pgadmin/base
 - n8n/base
+- immich/base
 
 namespace: apps
