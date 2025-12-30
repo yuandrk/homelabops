@@ -8,68 +8,91 @@ spec:
   chart:
     spec:
       chart: immich
-      version: ">=0.7.0"
+      version: ">=0.10.0"
       sourceRef:
         kind: HelmRepository
         name: immich
         namespace: apps
   values:
-    # Immich server component
+    # Shared configuration for all components
+    controllers:
+      main:
+        containers:
+          main:
+            envFrom:
+              - secretRef:
+                  name: immich-credentials
+
+    # Library storage
     immich:
       persistence:
         library:
           existingClaim: immich-library
 
-    # Server component (main API and web interface)
+    # Valkey (Redis replacement)
+    valkey:
+      enabled: true
+      controllers:
+        main:
+          pod:
+            nodeSelector:
+              kubernetes.io/hostname: k3s-worker3
+          containers:
+            main:
+              image:
+                repository: docker.io/valkey/valkey
+                tag: 9.0-alpine
+      persistence:
+        data:
+          enabled: true
+          size: 1Gi
+          type: emptyDir
+
+    # Server component
     server:
       enabled: true
-      nodeSelector:
-        kubernetes.io/hostname: k3s-worker3
-      resources:
-        requests:
-          cpu: 100m
-          memory: 512Mi
-        limits:
-          memory: 2Gi
+      controllers:
+        main:
+          pod:
+            nodeSelector:
+              kubernetes.io/hostname: k3s-worker3
+          containers:
+            main:
+              envFrom:
+                - secretRef:
+                    name: immich-credentials
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  memory: 2Gi
 
     # Machine learning component (with GPU)
     machine-learning:
       enabled: true
-      runtimeClassName: nvidia
-      nodeSelector:
-        kubernetes.io/hostname: k3s-worker3
-      resources:
-        requests:
-          cpu: 100m
-          memory: 1Gi
-        limits:
-          memory: 4Gi
-          nvidia.com/gpu: 1
-      env:
-        - name: NVIDIA_VISIBLE_DEVICES
-          value: "all"
-        - name: NVIDIA_DRIVER_CAPABILITIES
-          value: "compute,utility"
-
-    # Redis (in-memory, no persistent storage needed)
-    redis:
-      enabled: true
-      architecture: standalone
-      master:
-        nodeSelector:
-          kubernetes.io/hostname: k3s-worker3
-        persistence:
-          enabled: false
-      replica:
-        replicaCount: 0
-
-    # PostgreSQL (MUST use local storage, not NFS)
-    postgresql:
-      enabled: true
-      primary:
-        nodeSelector:
-          kubernetes.io/hostname: k3s-worker3
-        persistence:
+      controllers:
+        main:
+          pod:
+            nodeSelector:
+              kubernetes.io/hostname: k3s-worker3
+            runtimeClassName: nvidia
+          containers:
+            main:
+              env:
+                NVIDIA_VISIBLE_DEVICES: "all"
+                NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 1Gi
+                limits:
+                  memory: 4Gi
+                  nvidia.com/gpu: 1
+      persistence:
+        cache:
           enabled: true
-          size: 20Gi
+          size: 10Gi
+          type: persistentVolumeClaim
+          accessMode: ReadWriteOnce
           storageClass: local-path
