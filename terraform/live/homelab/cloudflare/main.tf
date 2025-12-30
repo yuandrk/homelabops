@@ -50,6 +50,11 @@ locals {
       hostname = "pgadmin.yuandrk.net"
       service  = "http://k3s-master:80"
     },
+    {
+      name     = "photos"
+      hostname = "photos.yuandrk.net"
+      service  = "http://k3s-master:80"
+    },
   ]
 
   #
