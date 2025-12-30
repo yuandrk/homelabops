@@ -68,7 +68,7 @@ spec:
                 limits:
                   memory: 2Gi
 
-    # Machine learning component (with GPU)
+    # Machine learning component (CPU-only, GPU used by ollama)
     machine-learning:
       enabled: true
       controllers:
@@ -76,19 +76,14 @@ spec:
           pod:
             nodeSelector:
               kubernetes.io/hostname: k3s-worker3
-            runtimeClassName: nvidia
           containers:
             main:
-              env:
-                NVIDIA_VISIBLE_DEVICES: "all"
-                NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 1Gi
+                  cpu: 500m
+                  memory: 2Gi
                 limits:
-                  memory: 4Gi
-                  nvidia.com/gpu: 1
+                  memory: 6Gi
       persistence:
         cache:
           enabled: true
