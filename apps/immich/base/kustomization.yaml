@@ -6,3 +6,4 @@ resources:
   - helm-release.yaml
   - pvc.yaml
   - ingress.yaml
+  - service-nodeport.yaml
