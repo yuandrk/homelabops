@@ -63,10 +63,16 @@ spec:
                     name: immich-credentials
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 512Mi
+                  cpu: 500m
+                  memory: 4Gi
                 limits:
-                  memory: 2Gi
+                  memory: 8Gi
+              probes:
+                startup:
+                  enabled: true
+                  spec:
+                    failureThreshold: 60
+                    periodSeconds: 10
 
     # Machine learning component (CPU-only, GPU used by ollama)
     machine-learning:
