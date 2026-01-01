@@ -66,9 +66,9 @@ spec:
               envFrom:
                 - secretRef:
                     name: immich-credentials
-              # Mount Intel iGPU for hardware transcoding (QSV)
+              # Enable privileged mode for GPU device access (Intel QSV)
               securityContext:
-                privileged: false
+                privileged: true
               resources:
                 requests:
                   cpu: 500m
