@@ -60,7 +60,7 @@ spec:
             securityContext:
               supplementalGroups:
                 - 44    # video group
-                - 109   # render group
+                - 993   # render group (host GID for /dev/dri/renderD128)
           containers:
             main:
               envFrom:
