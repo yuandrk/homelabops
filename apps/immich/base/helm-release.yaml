@@ -56,11 +56,19 @@ spec:
           pod:
             nodeSelector:
               kubernetes.io/hostname: k3s-worker3
+            # Grant access to Intel iGPU for QSV hardware transcoding
+            securityContext:
+              supplementalGroups:
+                - 44    # video group
+                - 109   # render group
           containers:
             main:
               envFrom:
                 - secretRef:
                     name: immich-credentials
+              # Mount Intel iGPU for hardware transcoding (QSV)
+              securityContext:
+                privileged: false
               resources:
                 requests:
                   cpu: 500m
@@ -73,6 +81,14 @@ spec:
                   spec:
                     failureThreshold: 60
                     periodSeconds: 10
+      # Mount Intel iGPU device for QSV transcoding
+      persistence:
+        dri:
+          enabled: true
+          type: hostPath
+          hostPath: /dev/dri
+          globalMounts:
+            - path: /dev/dri
 
     # Machine learning component (CPU-only, GPU used by ollama)
     machine-learning:
