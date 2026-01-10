@@ -211,6 +211,13 @@ spec:
         podMonitorSelector:
           matchLabels:
             app.kubernetes.io/component: monitoring
+        # Schedule on amd64 nodes with more RAM (k3s-master or k3s-worker3)
+        nodeSelector:
+          kubernetes.io/arch: amd64
+    prometheusOperator:
+      # Schedule operator on amd64 nodes
+      nodeSelector:
+        kubernetes.io/arch: amd64
     grafana:
       defaultDashboardsEnabled: false
       admin:
@@ -218,6 +225,9 @@ spec:
         userKey: admin-user
         passwordKey: admin-password
       envFromSecret: postgres-credentials
+      # Schedule on amd64 nodes with more RAM (k3s-master or k3s-worker3)
+      nodeSelector:
+        kubernetes.io/arch: amd64
       sidecar:
         datasources:
           enabled: true
