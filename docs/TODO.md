@@ -153,6 +153,63 @@ This document tracks all documentation improvements, additions, and fixes needed
 
 ---
 
+## 🚀 K3S CLUSTER PERFORMANCE OPTIMIZATION
+
+**Last Assessed**: 2026-01-10
+
+### Critical - Memory Overcommit on k3s-worker3
+
+- [ ] **Reduce memory limits on k3s-worker3** (currently 125% overcommitted - 19.5GB limits on 16GB node)
+  - [ ] Review Immich server limit (8Gi) - consider reducing to 6Gi
+  - [ ] Add memory limits to open-webui (currently none, using 607Mi)
+  - [ ] Add memory limits to open-webui-ollama (currently none)
+  - [ ] Target: Keep total limits under 100% of allocatable memory
+
+### High - Workload Rebalancing
+
+- [ ] **Move monitoring workloads off Raspberry Pi nodes**
+  - [ ] Prometheus (1.5GB) competing with other pods on k3s-worker1 (4GB total)
+  - [ ] Consider scheduling Prometheus on k3s-master or k3s-worker3
+  - [ ] Add node affinity for memory-intensive workloads to amd64 nodes
+
+- [ ] **Optimize pod distribution**
+  - [ ] k3s-worker3: 20+ pods (overloaded)
+  - [ ] k3s-worker2: Only 8 pods (underutilized)
+  - [ ] Consider using pod anti-affinity for better spread
+
+### Medium - Add Missing Resource Limits
+
+- [ ] **Configure resource limits for unbound pods**
+  - [ ] `open-webui` (apps) - no limits, using 607Mi
+  - [ ] `open-webui-ollama` (apps) - no limits
+  - [ ] `open-webui-pipelines` (apps) - no limits
+  - [ ] `traefik` (kube-system) - no limits
+  - [ ] `immich-valkey` (apps) - no limits
+  - [ ] `alloy` DaemonSet (monitoring) - no limits, using 150-167Mi per node
+
+### Medium - Monitoring Stack Tuning
+
+- [ ] **Reduce Prometheus resource usage**
+  - [ ] Review scrape intervals (currently default)
+  - [ ] Consider reducing retention period (currently 15d)
+  - [ ] Evaluate disabling unused exporters/targets
+  - [ ] Current usage: 279m CPU, 1.5GB memory
+
+- [ ] **Optimize Loki stack**
+  - [ ] loki-chunks-cache using 2.1GB memory
+  - [ ] Review cache size configuration
+  - [ ] Consider reducing log retention
+
+### Node Version Alignment
+
+- [ ] **Upgrade worker nodes to consistent K3s version**
+  - [ ] k3s-master: v1.33.5+k3s1 ✓
+  - [ ] k3s-worker1: v1.33.3+k3s1 (needs upgrade)
+  - [ ] k3s-worker2: v1.33.3+k3s1 (needs upgrade)
+  - [ ] k3s-worker3: v1.33.5+k3s1 ✓
+
+---
+
 ## ⚙️ IMPROVEMENTS & CLEANUP
 
 ### Documentation Consolidation (Week 4)
