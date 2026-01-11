@@ -228,7 +228,20 @@ spec:
       # Schedule on amd64 nodes with more RAM (k3s-master or k3s-worker3)
       nodeSelector:
         kubernetes.io/arch: amd64
+      # Increase startup delay to ensure sidecar writes datasources before Grafana reads them
+      readinessProbe:
+        httpGet:
+          path: /api/health
+          port: 3000
+        initialDelaySeconds: 30
+      livenessProbe:
+        httpGet:
+          path: /api/health
+          port: 3000
+        initialDelaySeconds: 60
+        failureThreshold: 10
       sidecar:
         datasources:
           enabled: true
           label: grafana_datasource
+          reloadURL: "http://localhost:3000/api/admin/provisioning/datasources/reload"
