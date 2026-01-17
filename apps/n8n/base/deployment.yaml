@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: n8n
-          image: n8nio/n8n:2.2.2
+          image: n8nio/n8n:2.4.4
           ports:
             - containerPort: 5678
           env:
