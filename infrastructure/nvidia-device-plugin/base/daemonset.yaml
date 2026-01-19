@@ -22,7 +22,7 @@ spec:
         nvidia.com/gpu: "true"
       priorityClassName: "system-node-critical"
       containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:v0.16.2
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.18.1
         name: nvidia-device-plugin-ctr
         env:
           - name: FAIL_ON_INIT_ERROR
