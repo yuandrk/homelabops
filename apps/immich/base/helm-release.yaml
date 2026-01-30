@@ -14,10 +14,6 @@ spec:
         name: immich
         namespace: apps
   values:
-    # Global image configuration
-    image:
-      tag: v2.5.2
-
     # Shared configuration for all components
     controllers:
       main:
@@ -67,6 +63,8 @@ spec:
                 - 993   # render group (host GID for /dev/dri/renderD128)
           containers:
             main:
+              image:
+                tag: v2.5.2
               envFrom:
                 - secretRef:
                     name: immich-credentials
@@ -104,6 +102,8 @@ spec:
               kubernetes.io/hostname: k3s-worker3
           containers:
             main:
+              image:
+                tag: v2.5.2
               resources:
                 requests:
                   cpu: 500m
