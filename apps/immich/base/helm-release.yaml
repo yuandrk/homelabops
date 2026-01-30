@@ -14,6 +14,10 @@ spec:
         name: immich
         namespace: apps
   values:
+    # Global image configuration
+    image:
+      tag: v2.5.2
+
     # Shared configuration for all components
     controllers:
       main:
