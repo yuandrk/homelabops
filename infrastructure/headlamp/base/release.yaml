@@ -19,9 +19,6 @@ spec:
     crds: CreateReplace
   targetNamespace: kube-system
   values:
-    image:
-      tag: "v0.26.0"
-
     # Init container to install Flux plugin
     initContainers:
       - name: flux-plugin
