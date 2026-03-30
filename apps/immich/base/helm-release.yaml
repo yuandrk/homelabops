@@ -64,7 +64,7 @@ spec:
           containers:
             main:
               image:
-                tag: v2.5.2
+                tag: v2.6.3
               envFrom:
                 - secretRef:
                     name: immich-credentials
@@ -103,7 +103,7 @@ spec:
           containers:
             main:
               image:
-                tag: v2.5.2
+                tag: v2.6.3
               resources:
                 requests:
                   cpu: 500m
