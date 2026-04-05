@@ -215,8 +215,8 @@ yamllint clusters/prod/monitoring/configs/*.yaml
 ### Escalation Path
 
 1. Check this guide ✅
-2. Review [Enhanced Monitoring Setup](Enhanced-Monitoring-Setup.md)
-3. Check [FluxCD Health Monitoring](FluxCD-Health-Monitoring.md)
+2. Review [Monitoring Setup](monitoring-setup.md)
+3. Check [FluxCD Health Monitoring](fluxcd-health-monitoring.md)
 4. Manual cluster inspection via SSH
 
 ---

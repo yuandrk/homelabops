@@ -118,13 +118,13 @@ Each release should include:
 # Release v1.1.0
 
 ## 🏗️ Infrastructure Status
-- K3s Cluster: 3-node cluster operational
+- K3s Cluster: 4-node cluster operational
 - FluxCD: v2.6.0 GitOps deployment
 - Services: [list active services]
 
 ## 🔧 What's Changed
 ### ✨ New Features
-- Added open-webui LLM interface (chat.yuandrk.net)
+- Added open-webui LLM interface (llm.yuandrk.net)
 - Implemented node affinity for amd64 workloads
 
 ### 🐛 Bug Fixes  
@@ -136,7 +136,7 @@ Each release should include:
 - Enhanced branch protection rules
 
 ## 🚀 Services & Access
-- 🤖 Open-WebUI: https://chat.yuandrk.net
+- 🤖 Open-WebUI: https://llm.yuandrk.net
 - 🛡️ Pi-hole: https://pihole.yuandrk.net
 - 💰 Budget App: https://budget.yuandrk.net
 

@@ -39,12 +39,17 @@ graph TB
         end
         
         subgraph "k3s-worker1 (arm64)"
-            Worker1[🍓 k3s-worker1<br/>Raspberry Pi<br/>192.168.1.137]
-            PostgreSQL[🐘 PostgreSQL<br/>Docker]
+            Worker1[🍓 k3s-worker1<br/>Raspberry Pi<br/>10.10.0.2]
         end
-        
+
         subgraph "k3s-worker2 (arm64)"
-            Worker2[🍓 k3s-worker2<br/>Raspberry Pi<br/>192.168.1.70]
+            Worker2[�� k3s-worker2<br/>Raspberry Pi<br/>10.10.0.4]
+        end
+
+        subgraph "k3s-worker3 (amd64)"
+            Worker3[🖥️ k3s-worker3<br/>GPU Node<br/>10.10.0.5]
+            PostgreSQL[🐘 PostgreSQL<br/>Native]
+            GPU[🎮 NVIDIA MX130]
         end
     end
 
@@ -54,7 +59,7 @@ graph TB
             FluxCD[🔄 FluxCD v2.6.0<br/>GitOps Controller]
             
             subgraph "Applications (apps namespace)"
-                OpenWebUI[🤖 Open-WebUI<br/>chat.yuandrk.net<br/>50Gi Storage]
+                OpenWebUI[🤖 Open-WebUI<br/>llm.yuandrk.net<br/>50Gi Storage]
                 Ollama[🧠 Ollama<br/>LLM Backend]
                 Pipelines[🔗 Pipelines<br/>API Gateway]
                 ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net<br/>5Gi Storage]
@@ -118,7 +123,7 @@ graph TB
     %% Storage connections
     OpenWebUI --> LocalPath
     LocalPath --> HostStorage
-    PostgreSQL --> Worker1
+    PostgreSQL --> Worker3
 
     %% Application connections
     OpenWebUI --> Ollama
@@ -138,7 +143,7 @@ graph TB
     class Internet,CloudFlare,DNS,Tunnel external
     class Router,Switch,WiFi network
     class S3,DynamoDB,Terraform,Ansible infra
-    class Master,Worker1,Worker2,Traefik,PiHole,PostgreSQL compute
+    class Master,Worker1,Worker2,Worker3,Traefik,PiHole,PostgreSQL,GPU compute
     class CoreDNS,FluxCD,OpenWebUI,Ollama,Pipelines container
     class LocalPath,HostStorage,GitRepo,HelmCharts data
 ```
@@ -149,7 +154,7 @@ graph TB
 flowchart LR
     subgraph "External Access"
         User[👤 User]
-        Domain[🌐 chat.yuandrk.net]
+        Domain[🌐 llm.yuandrk.net]
     end
 
     subgraph "Cloudflare"
@@ -172,7 +177,7 @@ flowchart LR
 
     subgraph "K3s Services"
         Traefik_LB[🔀 Traefik LoadBalancer<br/>Port 80/443]
-        Ingress[📥 Ingress Controller<br/>Host: chat.yuandrk.net]
+        Ingress[📥 Ingress Controller<br/>Host: llm.yuandrk.net]
         OpenWebUI_Svc[🤖 open-webui Service<br/>ClusterIP: 10.43.171.88:80]
         OpenWebUI_Pod[📦 open-webui Pod<br/>10.42.0.19:8080]
     end
@@ -266,7 +271,7 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "External Services"
-        Chat[🤖 chat.yuandrk.net]
+        Chat[🤖 llm.yuandrk.net]
         Pihole[🛡️ pihole.yuandrk.net]
         Budget[💰 budget.yuandrk.net]
         Headlamp[🎛️ headlamp.yuandrk.net]

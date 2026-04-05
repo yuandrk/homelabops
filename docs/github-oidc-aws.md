@@ -230,6 +230,5 @@ If migrating from DynamoDB locking:
 
 ## Related Documentation
 
-- [DevOps Workflow](./DevOps-Workflow.md)
-- [SOPS Secrets Management](./SOPS-Secrets-Management.md)
-- [Terraform Infrastructure](../Terraform/Terraform%20Homelab%20Infrastructure.md)
+- [SOPS Secrets Management](sops-secrets.md)
+- [Terraform Infrastructure](terraform-guide.md)

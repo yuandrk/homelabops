@@ -185,34 +185,29 @@ variable "flux_version" {
 - GitOps configuration stored in Git repository
 - Cluster manifests in `clusters/prod/` directory
 
-## Current Status (August 2025)
+## Current Status (April 2026)
 
-### Active Applications
-- **open-webui**: LLM interface with Ollama integration (3 pods running)
-  - Status: HelmRelease shows failed due to timeout, but application is healthy
-  - Services: open-webui, open-webui-ollama, open-webui-pipelines
+### Active HelmReleases
+- **open-webui** (apps) — LLM interface with Ollama
+- **immich** (apps) — Photo management
+- **headlamp** (kube-system) — Kubernetes dashboard
+- **kube-prometheus-stack** (monitoring) — Prometheus + Grafana
+- **alloy** (monitoring) — Log collector
+- **loki** (monitoring) — Log aggregation
+- **nfs-subdir-external-provisioner** (storage) — NFS storage
 
-### Cleaned Up Applications
-- **Removed**: todoist, cert-manager, github, actualbudget, n8n, headlamp
-- **Reason**: Unused applications causing resource consumption and maintenance overhead
-- **Method**: Complete directory removal to prevent kustomization parsing errors
+### Active Kustomizations
+- `flux-system`, `apps`, `infrastructure`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
 
 ### System Health
 - ✅ **FluxCD Controllers**: All 6 controllers healthy
-- ✅ **Kustomizations**: apps, infra-configs, flux-system all working
+- ✅ **Kustomizations**: 7 reconciled
+- ✅ **HelmReleases**: 7 deployed
 - ✅ **Git Sync**: Repository monitoring and reconciliation functional
-- ⚠️ **Webhook**: External access configured but experiencing hostname resolution issues
-
-## Next Steps
-
-1. **Add Applications**: Create HelmReleases in `apps/` directory
-2. **Configure Infrastructure**: Add ingress, certificates in `infrastructure/`
-3. **Setup Monitoring**: Deploy observability stack via FluxCD
-4. **Fix Webhook**: Resolve hostname resolution for instant updates
 
 ## Troubleshooting
 
-For common issues and solutions, see [FluxCD Troubleshooting Guide](./FluxCD-Troubleshooting.md).
+For common issues and solutions, see [FluxCD Troubleshooting Guide](fluxcd-troubleshooting.md).
 
 ## References
 

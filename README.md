@@ -38,7 +38,7 @@ This repository contains Infrastructure as Code and documentation for a 4-node K
 
 ## 🏗 Architecture
 
-![HomeLab Architecture](docs/Architecture/architecture_overview.png)
+![HomeLab Architecture](docs/architecture-overview.png)
 
 <details>
 <summary><b>Infrastructure Details</b></summary>
@@ -73,13 +73,14 @@ kubectl get helmreleases -A                # All deployed
 flux get all -A
 ```
 
-📖 **Detailed Guides:** [K3s Deployment](docs/K3s/) · [Ansible](docs/Ansible/Ansible-overview.md) · [Terraform](docs/Terraform/) · [FluxCD](docs/FluxCD/)
+📖 **Detailed Guides:** [K3s Deployment](docs/k3s-deploy-summary.md) · [Ansible](docs/ansible-overview.md) · [Terraform](docs/terraform-guide.md) · [FluxCD](docs/fluxcd-setup.md)
 
 ## 🌐 Services
 
 | Service | Description | URL |
 |---------|-------------|-----|
-| **open-webui** | LLM interface with Ollama | `chat.yuandrk.net` |
+| **Open-WebUI** | LLM interface with Ollama | `llm.yuandrk.net` |
+| **Immich** | Photo management | `photos.yuandrk.net` |
 | **Grafana** | Monitoring dashboards | `grafana.yuandrk.net` |
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
 | **Uptime Kuma** | Service monitoring | `uptime.yuandrk.net` |
@@ -87,7 +88,6 @@ flux get all -A
 | **pgAdmin** | PostgreSQL admin | `pgadmin.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
 | **Pi-hole** | DNS + ad-blocking | `pihole.yuandrk.net` |
-| **FluxCD** | GitOps webhook | `flux-webhook.yuandrk.net` |
 
 ## 📊 Current Status
 
@@ -96,8 +96,8 @@ flux get all -A
 | Component | Status |
 |-----------|--------|
 | K3s Nodes | 4/4 Ready (v1.33.x) |
-| Kustomizations | 6 reconciled |
-| HelmReleases | 3 deployed |
+| Kustomizations | 7 reconciled |
+| HelmReleases | 7 deployed |
 | External Services | 9 via Cloudflare Tunnels |
 
 ### GitOps ✅
@@ -136,14 +136,16 @@ homelabops/
 
 | Topic | Description |
 |-------|-------------|
-| [Architecture Diagrams](docs/Architecture/Infrastructure-Diagrams.md) | Mermaid infrastructure diagrams |
-| [Network Architecture](docs/Network/Network-Architecture.md) | Network topology and setup |
-| [K3s Deployment](docs/K3s/) | Cluster deployment guides |
-| [FluxCD GitOps](docs/FluxCD/) | GitOps setup and troubleshooting |
-| [Monitoring](docs/Monitoring/) | Prometheus/Grafana stack |
-| [Terraform](docs/Terraform/) | Cloud infrastructure management |
-| [Ansible](docs/Ansible/Ansible-overview.md) | Infrastructure automation |
-| [Database](docs/Database/) | PostgreSQL configuration |
+| [Architecture Diagrams](docs/architecture-diagrams.md) | Mermaid infrastructure diagrams |
+| [Network Architecture](docs/network-architecture.md) | Network topology and setup |
+| [K3s Deployment](docs/k3s-deploy-summary.md) | Cluster deployment guide |
+| [FluxCD Setup](docs/fluxcd-setup.md) | GitOps setup and configuration |
+| [FluxCD Troubleshooting](docs/fluxcd-troubleshooting.md) | Common issues and solutions |
+| [Monitoring Setup](docs/monitoring-setup.md) | Prometheus/Grafana stack |
+| [Terraform](docs/terraform-guide.md) | Cloud infrastructure management |
+| [Ansible](docs/ansible-overview.md) | Infrastructure automation |
+| [SOPS Secrets](docs/sops-secrets.md) | Secrets management with age encryption |
+| [GPU Setup](docs/gpu-setup.md) | NVIDIA GPU configuration for K3s |
 
 ## 📝 License
 

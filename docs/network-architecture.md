@@ -87,7 +87,6 @@ K3s Services: 10.43.0.0/16
 ### k3s-worker1 (10.10.0.2)
 | Service | Port | Protocol | Access | Notes |
 |---------|------|----------|--------|-------|
-| **PostgreSQL** | 5432 | TCP | LAN | Docker container (n8n database) |
 | **SSH** | 2222 | TCP | LAN | Hardened SSH port |
 | **systemd-resolved** | 53 | UDP | Local | Local DNS stub |
 
@@ -193,7 +192,7 @@ FallbackDNS=
 |---------|------------------|-----------------|---------|
 | **Pi-hole** | `http://127.0.0.1:8081` | `pihole.yuandrk.net` | ✅ Active |
 | **Budget App** | K3s service | `budget.yuandrk.net` | ✅ Active |
-| **Open-WebUI** | `http://k3s-master:80` | `chat.yuandrk.net` | ✅ Active |
+| **Open-WebUI** | `http://k3s-master:80` | `llm.yuandrk.net` | ✅ Active |
 
 ### Tunnel Management
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
@@ -251,13 +250,13 @@ resolvectl flush-caches      # Clear DNS cache
 ---
 
 ## 🧠 **Prompt Context (LLM)**
-This homelab runs a **3-node K3s cluster** with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
+This homelab runs a **4-node K3s cluster** (1 master + 3 workers) with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
 
 **Key Network Features:**
 - **Pi-hole DNS** on k3s-master (port 8081 web, port 53 DNS) with ad-blocking
 - **K3s cluster networking** via Flannel CNI (pods: 10.42.0.0/16, services: 10.43.0.0/16)
 - **Traefik ingress** handling ports 80/443 for K3s workloads
-- **PostgreSQL database** on k3s-worker1 (Docker, not K3s-managed)
+- **PostgreSQL database** on k3s-worker3 (native installation, not K3s-managed)
 - **Cloudflare tunnels** for secure external access to select services
 
 **Performance characteristics:** Gigabit speeds between workers (0.4ms latency), Wi-Fi speeds for master communication (6-9ms), sufficient internet access (14-19 Mbps) for external dependencies.

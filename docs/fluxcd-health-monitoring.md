@@ -185,12 +185,13 @@ kube-prometheus-stack-operator-79bb455bdc-gm9zx            1/1     Running   0  
 kube-prometheus-stack-prometheus-node-exporter-4j56d       1/1     Running   0          1h
 kube-prometheus-stack-prometheus-node-exporter-5hlw7       1/1     Running   0          1h
 kube-prometheus-stack-prometheus-node-exporter-wz4xj       1/1     Running   0          1h
+kube-prometheus-stack-prometheus-node-exporter-xbmnc       1/1     Running   0          1h
 prometheus-kube-prometheus-stack-prometheus-0              2/2     Running   0          1h
 ```
 
 **Health Indicators:**
 - ✅ Grafana pod shows `READY 3/3` (main + 2 sidecars)
-- ✅ Node exporters running on all nodes (1 per node)
+- ✅ Node exporters running on all 4 nodes (1 per node)
 - ✅ Prometheus pod shows `READY 2/2` (prometheus + config-reloader)
 - ✅ All pods have `STATUS Running`
 
@@ -202,7 +203,7 @@ kubectl get ingress -n apps
 **Expected Output (✅ Healthy):**
 ```
 NAME              CLASS     HOSTS              ADDRESS                                    PORTS     AGE
-openweb-ingress   traefik   chat.yuandrk.net   192.168.1.137,192.168.1.223,192.168.1.70   80, 443   32h
+openweb-ingress   traefik   llm.yuandrk.net   192.168.1.137,192.168.1.223,192.168.1.70   80, 443   32h
 ```
 
 ## 5. FluxCD Logs and Debugging
@@ -306,7 +307,7 @@ done
 
 echo ""
 echo "🌐 External Services:"
-curl -s -o /dev/null -w "chat.yuandrk.net: %{http_code}\n" https://chat.yuandrk.net
+curl -s -o /dev/null -w "llm.yuandrk.net: %{http_code}\n" https://llm.yuandrk.net
 curl -s -o /dev/null -w "pihole.yuandrk.net: %{http_code}\n" https://pihole.yuandrk.net
 
 echo ""

@@ -4,7 +4,7 @@
 This document captures the complete conversation and technical implementation of a k3s homelab cluster deployment using Ansible automation. The conversation spanned multiple sessions with context preservation through detailed documentation.
 
 ## Primary Objectives Achieved
-1. ✅ **K3s Cluster Deployment**: 3-node cluster (1 master + 2 workers) successfully deployed
+1. ✅ **K3s Cluster Deployment**: 4-node cluster (1 master + 3 workers) successfully deployed
 2. ✅ **Ansible Automation**: Complete k3s_install role with automatic token delegation
 3. ✅ **Network Architecture**: Multi-layer network design with no conflicts
 4. ✅ **GitOps Integration**: Changes committed and pushed to main branch
@@ -13,11 +13,12 @@ This document captures the complete conversation and technical implementation of
 ## Technical Architecture
 
 ### K3s Cluster Configuration
-- **Version**: v1.33.3+k3s1 across all nodes
-- **Nodes**: 
-  - k3s-master (10.10.0.1) - Control plane
-  - k3s-worker1 (10.10.0.2) - Worker node (Raspberry Pi)
-  - k3s-worker2 (10.10.0.4) - Worker node (Raspberry Pi)
+- **Version**: v1.33.5+k3s1 (master, worker3), v1.33.3+k3s1 (worker1, worker2)
+- **Nodes**:
+  - k3s-master (10.10.0.1) - Control plane (amd64)
+  - k3s-worker1 (10.10.0.2) - Worker node (Raspberry Pi, arm64)
+  - k3s-worker2 (10.10.0.4) - Worker node (Raspberry Pi, arm64)
+  - k3s-worker3 (10.10.0.5) - Worker node (amd64, NVIDIA GPU)
 - **System Pods**: 9/9 healthy (CoreDNS, Traefik, Local-path, Metrics-server)
 
 ### Network Architecture (Verified Working)
@@ -46,6 +47,7 @@ k3s-master ansible_host=10.10.0.1 ansible_user=yuandrk ansible_port=2222
 [workers]
 k3s-worker1 ansible_host=10.10.0.2 ansible_user=yuandrk ansible_port=2222
 k3s-worker2 ansible_host=10.10.0.4 ansible_user=yuandrk ansible_port=2222
+k3s-worker3 ansible_host=10.10.0.5 ansible_user=yuandrk ansible_port=2222
 
 [all:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
@@ -163,7 +165,7 @@ kubectl --kubeconfig=terraform/kube/kubeconfig get services --all-namespaces
 
 ## Current Status
 ✅ **FULLY OPERATIONAL**
-- 3-node k3s cluster running v1.33.3+k3s1
+- 4-node k3s cluster running v1.33.x
 - All system pods healthy and running
 - Cross-node pod communication verified (7-11ms latency)
 - DNS resolution functional via CoreDNS
@@ -180,7 +182,7 @@ kubectl --kubeconfig=terraform/kube/kubeconfig get services --all-namespaces
 
 ### Cloudflare Tunnels
 - Tunnel ID: 4a6abf9a-d178-4a56-9586-a3d77907c5f1
-- Services: pihole.yuandrk.net, budget.yuandrk.net, chat.yuandrk.net
+- Services: pihole.yuandrk.net, budget.yuandrk.net, llm.yuandrk.net
 - Managed via Terraform with reusable tunnel module
 
 ### FluxCD GitOps (Ready for Deployment)

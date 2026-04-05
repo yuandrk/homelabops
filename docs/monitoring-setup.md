@@ -41,7 +41,7 @@ graph TB
 ### 1. **Prometheus Stack**
 - **Main Prometheus**: `prometheus-kube-prometheus-stack-prometheus-0`
 - **Grafana**: `kube-prometheus-stack-grafana` 
-- **Node Exporters**: DaemonSet on all 3 nodes
+- **Node Exporters**: DaemonSet on all 4 nodes
 - **Storage**: 10Gi PVC, 15 days retention
 
 ### 2. **Custom Flux Monitoring**
@@ -254,6 +254,5 @@ Alert thresholds can be adjusted in `clusters/prod/monitoring/configs/prometheus
 
 ## Related Documentation
 
-- [Monitoring Stack Overview](Monitoring-Stack-Overview.md)  
-- [FluxCD Health Monitoring](FluxCD-Health-Monitoring.md)
-- [Monitoring Troubleshooting](Monitoring-Troubleshooting.md)
+- [FluxCD Health Monitoring](fluxcd-health-monitoring.md)
+- [Monitoring Troubleshooting](monitoring-troubleshooting.md)

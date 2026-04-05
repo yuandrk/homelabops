@@ -313,15 +313,13 @@ kubectl logs -n flux-system deployment/source-controller -f
 
 ## Current Environment Status
 
-### Working Configuration (August 2025)
+### Working Configuration (April 2026)
 - **FluxCD Version**: v2.6.0
-- **Active Applications**: open-webui (LLM interface)
-- **Removed Applications**: todoist, cert-manager, github, actualbudget, n8n, headlamp
-- **Infrastructure**: K3s cluster with Raspberry Pi workers
-- **Storage**: local-path provisioner for PVCs
+- **Active HelmReleases**: open-webui, immich, headlamp, kube-prometheus-stack, alloy, loki, nfs-subdir-external-provisioner
+- **Kustomizations**: flux-system, apps, infrastructure, monitoring-controllers, monitoring-configs, secrets, storage
+- **Infrastructure**: 4-node K3s cluster (1 master + 3 workers, mixed amd64/arm64)
+- **Storage**: local-path provisioner + NFS provisioner for PVCs
 
-### Known Issues
-- **open-webui HelmRelease**: Shows as failed due to timeout, but application pods are healthy and running
-- **RPi Resource Constraints**: Heavy applications may require increased timeouts and resource limits
-
-This configuration provides a clean, functional GitOps setup with minimal resource usage suitable for homelab environments.
+### Known Considerations
+- **RPi Resource Constraints**: Heavy applications may require increased timeouts and resource limits on arm64 workers
+- **Large image pulls**: Images 500MB+ can take 5-10 min on first deploy
