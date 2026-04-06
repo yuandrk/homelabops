@@ -39,6 +39,9 @@ spec:
     ollama:
       enabled: true
       fullnameOverride: "open-webui-ollama"
+      image:
+        repository: ollama/ollama
+        tag: 0.20.2
       runtimeClassName: nvidia
       gpu:
         enabled: true
