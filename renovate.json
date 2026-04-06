@@ -2,18 +2,23 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "timezone": "Europe/London",
-  "schedule": ["every weekend"],
+  "schedule": ["* 0-3 1-7 * 1"],
   "prConcurrentLimit": 3,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
+  "dependencyDashboard": true,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "osvVulnerabilityAlerts": true,
 
   "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3"],
 
   "kubernetes": {
-    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
+    "fileMatch": ["apps/.+\\.yaml$"]
   },
   "flux": {
-    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
+    "fileMatch": ["apps/.+\\.yaml$"]
   },
 
   "packageRules": [
@@ -28,21 +33,10 @@
       "enabled": false
     },
     {
-      "description": "Disable FluxCD system components",
-      "matchFileNames": ["clusters/prod/flux-system/**"],
-      "enabled": false
-    },
-    {
       "description": "Group app Docker images",
       "matchDatasources": ["docker"],
       "matchFileNames": ["apps/**"],
       "groupName": "app-images"
-    },
-    {
-      "description": "Group infrastructure Docker images",
-      "matchDatasources": ["docker"],
-      "matchFileNames": ["infrastructure/**"],
-      "groupName": "infra-images"
     },
     {
       "description": "Group Helm charts",
