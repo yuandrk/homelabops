@@ -15,6 +15,9 @@ spec:
         namespace: apps
       version: 8.22.1
   values:
+    image:
+      repository: ghcr.io/open-webui/open-webui
+      tag: 0.8.12
     nodeSelector:
       kubernetes.io/hostname: k3s-worker3
     affinity:
