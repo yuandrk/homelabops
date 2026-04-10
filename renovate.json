@@ -6,6 +6,7 @@
   "prConcurrentLimit": 3,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
+  "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
   "vulnerabilityAlerts": {
     "enabled": true
