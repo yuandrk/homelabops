@@ -223,6 +223,24 @@ spec:
         podMonitorSelector:
           matchLabels:
             app.kubernetes.io/component: monitoring
+        additionalScrapeConfigs:
+          - job_name: traefik
+            kubernetes_sd_configs:
+              - role: pod
+                namespaces:
+                  names:
+                    - kube-system
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+                regex: traefik
+                action: keep
+              - source_labels: [__meta_kubernetes_pod_container_port_name]
+                regex: metrics
+                action: keep
+              - source_labels: [__meta_kubernetes_pod_name]
+                target_label: pod
+              - source_labels: [__meta_kubernetes_namespace]
+                target_label: namespace
         # Schedule on amd64 nodes with more RAM (k3s-master or k3s-worker3)
         nodeSelector:
           kubernetes.io/arch: amd64

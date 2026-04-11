@@ -10,7 +10,6 @@ resources:
 - node-exporter-full-dashboard.yaml
 - prometheus-rules.yaml
 - grafana-ingress.yaml
-- traefik-metrics.yaml
 - cloudflared-scrapeconfig.yaml
 
 patches:
