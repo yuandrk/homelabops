@@ -1,0 +1,17 @@
+---
+# ScrapeConfig for cloudflared systemd service on k3s-master (10.10.0.1:9469)
+# cloudflared is not a K8s pod — it runs as a systemd service; metrics bound to node IP
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: cloudflared
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  staticConfigs:
+    - targets:
+        - 10.10.0.1:9469
+      labels:
+        job: cloudflared
+        instance: k3s-master
