@@ -11,6 +11,7 @@ resources:
 - prometheus-rules.yaml
 - grafana-ingress.yaml
 - cloudflared-scrapeconfig.yaml
+- ollama-scrapeconfig.yaml
 
 patches:
 - target:

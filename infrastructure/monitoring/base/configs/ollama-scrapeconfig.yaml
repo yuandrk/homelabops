@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: ollama
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  metricsPath: /metrics
+  staticConfigs:
+    - targets:
+        - ollama.apps.svc.cluster.local:11434
+      labels:
+        job: ollama
+        instance: k3s-worker3
