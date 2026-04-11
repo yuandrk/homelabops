@@ -12,7 +12,7 @@ metadata:
     release: kube-prometheus-stack
 spec:
   kubernetesSDConfigs:
-    - role: pod
+    - role: Pod
       namespaces:
         names:
           - kube-system
