@@ -7,5 +7,6 @@ resources:
 - pgadmin/base
 - n8n/base
 - immich/base
+- ollama/base
 
 namespace: apps
