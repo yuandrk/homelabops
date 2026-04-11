@@ -26,11 +26,6 @@ locals {
       service  = "http://k3s-worker1:30080"
     },
     {
-      name     = "llm"
-      hostname = "llm.yuandrk.net"
-      service  = "http://k3s-master:80"
-    },
-    {
       name     = "grafana"
       hostname = "grafana.yuandrk.net"
       service  = "http://k3s-master:80"

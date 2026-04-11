@@ -27,7 +27,7 @@
 ## Current Flux Resources
 
 - **Kustomizations**: `flux-system`, `apps`, `infrastructure`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
-- **HelmReleases**: `open-webui` (apps), `immich` (apps), `headlamp` (kube-system), `kube-prometheus-stack` (monitoring), `alloy` (monitoring), `loki` (monitoring), `nfs-subdir-external-provisioner` (storage)
+- **HelmReleases**: `immich` (apps), `headlamp` (kube-system), `kube-prometheus-stack` (monitoring), `alloy` (monitoring), `loki` (monitoring), `nfs-subdir-external-provisioner` (storage)
 - **GitRepository**: `flux-system` (watches main branch, 1m interval)
 
 ## Kubectl Fallback (only when MCP is unavailable)

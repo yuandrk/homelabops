@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
 - actualbudget/base
-- open-web/base
 - uptime-kuma/base
 - pgadmin/base
 - n8n/base
