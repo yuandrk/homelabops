@@ -58,9 +58,6 @@ graph TB
             FluxCD[🔄 FluxCD v2<br/>GitOps Controller]
 
             subgraph "apps namespace"
-                OpenWebUI[🤖 Open-WebUI<br/>llm.yuandrk.net]
-                Ollama[🧠 Ollama]
-                Pipelines[🔗 Pipelines]
                 Immich[🖼️ Immich<br/>photos.yuandrk.net]
                 ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net]
                 UptimeKuma[📊 Uptime Kuma<br/>uptime.yuandrk.net]
@@ -132,17 +129,13 @@ graph TB
 
     %% Storage
     Immich --> NFS
-    OpenWebUI --> LocalPath
     LocalPath --> HostStorage
     PostgreSQL --> Worker3
 
     %% App connections
-    OpenWebUI --> Ollama
-    OpenWebUI --> Pipelines
     Immich --> PostgreSQL
 
     %% Service exposure
-    Traefik --> OpenWebUI
     Traefik --> Immich
     Traefik --> ActualBudget
     Traefik --> UptimeKuma
@@ -162,7 +155,7 @@ graph TB
     class Router,Switch network
     class S3,OIDC,Terraform,Ansible infra
     class Master,Worker1,Worker2,Worker3,Traefik,PiHole,PostgreSQL,GPU compute
-    class CoreDNS,FluxCD,OpenWebUI,Ollama,Pipelines,Immich,ActualBudget,UptimeKuma,N8N,PgAdmin,Headlamp,NvidiaPlugin,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv container
+    class CoreDNS,FluxCD,Immich,ActualBudget,UptimeKuma,N8N,PgAdmin,Headlamp,NvidiaPlugin,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv container
     class LocalPath,NFS,HostStorage,GitRepo,HelmCharts data
 ```
 
@@ -282,7 +275,6 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "External Services (yuandrk.net)"
-        Chat[🤖 llm]
         Photos[🖼️ photos]
         Budget[💰 budget]
         N8nExt[⚙️ n8n]
@@ -305,9 +297,6 @@ graph TB
     end
 
     subgraph "K3s apps namespace"
-        OpenWebuiApp[🤖 open-webui]
-        OllamaApp[🧠 ollama]
-        PipelinesApp[🔗 pipelines]
         ImmichApp[🖼️ immich]
         ActualApp[💰 actualbudget]
         N8nApp[⚙️ n8n]
@@ -327,7 +316,6 @@ graph TB
     end
 
     %% External → Tunnel
-    Chat --> CFT
     Photos --> CFT
     Budget --> CFT
     N8nExt --> CFT
@@ -344,7 +332,6 @@ graph TB
     CFT --> WebhookNP
 
     %% Traefik → apps
-    TraefikSvc --> OpenWebuiApp
     TraefikSvc --> ImmichApp
     TraefikSvc --> ActualApp
     TraefikSvc --> N8nApp
@@ -353,13 +340,7 @@ graph TB
     TraefikSvc --> HeadlampApp
     TraefikSvc --> GrafanaApp
 
-    %% App internals
-    OpenWebuiApp --> OllamaApp
-    OpenWebuiApp --> PipelinesApp
-
     %% Storage
-    OpenWebuiApp --> LocalPV
-    PipelinesApp --> LocalPV
     ActualApp --> LocalPV
     UptimeApp --> LocalPV
     N8nApp --> LocalPV
@@ -374,10 +355,10 @@ graph TB
     classDef k8s fill:#fce4ec
     classDef storage fill:#f1f8e9
 
-    class Chat,Photos,Budget,N8nExt,PgAdminExt,Uptime,HeadlampExt,GrafanaExt,PiholeExt,Webhook external
+    class Photos,Budget,N8nExt,PgAdminExt,Uptime,HeadlampExt,GrafanaExt,PiholeExt,Webhook external
     class CFT tunnel
     class PiholeHost,TraefikSvc,WebhookNP host
-    class OpenWebuiApp,OllamaApp,PipelinesApp,ImmichApp,ActualApp,N8nApp,PgAdminApp,UptimeApp,HeadlampApp,GrafanaApp k8s
+    class ImmichApp,ActualApp,N8nApp,PgAdminApp,UptimeApp,HeadlampApp,GrafanaApp k8s
     class LocalPV,NFSPV,PG storage
 ```
 
@@ -392,13 +373,11 @@ graph TB
         subgraph "Master Workloads"
             TraefikWorkload[🔀 Traefik]
             FluxWorkload[🔄 FluxCD controllers]
-            OpenWebUIWorkload[🤖 open-webui<br/>nodeAffinity: amd64]
         end
 
         subgraph "Worker3 Workloads"
             ImmichWorkload[🖼️ immich-server]
-            ImmichML[🧠 immich-machine-learning<br/>GPU-accelerated]
-            OllamaWorkload[🧠 ollama]
+            ImmichML[🧠 immich-machine-learning<br/>CPU]
             PostgresHost[🐘 PostgreSQL native]
         end
     end
@@ -414,16 +393,14 @@ graph TB
     end
 
     subgraph "Scheduling"
-        Affinity[📋 Constraints<br/>• amd64 affinity for ML/LLM<br/>• GPU label: nvidia.com/gpu=true<br/>• PVC RWO pins to one node]
+        Affinity[📋 Constraints<br/>• Immich pinned to k3s-worker3 (GPU host + native PG)<br/>• PVC RWO pins to one node]
     end
 
     MasterNode --> TraefikWorkload
     MasterNode --> FluxWorkload
-    MasterNode --> OpenWebUIWorkload
 
     Worker3Node --> ImmichWorkload
     Worker3Node --> ImmichML
-    Worker3Node --> OllamaWorkload
     Worker3Node --> PostgresHost
 
     Worker1Node --> LightApps
@@ -431,7 +408,7 @@ graph TB
     Worker2Node --> LightApps
     Worker2Node --> SystemPods
 
-    Affinity --> OpenWebUIWorkload
+    Affinity --> ImmichWorkload
     Affinity --> ImmichML
 
     classDef amd64 fill:#e3f2fd
@@ -439,7 +416,7 @@ graph TB
     classDef workload fill:#fce4ec
     classDef rule fill:#f1f8e9
 
-    class MasterNode,Worker3Node,TraefikWorkload,FluxWorkload,OpenWebUIWorkload,ImmichWorkload,ImmichML,OllamaWorkload,PostgresHost amd64
+    class MasterNode,Worker3Node,TraefikWorkload,FluxWorkload,ImmichWorkload,ImmichML,PostgresHost amd64
     class Worker1Node,Worker2Node,LightApps,SystemPods arm64
     class Affinity rule
 ```

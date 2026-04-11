@@ -79,7 +79,6 @@ flux get all -A
 
 | Service | Description | URL |
 |---------|-------------|-----|
-| **Open-WebUI** | LLM interface with Ollama | `llm.yuandrk.net` |
 | **Immich** | Photo management | `photos.yuandrk.net` |
 | **Grafana** | Monitoring dashboards | `grafana.yuandrk.net` |
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
@@ -97,8 +96,8 @@ flux get all -A
 |-----------|--------|
 | K3s Nodes | 4/4 Ready (v1.33.x) |
 | Kustomizations | 7 reconciled |
-| HelmReleases | 7 deployed |
-| External Services | 9 via Cloudflare Tunnels |
+| HelmReleases | 6 deployed |
+| External Services | 8 via Cloudflare Tunnels |
 
 ### GitOps ✅
 - **Sync**: Automatic reconciliation every 1 minute

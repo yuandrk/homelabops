@@ -4,7 +4,6 @@
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| Open-WebUI | `llm.yuandrk.net` | LLM interface with Ollama, amd64 node affinity, 50Gi storage |
 | Immich | `photos.yuandrk.net` | Photo management, 500Gi NFS storage, v2.6.3 |
 | ActualBudget | `budget.yuandrk.net` | Financial management, v26.3.0 |
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
@@ -23,7 +22,7 @@
 - **Loki**: Log aggregation (10Gi PVC), with chunks-cache and results-cache
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
 - **NFS Provisioner**: External storage provisioner in `storage` namespace (used by Immich)
-- **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130)
+- **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130) — currently no GPU consumers
 
 ## Cloudflare Tunnel Routing
 

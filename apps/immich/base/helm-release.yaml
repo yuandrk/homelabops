@@ -92,7 +92,7 @@ spec:
           globalMounts:
             - path: /dev/dri
 
-    # Machine learning component (CPU-only, GPU used by ollama)
+    # Machine learning component (CPU-only)
     machine-learning:
       enabled: true
       controllers:
