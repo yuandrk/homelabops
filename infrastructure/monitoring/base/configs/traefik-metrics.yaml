@@ -1,61 +1,31 @@
 ---
-# Enable Prometheus metrics entrypoint on Traefik (K3s HelmChartConfig)
-apiVersion: helm.cattle.io/v1
-kind: HelmChartConfig
-metadata:
-  name: traefik
-  namespace: kube-system
-spec:
-  valuesContent: |-
-    metrics:
-      prometheus:
-        entryPoint: metrics
-        addEntryPointsLabels: true
-        addRoutersLabels: true
-        addServicesLabels: true
-    ports:
-      metrics:
-        port: 9100
-        expose:
-          default: false
-        protocol: TCP
----
-# ClusterIP Service exposing the Traefik metrics port internally
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik-metrics
-  namespace: kube-system
-  labels:
-    app.kubernetes.io/name: traefik
-    app.kubernetes.io/component: metrics
-spec:
-  selector:
-    app.kubernetes.io/instance: traefik-kube-system
-    app.kubernetes.io/name: traefik
-  ports:
-    - name: metrics
-      port: 9100
-      targetPort: metrics
-      protocol: TCP
-  type: ClusterIP
----
-# ServiceMonitor for Traefik — scraped by Prometheus via the metrics ClusterIP Service
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+# ScrapeConfig for Traefik ingress controller
+# Uses Kubernetes pod discovery to find Traefik pods in kube-system directly,
+# avoiding cross-namespace Service selector issues from the monitoring namespace override.
+# Traefik already exposes metrics on port 9100 (entrypoint: metrics) by default in K3s.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
 metadata:
   name: traefik
   namespace: monitoring
   labels:
     release: kube-prometheus-stack
 spec:
-  namespaceSelector:
-    matchNames:
-      - kube-system
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: traefik
-      app.kubernetes.io/component: metrics
-  endpoints:
-    - port: metrics
-      path: /metrics
+  kubernetesSDConfigs:
+    - role: pod
+      namespaces:
+        names:
+          - kube-system
+  relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+      regex: traefik
+      action: keep
+    - sourceLabels: [__meta_kubernetes_pod_container_port_name]
+      regex: metrics
+      action: keep
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - targetLabel: job
+      replacement: traefik
