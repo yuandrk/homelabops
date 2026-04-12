@@ -26,7 +26,7 @@ spec:
             - name: OLLAMA_HOST
               value: "0.0.0.0"
             - name: OLLAMA_KEEP_ALIVE
-              value: "24h"
+              value: "1h"
           volumeMounts:
             - name: ollama-data
               mountPath: /root/.ollama
