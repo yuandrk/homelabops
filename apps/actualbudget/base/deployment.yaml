@@ -26,6 +26,8 @@ spec:
           value: "production"
         - name: NODE_OPTIONS
           value: "--max-old-space-size=768"
+        - name: ACTUAL_UPLOAD_FILE_SYNC_SIZE_LIMIT_MB
+          value: "100"
         volumeMounts:
         - name: actual-data
           mountPath: /data
