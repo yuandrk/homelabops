@@ -24,6 +24,8 @@ spec:
         env:
         - name: NODE_ENV
           value: "production"
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=768"
         volumeMounts:
         - name: actual-data
           mountPath: /data
@@ -33,7 +35,7 @@ spec:
             memory: 128Mi
           limits:
             cpu: 500m
-            memory: 512Mi
+            memory: 1Gi
       volumes:
       - name: actual-data
         persistentVolumeClaim:
