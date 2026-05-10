@@ -118,3 +118,5 @@ spec:
                                 key: scopes
                           - name: HEADLAMP_CONFIG_OIDC_CA_FILE
                             value: "/etc/ssl/certs/ca-certificates.crt"
+                          - name: HEADLAMP_CONFIG_LOG_LEVEL
+                            value: "debug"
