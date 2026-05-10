@@ -71,6 +71,29 @@ spec:
     config:
       pluginsDir: "/headlamp/plugins"
 
+    # OIDC / Okta SSO
+    env:
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc
+            key: clientID
+      - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc
+            key: clientSecret
+      - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc
+            key: issuerURL
+      - name: HEADLAMP_CONFIG_OIDC_SCOPES
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc
+            key: scopes
+
     # Security context
     securityContext:
       runAsNonRoot: true
