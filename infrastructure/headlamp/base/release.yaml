@@ -52,6 +52,7 @@ spec:
       ingressClassName: traefik
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+        traefik.ingress.kubernetes.io/router.middlewares: kube-system-headlamp-https-headers@kubernetescrd
       hosts:
         - host: headlamp.yuandrk.net
           paths:
