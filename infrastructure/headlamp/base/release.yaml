@@ -120,3 +120,5 @@ spec:
                             value: "/etc/ssl/certs/ca-certificates.crt"
                           - name: HEADLAMP_CONFIG_OIDC_CALLBACK_URL
                             value: "https://headlamp.yuandrk.net/oidc-callback"
+                          - name: HEADLAMP_CONFIG_OIDC_USE_PKCE
+                            value: "true"
