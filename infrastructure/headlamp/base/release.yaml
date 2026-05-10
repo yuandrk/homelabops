@@ -116,3 +116,5 @@ spec:
                               secretKeyRef:
                                 name: headlamp-oidc
                                 key: scopes
+                          - name: HEADLAMP_CONFIG_OIDC_CA_FILE
+                            value: "/etc/ssl/certs/ca-certificates.crt"
