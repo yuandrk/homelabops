@@ -23,6 +23,15 @@
 
 - [ ] Upgrade k3s-worker1 and k3s-worker2 from v1.33.3 to v1.33.5
 
+## Identity & Access
+
+- [x] Integrate Headlamp with Okta via K3s OIDC
+  - [x] Create Okta OIDC app for K3s API server
+  - [x] Configure K3s `--kube-apiserver-arg` flags (`oidc-issuer-url`, `oidc-client-id`, `oidc-username-claim`, `oidc-groups-claim`)
+  - [x] Map Okta user to K8s RBAC via ClusterRoleBinding (subject format: `https://integrator-7752059.okta.com#me@yuandrk.net`)
+  - [x] Update Headlamp to use OIDC flow (PKCE enabled)
+  - [ ] If 403 errors return: check `Authorization` header in DevTools Network tab on a failing request — verify Headlamp is sending the OIDC JWT (starts with `eyJ`), not the service account token
+
 ## Documentation Gaps
 
 - [ ] Document Immich setup and configuration (photos.yuandrk.net)
