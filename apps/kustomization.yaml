@@ -8,5 +8,6 @@ resources:
 - n8n/base
 - immich/base
 - ollama/base
+- mcp-slack-bot/base
 
 namespace: apps

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-slack-bot
+  namespace: apps
+  labels:
+    app: mcp-slack-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-slack-bot
+  template:
+    metadata:
+      labels:
+        app: mcp-slack-bot
+    spec:
+      containers:
+        - name: mcp-slack-bot
+          image: ghcr.io/yuandrk/mcp-slack-bot:0.1.0
+          ports:
+            - containerPort: 8080
+              name: health
+          env:
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-slack-bot-credentials
+                  key: SLACK_BOT_TOKEN
+            - name: SLACK_APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-slack-bot-credentials
+                  key: SLACK_APP_TOKEN
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-slack-bot-credentials
+                  key: ANTHROPIC_API_KEY
+            - name: ALLOWED_USER_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-slack-bot-credentials
+                  key: ALLOWED_USER_IDS
+            - name: ANTHROPIC_MODEL
+              value: "claude-sonnet-4-5"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: HEALTH_PORT
+              value: "8080"
+            - name: MCP_FS_ROOT
+              value: "/data"
+          volumeMounts:
+            - name: context
+              mountPath: /data
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: context
+          configMap:
+            name: mcp-slack-bot-context

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-slack-bot-context
+  namespace: apps
+data:
+  homelab-context.md: |
+    # Homelab Context
+
+    K3s cluster: 4 nodes (k3s-master 10.10.0.1, k3s-worker1 10.10.0.2, k3s-worker2 10.10.0.3, k3s-worker3 10.10.0.5)
+    GitOps: FluxCD v2, watches main branch of homelabops-git repo
+
+    ## Services
+    - Immich (photos.yuandrk.net) — photo management
+    - ActualBudget (budget.yuandrk.net) — finances
+    - Headlamp (headlamp.yuandrk.net) — K8s dashboard
+    - n8n (n8n.yuandrk.net) — workflow automation
+    - Grafana (grafana.yuandrk.net) — monitoring dashboards
+    - pgAdmin (pgadmin.yuandrk.net) — PostgreSQL admin
+
+    ## Secrets
+    Managed via 1Password Kubernetes Operator (homelab vault).
+    Bootstrap secret: onepassword-token in onepassword namespace.
+
+    ## Networking
+    External access via Cloudflare Tunnels → Traefik ingress on k3s-master:80.
