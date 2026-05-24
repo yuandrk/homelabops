@@ -1,0 +1,21 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudflared
+  namespace: networking
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: cloudflare-tunnel-remote
+      version: ">=0.3.0"
+      sourceRef:
+        kind: HelmRepository
+        name: cloudflare
+        namespace: networking
+  values:
+    replicaCount: 2
+    cloudflare:
+      tunnel_token_secret:
+        name: cloudflared-token
+        key: tunnelToken
