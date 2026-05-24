@@ -8,14 +8,15 @@ spec:
   chart:
     spec:
       chart: cloudflare-tunnel-remote
-      version: ">=0.3.0"
+      version: ">=0.1.2"
       sourceRef:
         kind: HelmRepository
         name: cloudflare
         namespace: networking
   values:
     replicaCount: 2
-    cloudflare:
-      tunnel_token_secret:
-        name: cloudflared-token
-        key: tunnelToken
+  valuesFrom:
+    - kind: Secret
+      name: cloudflared-token
+      valuesKey: tunnelToken
+      targetPath: cloudflare.tunnel_token
