@@ -68,6 +68,11 @@ spec:
               envFrom:
                 - secretRef:
                     name: immich-credentials
+              env:
+                - name: IMMICH_WORKERS_API
+                  value: "4"
+                - name: IMMICH_WORKERS_MICROSERVICES
+                  value: "2"
               # Enable privileged mode for GPU device access (Intel QSV)
               securityContext:
                 privileged: true
