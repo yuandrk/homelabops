@@ -3,11 +3,8 @@ kind: Kustomization
 
 resources:
 - actualbudget/base
-- uptime-kuma/base
-- pgadmin/base
 - n8n/base
 - immich/base
-- ollama/base
 - mcp-slack-bot/base
 
 namespace: apps
