@@ -10,7 +10,6 @@
 | Uptime Kuma | `uptime.yuandrk.net` | Service monitoring, 2Gi storage |
 | pgAdmin4 | `pgadmin.yuandrk.net` | PostgreSQL admin |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
-| Pi-hole | `pihole.yuandrk.net` | DNS + ad-blocking |
 | Grafana | `grafana.yuandrk.net` | Dashboards (admin/flux) |
 
 ## Infrastructure Services
@@ -26,8 +25,7 @@
 
 ## Cloudflare Tunnel Routing
 
-All services except Pi-hole route through Traefik ingress at `k3s-master:80`.
+cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see memory `cloudflared-in-cluster`). All tunnel ingresses target in-cluster Service DNS:
 
-- `pihole.yuandrk.net` → `http://127.0.0.1:8081`
-- `flux-webhook.yuandrk.net` → `http://k3s-worker1:30080`
-- Everything else → `http://k3s-master:80` (Traefik)
+- `flux-webhook.yuandrk.net` → `http://webhook-receiver.flux-system.svc.cluster.local:80`
+- Everything else → `http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000)

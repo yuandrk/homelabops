@@ -48,7 +48,7 @@ gh auth login
   - fluxcd, terraform, ansible
   - cloudflare-tunnel, infrastructure-as-code
   - raspberry-pi, multi-arch, llm, open-webui
-  - self-hosted, pihole, mermaid-diagrams
+  - self-hosted, mermaid-diagrams
 
 **Prerequisites**:
 - GitHub CLI installed (`brew install gh`)

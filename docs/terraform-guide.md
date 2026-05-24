@@ -82,15 +82,14 @@ use_lockfile = true  # S3 native locking
 
 | Service | Hostname | Backend | Notes |
 |---------|----------|---------|-------|
-| Pi-hole | `pihole.yuandrk.net` | `http://127.0.0.1:8081` | DNS + ad blocking |
-| ActualBudget | `budget.yuandrk.net` | `http://k3s-master:80` | Financial management |
-| n8n | `n8n.yuandrk.net` | `http://k3s-master:80` | Workflow automation |
-| Flux Webhook | `flux-webhook.yuandrk.net` | `http://k3s-worker1:30080` | GitOps webhooks |
-| Open-WebUI | `llm.yuandrk.net` | `http://k3s-master:80` | LLM interface |
-| Grafana | `grafana.yuandrk.net` | `http://k3s-master:80` | Monitoring dashboards |
-| Headlamp | `headlamp.yuandrk.net` | `http://k3s-master:80` | K8s dashboard |
-| Uptime Kuma | `uptime.yuandrk.net` | `http://k3s-master:80` | Status page |
-| pgAdmin | `pgadmin.yuandrk.net` | `http://k3s-master:80` | PostgreSQL admin |
+| ActualBudget | `budget.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Financial management |
+| n8n | `n8n.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Workflow automation |
+| Flux Webhook | `flux-webhook.yuandrk.net` | `http://webhook-receiver.flux-system.svc.cluster.local:80` | GitOps webhooks |
+| Grafana | `grafana.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Monitoring dashboards |
+| Headlamp | `headlamp.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | K8s dashboard |
+| Uptime Kuma | `uptime.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Status page |
+| pgAdmin | `pgadmin.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | PostgreSQL admin |
+| Immich | `photos.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Photo management |
 
 **Tunnel Configuration**:
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
@@ -219,38 +218,24 @@ use_lockfile = true
 - External `backend.hcl` allows S3 native locking parameter
 - Cleaner separation of environment-specific config
 
-## Module: `modules/tunnel`
+## Tunnel DNS Records
 
-Reusable module for creating Cloudflare Tunnel DNS records.
+Each tunnel hostname gets a CNAME pointing at `<tunnel_id>.cfargotunnel.com`. Records are inlined in `terraform/live/homelab/cloudflare/main.tf` (the previous `modules/tunnel` abstraction was removed when cloudflared moved in-cluster — the standalone token data source it provided is no longer needed).
 
-**Inputs**:
 ```hcl
-variable "account_id"         # Cloudflare account ID
-variable "zone_id"            # DNS zone ID
-variable "existing_tunnel_id" # Tunnel ID to use
-variable "hostname"           # Public hostname (e.g., pihole.yuandrk.net)
-variable "service"            # Backend service URL
-```
+resource "cloudflare_dns_record" "services" {
+  for_each = local.tunnel_services_map
 
-**Outputs**:
-```hcl
-output "tunnel_id"     # Tunnel ID
-output "tunnel_cname"  # CNAME target: {tunnel_id}.cfargotunnel.com
-output "hostname"      # Public hostname
-```
-
-**Usage Example**:
-```hcl
-module "pihole_dns" {
-  source = "../../../modules/tunnel"
-
-  account_id         = var.cloudflare_account_id
-  zone_id            = var.cloudflare_zone_id
-  existing_tunnel_id = local.tunnel_id
-  hostname           = "pihole.yuandrk.net"
-  service            = "http://127.0.0.1:8081"
+  zone_id = data.cloudflare_zone.root.zone_id
+  name    = split(".", each.value.hostname)[0]
+  content = "${local.tunnel_id}.cfargotunnel.com"
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
 }
 ```
+
+To add a new hostname: append to `local.tunnel_services` in `main.tf`, then `git push` — CI runs `terraform-apply` and creates the CNAME + ingress entry.
 
 ## Troubleshooting
 

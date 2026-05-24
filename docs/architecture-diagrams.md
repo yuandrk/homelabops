@@ -34,7 +34,6 @@ graph TB
         subgraph "k3s-master (amd64)"
             Master[🖥️ k3s-master<br/>Ubuntu 24.04<br/>10.10.0.1 / 192.168.1.223]
             Traefik[🔀 Traefik<br/>Ingress]
-            PiHole[🛡️ Pi-hole<br/>Host :8081]
         end
 
         subgraph "k3s-worker1 (arm64)"
@@ -154,7 +153,7 @@ graph TB
     class Internet,CloudFlare,DNS,Tunnel external
     class Router,Switch network
     class S3,OIDC,Terraform,Ansible infra
-    class Master,Worker1,Worker2,Worker3,Traefik,PiHole,PostgreSQL,GPU compute
+    class Master,Worker1,Worker2,Worker3,Traefik,PostgreSQL,GPU compute
     class CoreDNS,FluxCD,Immich,ActualBudget,UptimeKuma,N8N,PgAdmin,Headlamp,NvidiaPlugin,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv container
     class LocalPath,NFS,HostStorage,GitRepo,HelmCharts data
 ```
@@ -282,18 +281,16 @@ graph TB
         Uptime[📊 uptime]
         HeadlampExt[🎛️ headlamp]
         GrafanaExt[📊 grafana]
-        PiholeExt[🛡️ pihole]
         Webhook[🔗 flux-webhook]
     end
 
     subgraph "Cloudflare Tunnel"
-        CFT[🚇 cloudflared]
+        CFT[🚇 cloudflared<br/>networking ns, 2 replicas]
     end
 
     subgraph "Routing Targets"
-        TraefikSvc[🔀 Traefik<br/>k3s-master:80]
-        PiholeHost[🛡️ Pi-hole FTL<br/>127.0.0.1:8081]
-        WebhookNP[🔗 Flux Webhook<br/>k3s-worker1:30080]
+        TraefikSvc[🔀 Traefik<br/>traefik.kube-system.svc:80]
+        WebhookSvc[🔗 webhook-receiver<br/>flux-system.svc:80]
     end
 
     subgraph "K3s apps namespace"
@@ -323,13 +320,11 @@ graph TB
     Uptime --> CFT
     HeadlampExt --> CFT
     GrafanaExt --> CFT
-    PiholeExt --> CFT
     Webhook --> CFT
 
     %% Tunnel → routes
     CFT --> TraefikSvc
-    CFT --> PiholeHost
-    CFT --> WebhookNP
+    CFT --> WebhookSvc
 
     %% Traefik → apps
     TraefikSvc --> ImmichApp
@@ -355,9 +350,9 @@ graph TB
     classDef k8s fill:#fce4ec
     classDef storage fill:#f1f8e9
 
-    class Photos,Budget,N8nExt,PgAdminExt,Uptime,HeadlampExt,GrafanaExt,PiholeExt,Webhook external
+    class Photos,Budget,N8nExt,PgAdminExt,Uptime,HeadlampExt,GrafanaExt,Webhook external
     class CFT tunnel
-    class PiholeHost,TraefikSvc,WebhookNP host
+    class TraefikSvc,WebhookSvc host
     class ImmichApp,ActualApp,N8nApp,PgAdminApp,UptimeApp,HeadlampApp,GrafanaApp k8s
     class LocalPV,NFSPV,PG storage
 ```

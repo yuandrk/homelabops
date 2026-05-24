@@ -1,6 +1,10 @@
 # inventory/group_vars/masters/cloudflared.yaml
+#
+# DEPRECATED: the host cloudflared was decommissioned 2026-05-24.
+# cloudflared now runs in-cluster as a HelmRelease in the `networking`
+# namespace (infrastructure/networking/cloudflared/). The ansible role at
+# ansible/roles/cloudflared/ is unused and should be removed in a follow-up.
 cloudflared_tunnel_id: "4a6abf9a-d178-4a56-9586-a3d77907c5f1"
-cloudflared_hostname: "pihole.yuandrk.net"
 cloudflared_service_port: 80
-cloudflared_metrics: "127.0.0.1:9469"  
+cloudflared_metrics: "127.0.0.1:9469"
 cloudflared_no_autoupdate: true

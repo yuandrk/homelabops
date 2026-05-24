@@ -308,7 +308,6 @@ done
 echo ""
 echo "🌐 External Services:"
 curl -s -o /dev/null -w "llm.yuandrk.net: %{http_code}\n" https://llm.yuandrk.net
-curl -s -o /dev/null -w "pihole.yuandrk.net: %{http_code}\n" https://pihole.yuandrk.net
 
 echo ""
 echo "✅ Health check complete!"

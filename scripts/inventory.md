@@ -15,7 +15,7 @@
 ## 🎯 AI Context Summary
 
 This inventory provides a complete snapshot of a homelab infrastructure consisting of:
-- 1 x86-64 master node (Intel NUC) running K3s control plane and Pi-hole DNS
+- 1 x86-64 master node (Intel NUC) running K3s control plane
 - 2 ARM64 worker nodes (Raspberry Pi 4) for workloads
 - Mixed architecture cluster requiring multi-arch container images
 - Network: 10.10.0.0/24 (wired) + 192.168.1.0/24 (WiFi for internet)
@@ -95,8 +95,6 @@ listening_ports:
 #### Active Services
 ```yaml
 systemd_services:
-  - cloudflared.service
-  - pihole-FTL.service
   - snap.docker.dockerd.service
 
 docker_containers:
@@ -425,7 +423,6 @@ automation_gaps:
 
 manual_processes:
   - PostgreSQL running in Docker Compose on k3s-worker1
-  - Pi-hole running bare metal on k3s-master
   - No automated certificate management
   - No centralized logging
   - No automated backups

@@ -49,7 +49,7 @@ This repository contains Infrastructure as Code and documentation for a 4-node K
 | **GitOps** | FluxCD v2.6.0 with automatic reconciliation |
 | **Networking** | Dual network (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi) |
 | **External Access** | Cloudflare Tunnels + Traefik ingress |
-| **DNS** | Pi-hole (host) + CoreDNS (cluster) |
+| **DNS** | CoreDNS (cluster); nodes use systemd-resolved → 1.1.1.1/8.8.8.8 |
 | **Database** | PostgreSQL 15 on k3s-worker3 |
 | **GPU** | NVIDIA GeForce MX130 (Ollama LLM workloads) |
 | **Storage** | 76Gi total (local-path provisioner) |
@@ -86,7 +86,6 @@ flux get all -A
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
 | **pgAdmin** | PostgreSQL admin | `pgadmin.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
-| **Pi-hole** | DNS + ad-blocking | `pihole.yuandrk.net` |
 
 ## 📊 Current Status
 

@@ -175,15 +175,11 @@ kubectl --kubeconfig=terraform/kube/kubeconfig get services --all-namespaces
 
 ## Integration Points
 
-### Pi-hole DNS
-- Service running on k3s-master host (PID 274612)
-- Accessible via Cloudflare tunnel: pihole.yuandrk.net
-- No port conflicts with CoreDNS (different network layers)
-
 ### Cloudflare Tunnels
 - Tunnel ID: 4a6abf9a-d178-4a56-9586-a3d77907c5f1
-- Services: pihole.yuandrk.net, budget.yuandrk.net, llm.yuandrk.net
-- Managed via Terraform with reusable tunnel module
+- Services: budget.yuandrk.net, photos.yuandrk.net, grafana.yuandrk.net, n8n.yuandrk.net, headlamp.yuandrk.net, pgadmin.yuandrk.net, uptime.yuandrk.net, flux-webhook.yuandrk.net
+- Managed via Terraform in `terraform/live/homelab/cloudflare/`
+- cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (not on the host)
 
 ### FluxCD GitOps (Ready for Deployment)
 - Repository: ssh://git@github.com/yuandrk/homelabops

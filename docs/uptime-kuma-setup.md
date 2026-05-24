@@ -36,7 +36,6 @@ ActualBudget: https://budget.yuandrk.net (HTTP, 60s interval)
 Open-WebUI: https://llm.yuandrk.net (HTTP, 60s interval)  
 Grafana: https://grafana.yuandrk.net (HTTP, 300s interval)
 Headlamp: https://headlamp.yuandrk.net (HTTP, 300s interval)
-Pi-hole: https://pihole.yuandrk.net (HTTP, 60s interval)
 ```
 
 #### Infrastructure Components

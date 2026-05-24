@@ -25,7 +25,7 @@
 
 | Node | Hostname | Host LAN IP | Wi-Fi IP | Role | Key Services |
 |------|----------|-------------|----------|------|--------------|
-| **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | Pi-hole DNS, K3s Server, Traefik |
+| **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | K3s Server, Traefik |
 | **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Worker Node | K3s Agent |
 | **Worker 2** | `k3s-worker2` | 10.10.0.4/24 | 192.168.1.70 | Worker Node | K3s Agent |
 | **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), Ollama, K3s Agent, GPU |
@@ -78,8 +78,6 @@ K3s Services: 10.43.0.0/16
 ### k3s-master (10.10.0.1)
 | Service | Port | Protocol | Access | Notes |
 |---------|------|----------|--------|-------|
-| **Pi-hole DNS** | 53 | UDP | LAN-wide | Host-level DNS server |
-| **Pi-hole Web** | 8081 | HTTP | Local only | Moved from port 80 due to Traefik |
 | **Traefik** | 80, 443 | HTTP/HTTPS | LAN + External | K3s ingress controller |
 | **K3s API** | 6443 | HTTPS | Internal | Kubernetes API server |
 | **SSH** | 2222 | TCP | LAN | Hardened SSH port |
@@ -100,41 +98,39 @@ K3s Services: 10.43.0.0/16
 
 ## 🌍 DNS Architecture
 
-### Dual DNS Setup
+### DNS Setup
 ```
-Applications/Browsers
+Host nodes (k3s-master, workers)
         ↓
-   Pi-hole (10.10.0.1:53)
-   ├─ Host DNS resolution
-   ├─ Ad/tracker blocking  
-   ├─ Custom domain routing
-   └─ Upstream: Cloudflare (1.1.1.1)
+   systemd-resolved
+   └─ Upstream: 1.1.1.1, 8.8.8.8 (fallback: 9.9.9.9)
 
 K3s Pods
         ↓
-   CoreDNS (10.42.0.3:53)
-   ├─ Service discovery
-   ├─ Internal .cluster.local
-   └─ Upstream: Host DNS
+   CoreDNS (cluster service 10.43.0.10:53)
+   ├─ Service discovery (.cluster.local)
+   ├─ Node hostnames via NodeHosts plugin (k3s-master → 10.10.0.1, etc.)
+   └─ Upstream forward: 1.1.1.1, 8.8.8.8 (independent of host resolver)
 ```
 
 ### DNS Configuration
 
 #### systemd-resolved Override (All Nodes)
 ```ini
-# /etc/systemd/resolved.conf.d/pihole.conf
+# /etc/systemd/resolved.conf.d/homelab.conf
 [Resolve]
-DNS=10.10.0.1 1.1.1.1
+DNS=1.1.1.1 8.8.8.8
+FallbackDNS=9.9.9.9
 Domains=~.
-ResolveUnicastSingleLabel=yes
-FallbackDNS=
 ```
 
-#### Pi-hole Configuration
-- **Service**: Pi-hole FTL on k3s-master
-- **Web Interface**: `http://k3s-master:8081/admin`
-- **External Access**: `https://pihole.yuandrk.net` (Cloudflare tunnel)
-- **Port Change**: Moved from 80 → 8081 due to K3s Traefik conflict
+Cluster node hostnames are mirrored in `/etc/hosts` on every node so `ssh k3s-worker1` etc. resolve without DNS:
+```
+10.10.0.1 k3s-master
+10.10.0.2 k3s-worker1
+10.10.0.4 k3s-worker2
+10.10.0.5 k3s-worker3
+```
 
 ---
 
@@ -156,12 +152,6 @@ FallbackDNS=
 
 ## 🔧 K3s Integration Notes
 
-### Network Conflicts Resolved
-- **Pi-hole Port Conflict**: Web interface moved from port 80 → 8081
-- **Root Cause**: K3s Traefik LoadBalancer intercepts port 80/443 traffic
-- **Solution**: Updated Pi-hole config in `/etc/pihole/pihole.toml`
-- **Cloudflare Update**: Terraform config updated to route to port 8081
-
 ### K3s Networking Features
 - **CNI**: Flannel VXLAN for pod networking
 - **Service Mesh**: ClusterIP services via kube-proxy
@@ -174,7 +164,6 @@ FallbackDNS=
 
 ### Network Security
 - **SSH Hardening**: All nodes use port 2222 with key-based auth
-- **DNS Security**: Pi-hole blocks ads/trackers at network level
 - **Firewall**: Currently disabled (UFW=off) - LAN-only access
 - **Tunnel Security**: Cloudflare tunnels for secure external access
 
@@ -188,15 +177,12 @@ FallbackDNS=
 ## 🚀 External Services & Tunnels
 
 ### Cloudflare Tunnel Configuration
-| Service | Internal Endpoint | External Domain | Status |
-|---------|------------------|-----------------|---------|
-| **Pi-hole** | `http://127.0.0.1:8081` | `pihole.yuandrk.net` | ✅ Active |
-| **Budget App** | K3s service | `budget.yuandrk.net` | ✅ Active |
+All public hostnames route via in-cluster `traefik.kube-system.svc.cluster.local:80`, except `flux-webhook.yuandrk.net` which targets `webhook-receiver.flux-system.svc.cluster.local:80`. See `apps/*/base/ingress.yaml` for per-service Traefik routing.
 
 ### Tunnel Management
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
-- **Configuration**: Terraform managed in `terraform/cloudflare/main.tf`
-- **Deployment**: Cloudflared systemd service on k3s-master
+- **Configuration**: Terraform managed in `terraform/live/homelab/cloudflare/main.tf`
+- **Deployment**: 2-replica `cloudflared` HelmRelease in the `networking` namespace (see `infrastructure/networking/cloudflared/`)
 
 ---
 
@@ -205,7 +191,7 @@ FallbackDNS=
 ### Network Diagnostics
 ```bash
 # Test internal connectivity
-ping k3s-worker1              # Should resolve via Pi-hole
+ping k3s-worker1              # Resolves via /etc/hosts
 resolvectl query k3s-master   # DNS resolution test
 
 # Check K3s network
@@ -219,14 +205,14 @@ ping -c 10 k3s-worker2        # Latency test
 
 ### DNS Management
 ```bash
-# Pi-hole management
-systemctl status pihole-FTL   # Service status
-pihole status                 # Pi-hole status
-pihole restartdns            # Restart DNS
-
-# systemd-resolved
+# systemd-resolved on host nodes
 systemctl restart systemd-resolved
-resolvectl flush-caches      # Clear DNS cache
+resolvectl status              # Show active DNS servers
+resolvectl flush-caches        # Clear host DNS cache
+
+# CoreDNS in-cluster
+kubectl rollout restart -n kube-system deploy/coredns
+kubectl get cm -n kube-system coredns -o yaml
 ```
 
 ---
@@ -237,7 +223,6 @@ resolvectl flush-caches      # Clear DNS cache
 - **Network Policies**: Implement K3s NetworkPolicies for pod isolation
 - **Service Mesh**: Consider Istio or Linkerd for advanced traffic management
 - **Monitoring**: Deploy network monitoring (Prometheus + Grafana)
-- **Backup DNS**: Add secondary Pi-hole for redundancy
 - **Firewall**: Implement UFW rules for additional security
 
 ### K3s Network Expansion
@@ -252,7 +237,7 @@ resolvectl flush-caches      # Clear DNS cache
 This homelab runs a **4-node K3s cluster** (1 master + 3 workers) with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
 
 **Key Network Features:**
-- **Pi-hole DNS** on k3s-master (port 8081 web, port 53 DNS) with ad-blocking
+- **Host DNS** via systemd-resolved → 1.1.1.1/8.8.8.8 (no host-level forwarder; CoreDNS handles cluster DNS independently)
 - **K3s cluster networking** via Flannel CNI (pods: 10.42.0.0/16, services: 10.43.0.0/16)
 - **Traefik ingress** handling ports 80/443 for K3s workloads
 - **PostgreSQL database** on k3s-worker3 (native installation, not K3s-managed)
@@ -260,4 +245,4 @@ This homelab runs a **4-node K3s cluster** (1 master + 3 workers) with a **dual 
 
 **Performance characteristics:** Gigabit speeds between workers (0.4ms latency), Wi-Fi speeds for master communication (6-9ms), sufficient internet access (14-19 Mbps) for external dependencies.
 
-The network architecture supports both traditional services (Pi-hole, PostgreSQL) and modern K3s workloads with external access via secure tunnels.
+The network architecture supports both host-native services (PostgreSQL on worker3) and K3s workloads with external access via secure tunnels.

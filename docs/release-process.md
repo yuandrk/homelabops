@@ -137,7 +137,6 @@ Each release should include:
 
 ## 🚀 Services & Access
 - 🤖 Open-WebUI: https://llm.yuandrk.net
-- 🛡️ Pi-hole: https://pihole.yuandrk.net
 - 💰 Budget App: https://budget.yuandrk.net
 
 ## 📊 Architecture Highlights
