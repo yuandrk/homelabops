@@ -6,11 +6,6 @@ locals {
   # List of services with guaranteed order
   tunnel_services = [
     {
-      name     = "pihole"
-      hostname = "pihole.yuandrk.net"
-      service  = "http://k3s-master:8081"
-    },
-    {
       name     = "budget"
       hostname = "budget.yuandrk.net"
       service  = "http://traefik.kube-system.svc.cluster.local:80"
