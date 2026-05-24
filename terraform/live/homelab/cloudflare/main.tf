@@ -31,16 +31,6 @@ locals {
       service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
-      name     = "uptime"
-      hostname = "uptime.yuandrk.net"
-      service  = "http://traefik.kube-system.svc.cluster.local:80"
-    },
-    {
-      name     = "pgadmin"
-      hostname = "pgadmin.yuandrk.net"
-      service  = "http://traefik.kube-system.svc.cluster.local:80"
-    },
-    {
       name     = "photos"
       hostname = "photos.yuandrk.net"
       service  = "http://traefik.kube-system.svc.cluster.local:80"
