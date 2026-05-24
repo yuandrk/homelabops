@@ -25,3 +25,13 @@ spec:
       archiveOnDelete: true
       onDelete: retain
       pathPattern: "${.PVC.namespace}/${.PVC.name}"
+      mountOptions:
+        - async
+        - rsize=1048576
+        - wsize=1048576
+        - nconnect=4
+        - noatime
+        - nodiratime
+    # NOTE: existing PV pvc-236d6af6-2c39-4e1f-8304-e06bae7c69bf was manually patched
+    # with the same mountOptions above via: kubectl patch pv pvc-236d6af6-... --type=json
+    # New PVs from this StorageClass will automatically inherit these options.
