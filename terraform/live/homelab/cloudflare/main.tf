@@ -13,46 +13,45 @@ locals {
     {
       name     = "budget"
       hostname = "budget.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "n8n"
       hostname = "n8n.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "flux-webhook"
       hostname = "flux-webhook.yuandrk.net"
-      service  = "http://k3s-worker1:30080"
+      service  = "http://webhook-receiver.flux-system.svc.cluster.local:80"
     },
     {
       name     = "grafana"
       hostname = "grafana.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "headlamp"
       hostname = "headlamp.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "uptime"
       hostname = "uptime.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "pgadmin"
       hostname = "pgadmin.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
       name     = "photos"
       hostname = "photos.yuandrk.net"
-      service  = "http://k3s-master:80"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
   ]
 
-  #
   tunnel_services_map = {
     for service in local.tunnel_services : service.name => {
       hostname    = service.hostname
@@ -65,15 +64,15 @@ locals {
 }
 
 # DNS records for each service
-module "tunnel_dns" {
-  source   = "../../../modules/tunnel"
+resource "cloudflare_dns_record" "services" {
   for_each = local.tunnel_services_map
 
-  account_id = var.cloudflare_account_id
-  zone_id    = data.cloudflare_zone.root.zone_id
-
-  existing_tunnel_id = local.tunnel_id
-  hostname           = each.value.hostname
+  zone_id = data.cloudflare_zone.root.zone_id
+  name    = split(".", each.value.hostname)[0]
+  content = "${local.tunnel_id}.cfargotunnel.com"
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
 }
 
 # Tunnel configuration - use the list directly

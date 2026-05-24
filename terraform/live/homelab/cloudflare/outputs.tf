@@ -18,10 +18,3 @@ output "tunnel_config" {
     service_count = length(local.tunnel_services)
   }
 }
-
-# Sensitive token
-output "tunnel_token" {
-  description = "Token for cloudflared daemon"
-  value       = module.tunnel_dns["pihole"].tunnel_token
-  sensitive   = true
-}
