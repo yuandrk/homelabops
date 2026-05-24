@@ -73,6 +73,10 @@ spec:
                   value: "4"
                 - name: IMMICH_WORKERS_MICROSERVICES
                   value: "2"
+                - name: REDIS_HOSTNAME
+                  value: immich-valkey
+                - name: IMMICH_MACHINE_LEARNING_URL
+                  value: http://immich-machine-learning:3003
               # Enable privileged mode for GPU device access (Intel QSV)
               securityContext:
                 privileged: true
