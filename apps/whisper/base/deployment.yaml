@@ -26,9 +26,7 @@ spec:
           value: "cpu"
         - name: WHISPER__COMPUTE_TYPE
           value: "int8"
-        - name: PRELOAD_MODELS
-          value: '["Systran/faster-whisper-large-v3-turbo"]'
-        - name: STT_MODEL_TTL
+        - name: WHISPER__TTL
           value: "-1"
         volumeMounts:
         - name: model-cache
