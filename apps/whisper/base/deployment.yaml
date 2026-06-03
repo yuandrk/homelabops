@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisper
+  namespace: apps
+  labels:
+    app: whisper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisper
+  template:
+    metadata:
+      labels:
+        app: whisper
+    spec:
+      containers:
+      - name: whisper
+        image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: WHISPER__INFERENCE_DEVICE
+          value: "cpu"
+        - name: WHISPER__COMPUTE_TYPE
+          value: "int8"
+        - name: PRELOAD_MODELS
+          value: '["Systran/faster-whisper-large-v3-turbo"]'
+        - name: STT_MODEL_TTL
+          value: "-1"
+        volumeMounts:
+        - name: model-cache
+          mountPath: /home/ubuntu/.cache/huggingface/hub
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "4"
+            memory: 4Gi
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          failureThreshold: 60
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: whisper-model-cache

@@ -6,5 +6,6 @@ resources:
 - n8n/base
 - immich/base
 - mcp-slack-bot/base
+- whisper/base
 
 namespace: apps
