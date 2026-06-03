@@ -79,6 +79,10 @@ spec:
               port: 5678
             initialDelaySeconds: 30
             periodSeconds: 10
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
       volumes:
         - name: n8n-data
           persistentVolumeClaim:
