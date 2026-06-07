@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "timezone": "Europe/London",
-  "schedule": ["* 0-3 1-7 * 1"],
+  "schedule": ["* 0-5 * * 1"],
   "prConcurrentLimit": 3,
   "labels": ["dependencies", "renovate"],
   "assignees": ["yuandrk"],
