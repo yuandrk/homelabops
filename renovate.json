@@ -16,10 +16,14 @@
   "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3"],
 
   "kubernetes": {
-    "fileMatch": ["apps/.+\\.yaml$"]
+    "managerFilePatterns": [
+      "/apps/.+\\.yaml$/"
+    ]
   },
   "flux": {
-    "fileMatch": ["apps/.+\\.yaml$"]
+    "managerFilePatterns": [
+      "/apps/.+\\.yaml$/"
+    ]
   },
 
   "packageRules": [
