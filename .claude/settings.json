@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(kubectl get:*)",
+      "Bash(kubectl describe:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl top:*)",
+      "Bash(kubectl explain:*)",
+      "Bash(kubectl api-resources:*)",
+      "Bash(kubectl kustomize:*)",
+      "Bash(kubectl diff:*)",
+      "Bash(flux get:*)",
+      "Bash(flux check:*)",
+      "Bash(flux reconcile:*)",
+      "Bash(flux logs:*)",
+      "Bash(flux events:*)",
+      "Bash(flux tree:*)",
+      "Bash(flux stats:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform validate:*)",
+      "Bash(terraform fmt:*)",
+      "Bash(terraform output:*)",
+      "Bash(terraform show:*)",
+      "Bash(sops -d:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(yq:*)",
+      "Bash(jq:*)",
+      "Bash(./tools/check-system-health.sh:*)"
+    ],
+    "deny": [
+      "Read(./age.key)",
+      "Read(**/*.agekey)",
+      "Read(**/*.key)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-mutations.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-secrets.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
