@@ -13,8 +13,8 @@ We follow [Semantic Versioning (SemVer)](https://semver.org/) with the format `v
 ### Version Examples
 
 - `v1.0.0` - Initial stable release with K3s cluster
-- `v1.1.0` - Added open-webui service with LLM capabilities
-- `v1.1.1` - Fixed open-webui storage configuration
+- `v1.1.0` - Added whisper transcription service
+- `v1.1.1` - Fixed whisper storage configuration
 - `v2.0.0` - Major upgrade to K3s v1.34 with breaking changes
 
 ## Release Types
@@ -39,7 +39,7 @@ We follow [Semantic Versioning (SemVer)](https://semver.org/) with the format `v
 - New external integrations
 
 **Examples:**
-- Adding new services (open-webui, monitoring stack)
+- Adding new services (whisper, monitoring stack)
 - Implementing Cloudflare tunnels
 - Adding multi-architecture support
 - New GitOps workflows
@@ -95,7 +95,7 @@ If you prefer manual control:
 2. **Create Tag**
    ```bash
    # Create annotated tag
-   git tag -a v1.1.0 -m "Release v1.1.0: Add open-webui LLM service"
+   git tag -a v1.1.0 -m "Release v1.1.0: Add whisper transcription service"
    
    # Push tag
    git push origin v1.1.0
@@ -118,13 +118,13 @@ Each release should include:
 # Release v1.1.0
 
 ## 🏗️ Infrastructure Status
-- K3s Cluster: 4-node cluster operational
+- K3s Cluster: 3-node cluster operational
 - FluxCD: v2.6.0 GitOps deployment
 - Services: [list active services]
 
 ## 🔧 What's Changed
 ### ✨ New Features
-- Added open-webui LLM interface (llm.yuandrk.net)
+- Added whisper transcription server (internal)
 - Implemented node affinity for amd64 workloads
 
 ### 🐛 Bug Fixes  
@@ -136,7 +136,7 @@ Each release should include:
 - Enhanced branch protection rules
 
 ## 🚀 Services & Access
-- 🤖 Open-WebUI: https://llm.yuandrk.net
+- 📸 Immich: https://photos.yuandrk.net
 - 💰 Budget App: https://budget.yuandrk.net
 
 ## 📊 Architecture Highlights

@@ -87,14 +87,12 @@ use_lockfile = true  # S3 native locking
 | Flux Webhook | `flux-webhook.yuandrk.net` | `http://webhook-receiver.flux-system.svc.cluster.local:80` | GitOps webhooks |
 | Grafana | `grafana.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Monitoring dashboards |
 | Headlamp | `headlamp.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | K8s dashboard |
-| Uptime Kuma | `uptime.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Status page |
-| pgAdmin | `pgadmin.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | PostgreSQL admin |
 | Immich | `photos.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Photo management |
 
 **Tunnel Configuration**:
 - **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
 - **Tunnel Name**: `homeserver`
-- **Deployment**: Cloudflared systemd service on k3s-master
+- **Deployment**: 2-replica `cloudflared` HelmRelease in the `networking` namespace
 
 ## CI/CD Workflows
 

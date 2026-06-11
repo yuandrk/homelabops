@@ -22,7 +22,7 @@ Production-grade homelab infrastructure running K3s with GitOps automation, Infr
 
 ## 📋 Overview
 
-This repository contains Infrastructure as Code and documentation for a 4-node K3s cluster with GitOps automation. Infrastructure is managed via Ansible, Terraform for cloud resources, and FluxCD for continuous deployment.
+This repository contains Infrastructure as Code and documentation for a 3-node K3s cluster with GitOps automation. Infrastructure is managed via Ansible, Terraform for cloud resources, and FluxCD for continuous deployment.
 
 ## 🛠 Tech Stack
 
@@ -45,14 +45,14 @@ This repository contains Infrastructure as Code and documentation for a 4-node K
 
 | Component | Details |
 |-----------|---------|
-| **Cluster** | 4-node K3s (1 master + 3 workers) on Ubuntu 24.04 LTS |
+| **Cluster** | 3-node K3s (1 master + 2 workers) on Ubuntu 24.04 LTS |
 | **GitOps** | FluxCD v2.6.0 with automatic reconciliation |
 | **Networking** | Dual network (10.10.0.0/24 LAN + 192.168.1.0/24 Wi-Fi) |
 | **External Access** | Cloudflare Tunnels + Traefik ingress |
 | **DNS** | CoreDNS (cluster); nodes use systemd-resolved → 1.1.1.1/8.8.8.8 |
 | **Database** | PostgreSQL 15 on k3s-worker3 |
-| **GPU** | NVIDIA GeForce MX130 (Ollama LLM workloads) |
-| **Storage** | 76Gi total (local-path provisioner) |
+| **GPU** | NVIDIA GeForce MX130 on k3s-worker3 (device plugin installed, no consumers yet) |
+| **Storage** | local-path provisioner + NFS (nfs-subdir-external-provisioner) |
 
 </details>
 
@@ -82,10 +82,10 @@ flux get all -A
 | **Immich** | Photo management | `photos.yuandrk.net` |
 | **Grafana** | Monitoring dashboards | `grafana.yuandrk.net` |
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
-| **Uptime Kuma** | Service monitoring | `uptime.yuandrk.net` |
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
-| **pgAdmin** | PostgreSQL admin | `pgadmin.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
+| **Whisper** | Speech-to-text API (speaches) | internal only |
+| **MCP Slack Bot** | Slack bot (MCP) | internal only |
 
 ## 📊 Current Status
 
@@ -93,10 +93,10 @@ flux get all -A
 
 | Component | Status |
 |-----------|--------|
-| K3s Nodes | 4/4 Ready (v1.33.x) |
-| Kustomizations | 7 reconciled |
-| HelmReleases | 6 deployed |
-| External Services | 8 via Cloudflare Tunnels |
+| K3s Nodes | 3/3 Ready (v1.33.x) |
+| Kustomizations | 8 reconciled |
+| HelmReleases | 8 deployed |
+| External Services | 6 via Cloudflare Tunnels |
 
 ### GitOps ✅
 - **Sync**: Automatic reconciliation every 1 minute

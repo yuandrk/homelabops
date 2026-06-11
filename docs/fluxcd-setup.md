@@ -185,24 +185,25 @@ variable "flux_version" {
 - GitOps configuration stored in Git repository
 - Cluster manifests in `clusters/prod/` directory
 
-## Current Status (April 2026)
+## Current Status (June 2026)
 
 ### Active HelmReleases
-- **open-webui** (apps) — LLM interface with Ollama
 - **immich** (apps) — Photo management
+- **1password-operator** (flux-system → `onepassword` ns) — Secrets sync
 - **headlamp** (kube-system) — Kubernetes dashboard
 - **kube-prometheus-stack** (monitoring) — Prometheus + Grafana
 - **alloy** (monitoring) — Log collector
 - **loki** (monitoring) — Log aggregation
+- **cloudflared** (networking) — Cloudflare tunnel (2 replicas)
 - **nfs-subdir-external-provisioner** (storage) — NFS storage
 
 ### Active Kustomizations
-- `flux-system`, `apps`, `infrastructure`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
+- `flux-system`, `apps`, `infrastructure`, `infrastructure-networking`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
 
 ### System Health
-- ✅ **FluxCD Controllers**: All 6 controllers healthy
-- ✅ **Kustomizations**: 7 reconciled
-- ✅ **HelmReleases**: 7 deployed
+- ✅ **FluxCD Controllers**: All controllers healthy
+- ✅ **Kustomizations**: 8 reconciled
+- ✅ **HelmReleases**: 8 deployed
 - ✅ **Git Sync**: Repository monitoring and reconciliation functional
 
 ## Troubleshooting

@@ -1,8 +1,8 @@
-# 🌐 Homelab Network Architecture (August 2025)
+# 🌐 Homelab Network Architecture
 
 **Status**: ✅ K3s cluster operational with dual networking setup
-**Last Updated**: November 27, 2025
-**Cluster**: 4-node K3s cluster (1 master + 3 workers)
+**Last Updated**: June 11, 2026
+**Cluster**: 3-node K3s cluster (1 master + 2 workers)
 
 ---
 
@@ -27,14 +27,14 @@
 |------|----------|-------------|----------|------|--------------|
 | **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | K3s Server, Traefik |
 | **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Worker Node | K3s Agent |
-| **Worker 2** | `k3s-worker2` | 10.10.0.4/24 | 192.168.1.70 | Worker Node | K3s Agent |
-| **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), Ollama, K3s Agent, GPU |
+| **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), K3s Agent, GPU |
 
 ### Hardware Specs
 - **k3s-master**: Intel i3-7100U, 15 GiB RAM, 931 GiB NVMe (x86-64)
 - **k3s-worker1**: ARM64 RPi 4, 3.7 GiB RAM, 954 GiB USB-SSD
-- **k3s-worker2**: ARM64 RPi 4, 3.7 GiB RAM, 15 GiB eMMC
 - **k3s-worker3**: x86_64, NVIDIA GeForce MX130 (2GB VRAM), CUDA 12.2
+
+> `k3s-worker2` (RPi 4, 10.10.0.4) was decommissioned in May 2026.
 
 ---
 
@@ -47,26 +47,24 @@
 └────────┬────────┘
          │
     Wi-Fi Cloud ☁️
-    ┌────┼────┐
-    │    │    │
-[k3s-master] [worker1] [worker2]
-192.168.1.223 .137     .70
-    │    │    │
-    │    │    │ 
+    ┌────┴────┐
+    │         │
+[k3s-master] [worker1]
+192.168.1.223 .137
+    │         │
+    │         │
 ════════════════════════════════════
     │ 10.10.0.0/24 LAN │ ⚡ Gigabit
 ════════════════════════════════════
     │    │    │
-  .1/24 .2/24 .4/24
-[k3s-master] [worker1] [worker2]
+  .1/24 .2/24 .5/24
+[k3s-master] [worker1] [worker3]
     │    │    │
     └────┴────┘
    [Unmanaged Switch]
 
 K3s Pod Networks (Flannel):
-├─ Master Pods:  10.42.0.x/24
-├─ Worker1 Pods: 10.42.2.x/24  
-└─ Worker2 Pods: 10.42.1.x/24
+└─ One 10.42.x.0/24 subnet per node (see `kubectl get nodes -o custom-columns=NAME:.metadata.name,CIDR:.spec.podCIDR`)
 
 K3s Services: 10.43.0.0/16
 ```
@@ -88,10 +86,11 @@ K3s Services: 10.43.0.0/16
 | **SSH** | 2222 | TCP | LAN | Hardened SSH port |
 | **systemd-resolved** | 53 | UDP | Local | Local DNS stub |
 
-### k3s-worker2 (10.10.0.4)
+### k3s-worker3 (10.10.0.5)
 | Service | Port | Protocol | Access | Notes |
 |---------|------|----------|--------|-------|
 | **SSH** | 2222 | TCP | LAN | Hardened SSH port |
+| **PostgreSQL** | 5432 | TCP | LAN | Native install (not K3s-managed) |
 | **systemd-resolved** | 53 | UDP | Local | Local DNS stub |
 
 ---
@@ -128,7 +127,6 @@ Cluster node hostnames are mirrored in `/etc/hosts` on every node so `ssh k3s-wo
 ```
 10.10.0.1 k3s-master
 10.10.0.2 k3s-worker1
-10.10.0.4 k3s-worker2
 10.10.0.5 k3s-worker3
 ```
 
@@ -200,7 +198,7 @@ kubectl get pods -o wide -A   # Pod distribution across nodes
 
 # Performance testing
 iperf3 -c k3s-worker1 -t 5    # Bandwidth test
-ping -c 10 k3s-worker2        # Latency test
+ping -c 10 k3s-worker3        # Latency test
 ```
 
 ### DNS Management
@@ -234,7 +232,7 @@ kubectl get cm -n kube-system coredns -o yaml
 ---
 
 ## 🧠 **Prompt Context (LLM)**
-This homelab runs a **4-node K3s cluster** (1 master + 3 workers) with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
+This homelab runs a **3-node K3s cluster** (1 master + 2 workers) with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
 
 **Key Network Features:**
 - **Host DNS** via systemd-resolved → 1.1.1.1/8.8.8.8 (no host-level forwarder; CoreDNS handles cluster DNS independently)

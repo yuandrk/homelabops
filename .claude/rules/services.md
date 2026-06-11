@@ -4,13 +4,16 @@
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| Immich | `photos.yuandrk.net` | Photo management, 500Gi NFS storage, v2.6.3 |
-| ActualBudget | `budget.yuandrk.net` | Financial management, v26.3.0 |
+| Immich | `photos.yuandrk.net` | Photo management, 500Gi NFS storage |
+| ActualBudget | `budget.yuandrk.net` | Financial management |
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
-| Uptime Kuma | `uptime.yuandrk.net` | Service monitoring, 2Gi storage |
-| pgAdmin4 | `pgadmin.yuandrk.net` | PostgreSQL admin |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards (admin/flux) |
+| Whisper | internal (`whisper.apps.svc`) | Speech-to-text API (speaches), no ingress |
+| MCP Slack Bot | internal | Slack bot, no service/ingress |
+
+> Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
+> Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
 
 ## Infrastructure Services
 
@@ -22,6 +25,7 @@
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
 - **NFS Provisioner**: External storage provisioner in `storage` namespace (used by Immich)
 - **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130) — currently no GPU consumers
+- **1Password Operator**: Secrets sync (`onepassword` namespace, HelmRelease in `flux-system`)
 
 ## Cloudflare Tunnel Routing
 

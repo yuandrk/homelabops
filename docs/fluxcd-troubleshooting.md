@@ -56,7 +56,7 @@ Helm install failed for release apps/open-webui with chart open-webui@4.1.0: con
 ```
 
 #### Root Cause
-- Heavy applications (like open-webui with Ollama) take longer to start
+- Heavy applications take longer to start (example above is from the since-removed open-webui/Ollama)
 - Default Helm timeout (5 minutes) insufficient for resource-constrained environments
 - Particularly common on Raspberry Pi workers
 
@@ -313,11 +313,11 @@ kubectl logs -n flux-system deployment/source-controller -f
 
 ## Current Environment Status
 
-### Working Configuration (April 2026)
+### Working Configuration (June 2026)
 - **FluxCD Version**: v2.6.0
-- **Active HelmReleases**: open-webui, immich, headlamp, kube-prometheus-stack, alloy, loki, nfs-subdir-external-provisioner
-- **Kustomizations**: flux-system, apps, infrastructure, monitoring-controllers, monitoring-configs, secrets, storage
-- **Infrastructure**: 4-node K3s cluster (1 master + 3 workers, mixed amd64/arm64)
+- **Active HelmReleases**: immich, 1password-operator, headlamp, kube-prometheus-stack, alloy, loki, cloudflared, nfs-subdir-external-provisioner
+- **Kustomizations**: flux-system, apps, infrastructure, infrastructure-networking, monitoring-controllers, monitoring-configs, secrets, storage
+- **Infrastructure**: 3-node K3s cluster (1 master + 2 workers, mixed amd64/arm64)
 - **Storage**: local-path provisioner + NFS provisioner for PVCs
 
 ### Known Considerations

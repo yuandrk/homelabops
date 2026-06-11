@@ -149,8 +149,8 @@ kubectl get helmrelease -A
 **Expected Output (✅ Healthy):**
 ```
 NAMESPACE    NAME                    AGE   READY   STATUS
-apps         open-webui              34h   True    Helm upgrade succeeded for release apps/open-webui.v3 with chart open-webui@7.0.1
-monitoring   kube-prometheus-stack   1h    True    Helm upgrade succeeded for release monitoring/kube-prometheus-stack.v1 with chart kube-prometheus-stack@45.5.5
+apps         immich                  34h   True    Helm upgrade succeeded for release apps/immich.v21 with chart immich@0.12.0
+monitoring   kube-prometheus-stack   1h    True    Helm upgrade succeeded for release monitoring/kube-prometheus-stack.v229 with chart kube-prometheus-stack@86.2.2
 ```
 
 **Health Indicators:**
@@ -165,10 +165,12 @@ kubectl get pods -n apps
 
 **Expected Output (✅ Healthy):**
 ```
-NAME                                    READY   STATUS    RESTARTS   AGE
-open-webui-0                            1/1     Running   0          33h
-open-webui-ollama-5b5cf776c7-rx5pj      1/1     Running   0          33h
-open-webui-pipelines-5b6f5f9fc5-p29g9   1/1     Running   0          33h
+NAME                                       READY   STATUS    RESTARTS   AGE
+actualbudget-6c5f8b7d9c-x2x4q              1/1     Running   0          33h
+immich-server-7d9b5c6f8d-p29g9             1/1     Running   0          33h
+immich-machine-learning-5b6f5f9fc5-rx5pj   1/1     Running   0          33h
+n8n-7f9c5d6b8d-k4m2n                       1/1     Running   0          33h
+whisper-5b5cf776c7-q8r3t                   1/1     Running   0          33h
 ```
 
 ### Check Monitoring Stack
@@ -244,10 +246,10 @@ kubectl annotate --overwrite gitrepository flux-system -n flux-system reconcile.
 
 # Force kustomization sync
 kubectl annotate --overwrite kustomization apps -n flux-system reconcile.fluxcd.io/requestedAt="$(date +%s)"
-kubectl annotate --overwrite kustomization infra-configs -n flux-system reconcile.fluxcd.io/requestedAt="$(date +%s)"
+kubectl annotate --overwrite kustomization infrastructure -n flux-system reconcile.fluxcd.io/requestedAt="$(date +%s)"
 
 # Force Helm release sync
-kubectl annotate --overwrite helmrelease open-webui -n apps reconcile.fluxcd.io/requestedAt="$(date +%s)"
+kubectl annotate --overwrite helmrelease immich -n apps reconcile.fluxcd.io/requestedAt="$(date +%s)"
 ```
 
 ## 7. System Health Dashboard Script
@@ -357,14 +359,14 @@ kubectl logs -n flux-system -l app=kustomize-controller --tail=100
 **Solutions:**
 ```bash
 # Check Helm release details
-kubectl describe helmrelease open-webui -n apps
+kubectl describe helmrelease immich -n apps
 
 # Check Helm controller logs
 kubectl logs -n flux-system -l app=helm-controller --tail=100
 
 # Manual Helm troubleshooting
 helm list -A
-helm status open-webui -n apps
+helm status immich -n apps
 ```
 
 ## 9. Performance Monitoring
