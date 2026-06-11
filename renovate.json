@@ -52,8 +52,7 @@
       "description": "Automerge patch updates for stable apps",
       "matchUpdateTypes": ["patch"],
       "matchPackageNames": [
-        "actualbudget/actual-server",
-        "louislam/uptime-kuma"
+        "actualbudget/actual-server"
       ],
       "automerge": true,
       "automergeType": "pr"

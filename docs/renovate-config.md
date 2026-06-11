@@ -20,81 +20,25 @@ This keeps Renovate focused on what matters most in a Kubernetes homelab: contai
 
 ## Current Configuration
 
-The `renovate.json` file in the repository root contains the Renovate configuration:
+The source of truth is [`renovate.json`](../renovate.json) in the repository root. Key settings (don't trust this table blindly — the JSON wins if they disagree):
 
-```json
-{
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "timezone": "Europe/London",
-  "schedule": ["every weekend"],
-  "prConcurrentLimit": 3,
-  "labels": ["dependencies", "renovate"],
-  "assignees": ["yuandrk"],
-
-  "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3"],
-
-  "kubernetes": {
-    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
-  },
-  "flux": {
-    "fileMatch": ["apps/.+\\.yaml$", "infrastructure/.+\\.yaml$"]
-  },
-
-  "packageRules": [
-    {
-      "description": "Disable GitHub Actions updates",
-      "matchManagers": ["github-actions"],
-      "enabled": false
-    },
-    {
-      "description": "Disable Terraform updates",
-      "matchManagers": ["terraform", "terraform-version"],
-      "enabled": false
-    },
-    {
-      "description": "Disable FluxCD system components",
-      "matchFileNames": ["clusters/prod/flux-system/**"],
-      "enabled": false
-    },
-    {
-      "description": "Group app Docker images",
-      "matchDatasources": ["docker"],
-      "matchFileNames": ["apps/**"],
-      "groupName": "app-images"
-    },
-    {
-      "description": "Group infrastructure Docker images",
-      "matchDatasources": ["docker"],
-      "matchFileNames": ["infrastructure/**"],
-      "groupName": "infra-images"
-    },
-    {
-      "description": "Group Helm charts",
-      "matchDatasources": ["helm"],
-      "groupName": "helm-charts"
-    },
-    {
-      "description": "Automerge patch updates for stable apps",
-      "matchUpdateTypes": ["patch"],
-      "matchPackageNames": [
-        "actualbudget/actual-server",
-        "louislam/uptime-kuma"
-      ],
-      "automerge": true,
-      "automergeType": "pr"
-    }
-  ]
-}
-```
+| Setting | Value |
+|---------|-------|
+| Schedule | `* 0-5 * * 1` — Mondays 00:00–05:00 (Europe/London) |
+| Managers | `kubernetes`, `flux`, `helm-values`, `helmv3` only |
+| File scope | `apps/**/*.yaml` (kubernetes + flux managers via `managerFilePatterns`) |
+| PR limit | 3 concurrent, `rebaseWhen: behind-base-branch` |
+| Dashboard | Dependency Dashboard issue enabled |
+| Security | `vulnerabilityAlerts` + `osvVulnerabilityAlerts` enabled |
+| Grouping | `app-images` (Docker images in `apps/`), `helm-charts` (helm datasource) |
+| Automerge | Patch updates of `actualbudget/actual-server` only |
 
 ## Configuration Explained
 
 ### Base Settings
 
 - **`extends: ["config:recommended"]`** - Uses Renovate's recommended default settings
-- **`timezone: "Europe/London"`** - Sets timezone for schedule
-- **`schedule: ["every weekend"]`** - Renovate only runs on weekends to avoid disrupting weekday operations
+- **`timezone: "Europe/London"`** + **`schedule: ["* 0-5 * * 1"]`** - Renovate only runs early Monday morning to batch updates into one weekly window
 - **`enabledManagers`** - **CRITICAL**: Only enables `kubernetes`, `flux`, `helm-values`, and `helmv3` managers (disables everything else by default)
 
 ### Pull Request Management
@@ -105,42 +49,29 @@ The `renovate.json` file in the repository root contains the Renovate configurat
 
 ### File Matching
 
-- **`kubernetes.fileMatch`** - Scans `apps/` and `infrastructure/` directories for Kubernetes manifests
-- **`flux.fileMatch`** - Detects FluxCD HelmRelease resources in the same directories
-- **Note**: `clusters/` directory excluded from scanning to avoid FluxCD system components
+- **`managerFilePatterns`** restricts the `kubernetes` and `flux` managers to `apps/**/*.yaml`
+- **Note**: `clusters/` (FluxCD system components) and `infrastructure/` are outside the matched patterns
 
 ### Explicit Exclusions
 
 - **GitHub Actions disabled** - `enabled: false` for `github-actions` manager
 - **Terraform disabled** - `enabled: false` for `terraform` and `terraform-version` managers
-- **FluxCD system components disabled** - `clusters/prod/flux-system/**` files excluded
 
 ### Update Policy & Grouping
 
 - **App Docker images grouped** - All Docker image updates in `apps/` bundled into "app-images" PRs
-- **Infrastructure images grouped** - Infrastructure Docker images bundled into "infra-images" PRs
 - **Helm charts grouped** - All Helm chart updates bundled into "helm-charts" PRs
-- **Patch automerge** - Patch updates for ActualBudget and Uptime Kuma auto-merge after CI passes
+- **Patch automerge** - Patch updates for ActualBudget auto-merge after CI passes
 
 ## Monitored Dependencies
 
-Renovate **only monitors** these dependency types:
+Renovate **only monitors** Docker images and Helm charts under `apps/`, currently:
 
-### Applications (Docker Images)
 - **ActualBudget** - `actualbudget/actual-server`
-- **Uptime Kuma** - `louislam/uptime-kuma`
-- **pgAdmin** - `dpage/pgadmin4`
 - **n8n** - `n8nio/n8n`
-
-### Infrastructure (Docker Images)
-- **NVIDIA Device Plugin** - `nvcr.io/nvidia/k8s-device-plugin`
-- **Kube State Metrics** - `registry.k8s.io/kube-state-metrics/kube-state-metrics`
-- **Headlamp Flux Plugin** - `ghcr.io/headlamp-k8s/headlamp-plugin-flux`
-
-### Helm Charts
-- **open-webui** - Helm chart updates
-- **Headlamp** - Helm chart updates
-- **kube-prometheus-stack** - Helm chart updates (monitoring stack)
+- **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey)
+- **Whisper** - `ghcr.io/speaches-ai/speaches`
+- **MCP Slack Bot** - `ghcr.io/yuandrk/mcp-slack-bot`
 
 ### Explicitly NOT Monitored
 
@@ -152,10 +83,10 @@ These are intentionally disabled and require manual updates:
 
 ## How It Works
 
-1. **Weekend Scan**: Every weekend, Renovate scans `apps/` and `infrastructure/` for Docker images and Helm charts
+1. **Weekly Scan**: Early Monday morning, Renovate scans `apps/` for Docker images and Helm charts
 2. **PR Creation**: Creates up to 3 PRs for available updates (grouped by category)
 3. **Manual Review**: You review, test, and merge the PRs when ready
-4. **Auto-merge**: Patch updates for ActualBudget and Uptime Kuma merge automatically
+4. **Auto-merge**: Patch updates for ActualBudget merge automatically
 5. **Dependency Dashboard**: Check the "Dependency Dashboard" issue for all pending updates
 
 **What Renovate Scans**:
@@ -217,7 +148,7 @@ Skip updates for a specific package:
 ```json
 "packageRules": [
   {
-    "matchPackageNames": ["open-webui/open-webui"],
+    "matchPackageNames": ["n8nio/n8n"],
     "enabled": false
   }
 ]
@@ -252,7 +183,7 @@ renovate --dry-run --token=$GITHUB_TOKEN yuandrk/homelabops
 4. **Test Updates**: Use a dev branch to test major updates before merging to main
 5. **Monitor Dashboard**: Check the Dependency Dashboard issue regularly
 6. **Group Updates**: Related dependencies grouped together (app-images, infra-images, helm-charts)
-7. **Schedule Wisely**: Weekend-only runs avoid disrupting weekday operations
+7. **Schedule Wisely**: A single weekly window (Monday 00:00–05:00) avoids disrupting daily operations
 
 ## Troubleshooting
 

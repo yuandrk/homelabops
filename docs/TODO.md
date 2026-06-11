@@ -1,6 +1,6 @@
 # Documentation TODO
 
-**Last Updated**: 2026-04-05
+**Last Updated**: 2026-06-11
 
 ## Performance & Operations
 
@@ -21,7 +21,7 @@
 
 ### Node Version Alignment
 
-- [ ] Upgrade k3s-worker1 and k3s-worker2 from v1.33.3 to v1.33.5
+- [ ] Upgrade k3s-worker1 from v1.33.3 to v1.33.5 (k3s-worker2 was decommissioned May 2026)
 
 ## Identity & Access
 

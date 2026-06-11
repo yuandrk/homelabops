@@ -40,10 +40,6 @@ graph TB
             Worker1[🍓 k3s-worker1<br/>Raspberry Pi<br/>10.10.0.2]
         end
 
-        subgraph "k3s-worker2 (arm64)"
-            Worker2[🍓 k3s-worker2<br/>Raspberry Pi<br/>10.10.0.4]
-        end
-
         subgraph "k3s-worker3 (amd64, GPU)"
             Worker3[🖥️ k3s-worker3<br/>10.10.0.5]
             PostgreSQL[🐘 PostgreSQL<br/>Native]
@@ -59,9 +55,9 @@ graph TB
             subgraph "apps namespace"
                 Immich[🖼️ Immich<br/>photos.yuandrk.net]
                 ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net]
-                UptimeKuma[📊 Uptime Kuma<br/>uptime.yuandrk.net]
                 N8N[⚙️ n8n<br/>n8n.yuandrk.net]
-                PgAdmin[🐘 pgAdmin<br/>pgadmin.yuandrk.net]
+                Whisper[🎙️ Whisper<br/>internal]
+                MCPBot[🤖 MCP Slack Bot<br/>internal]
             end
 
             subgraph "kube-system namespace"
@@ -107,7 +103,6 @@ graph TB
     Router --> Switch
     Switch --> Master
     Switch --> Worker1
-    Switch --> Worker2
     Switch --> Worker3
 
     %% Infra
@@ -116,7 +111,6 @@ graph TB
     Terraform --> CloudFlare
     Ansible --> Master
     Ansible --> Worker1
-    Ansible --> Worker2
     Ansible --> Worker3
 
     %% Orchestration
@@ -133,13 +127,12 @@ graph TB
 
     %% App connections
     Immich --> PostgreSQL
+    N8N --> PostgreSQL
 
     %% Service exposure
     Traefik --> Immich
     Traefik --> ActualBudget
-    Traefik --> UptimeKuma
     Traefik --> N8N
-    Traefik --> PgAdmin
     Traefik --> Grafana
     Traefik --> Headlamp
 
@@ -153,8 +146,8 @@ graph TB
     class Internet,CloudFlare,DNS,Tunnel external
     class Router,Switch network
     class S3,OIDC,Terraform,Ansible infra
-    class Master,Worker1,Worker2,Worker3,Traefik,PostgreSQL,GPU compute
-    class CoreDNS,FluxCD,Immich,ActualBudget,UptimeKuma,N8N,PgAdmin,Headlamp,NvidiaPlugin,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv container
+    class Master,Worker1,Worker3,Traefik,PostgreSQL,GPU compute
+    class CoreDNS,FluxCD,Immich,ActualBudget,N8N,Whisper,MCPBot,Headlamp,NvidiaPlugin,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv container
     class LocalPath,NFS,HostStorage,GitRepo,HelmCharts data
 ```
 
@@ -176,7 +169,6 @@ flowchart LR
     subgraph "Homelab Network (10.10.0.0/24 LAN)"
         Master_Node[🖥️ k3s-master<br/>10.10.0.1]
         Worker1_Node[🍓 k3s-worker1<br/>10.10.0.2]
-        Worker2_Node[🍓 k3s-worker2<br/>10.10.0.4]
         Worker3_Node[🖥️ k3s-worker3 GPU<br/>10.10.0.5]
     end
 
@@ -202,7 +194,6 @@ flowchart LR
 
     %% Cluster network
     Master_Node -.-> Worker1_Node
-    Master_Node -.-> Worker2_Node
     Master_Node -.-> Worker3_Node
 
     classDef external fill:#e3f2fd
@@ -212,7 +203,7 @@ flowchart LR
 
     class User,Domain external
     class CF_DNS,CF_Tunnel,CF_Proxy cloudflare
-    class Master_Node,Worker1_Node,Worker2_Node,Worker3_Node network
+    class Master_Node,Worker1_Node,Worker3_Node network
     class Traefik_LB,Ingress,Service,Pod k3s
 ```
 
@@ -277,8 +268,6 @@ graph TB
         Photos[🖼️ photos]
         Budget[💰 budget]
         N8nExt[⚙️ n8n]
-        PgAdminExt[🐘 pgadmin]
-        Uptime[📊 uptime]
         HeadlampExt[🎛️ headlamp]
         GrafanaExt[📊 grafana]
         Webhook[🔗 flux-webhook]
@@ -297,8 +286,8 @@ graph TB
         ImmichApp[🖼️ immich]
         ActualApp[💰 actualbudget]
         N8nApp[⚙️ n8n]
-        PgAdminApp[🐘 pgadmin]
-        UptimeApp[📊 uptime-kuma]
+        WhisperApp[🎙️ whisper<br/>internal]
+        MCPBotApp[🤖 mcp-slack-bot<br/>internal]
     end
 
     subgraph "Other Namespaces"
@@ -316,8 +305,6 @@ graph TB
     Photos --> CFT
     Budget --> CFT
     N8nExt --> CFT
-    PgAdminExt --> CFT
-    Uptime --> CFT
     HeadlampExt --> CFT
     GrafanaExt --> CFT
     Webhook --> CFT
@@ -330,16 +317,13 @@ graph TB
     TraefikSvc --> ImmichApp
     TraefikSvc --> ActualApp
     TraefikSvc --> N8nApp
-    TraefikSvc --> PgAdminApp
-    TraefikSvc --> UptimeApp
     TraefikSvc --> HeadlampApp
     TraefikSvc --> GrafanaApp
 
     %% Storage
     ActualApp --> LocalPV
-    UptimeApp --> LocalPV
     N8nApp --> LocalPV
-    PgAdminApp --> LocalPV
+    WhisperApp --> LocalPV
     ImmichApp --> NFSPV
     ImmichApp --> PG
     N8nApp --> PG
@@ -350,10 +334,10 @@ graph TB
     classDef k8s fill:#fce4ec
     classDef storage fill:#f1f8e9
 
-    class Photos,Budget,N8nExt,PgAdminExt,Uptime,HeadlampExt,GrafanaExt,Webhook external
+    class Photos,Budget,N8nExt,HeadlampExt,GrafanaExt,Webhook external
     class CFT tunnel
     class TraefikSvc,WebhookSvc host
-    class ImmichApp,ActualApp,N8nApp,PgAdminApp,UptimeApp,HeadlampApp,GrafanaApp k8s
+    class ImmichApp,ActualApp,N8nApp,WhisperApp,MCPBotApp,HeadlampApp,GrafanaApp k8s
     class LocalPV,NFSPV,PG storage
 ```
 
@@ -377,12 +361,11 @@ graph TB
         end
     end
 
-    subgraph "arm64 Nodes (Raspberry Pi)"
+    subgraph "arm64 Node (Raspberry Pi)"
         Worker1Node[🍓 k3s-worker1<br/>4 cores / 4Gi RAM]
-        Worker2Node[🍓 k3s-worker2<br/>4 cores / 4Gi RAM]
 
         subgraph "Pi Workloads"
-            LightApps[⚡ Lightweight apps<br/>uptime-kuma, actualbudget,<br/>pgadmin, n8n]
+            LightApps[⚡ Lightweight apps<br/>actualbudget, n8n]
             SystemPods[📦 System DaemonSets<br/>node-exporter, alloy]
         end
     end
@@ -400,8 +383,6 @@ graph TB
 
     Worker1Node --> LightApps
     Worker1Node --> SystemPods
-    Worker2Node --> LightApps
-    Worker2Node --> SystemPods
 
     Affinity --> ImmichWorkload
     Affinity --> ImmichML
@@ -412,6 +393,6 @@ graph TB
     classDef rule fill:#f1f8e9
 
     class MasterNode,Worker3Node,TraefikWorkload,FluxWorkload,ImmichWorkload,ImmichML,PostgresHost amd64
-    class Worker1Node,Worker2Node,LightApps,SystemPods arm64
+    class Worker1Node,LightApps,SystemPods arm64
     class Affinity rule
 ```

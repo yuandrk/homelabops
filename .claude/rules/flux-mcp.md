@@ -38,8 +38,8 @@ Prefer the `/reconcile [target]` slash command, which wraps the source + kustomi
 
 ## Current Flux Resources
 
-- **Kustomizations**: `flux-system`, `apps`, `infrastructure`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
-- **HelmReleases**: `immich` (apps), `headlamp` (kube-system), `kube-prometheus-stack` (monitoring), `alloy` (monitoring), `loki` (monitoring), `nfs-subdir-external-provisioner` (storage)
+- **Kustomizations**: `flux-system`, `apps`, `infrastructure`, `infrastructure-networking`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
+- **HelmReleases**: `immich` (apps), `1password-operator` (flux-system), `headlamp` (kube-system), `kube-prometheus-stack` (monitoring), `alloy` (monitoring), `loki` (monitoring), `cloudflared` (networking), `nfs-subdir-external-provisioner` (storage)
 - **GitRepository**: `flux-system` (watches `main` branch, 1m interval)
 
 ## Important
