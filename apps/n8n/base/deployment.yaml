@@ -57,6 +57,8 @@ spec:
                 secretKeyRef:
                   name: n8n-credentials
                   key: encryption_key
+            - name: N8N_PROXY_HOPS
+              value: "1"
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n
