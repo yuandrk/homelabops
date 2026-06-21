@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
 - actualbudget/base
+- postgres/base
 - n8n/base
 - immich/base
 - mcp-slack-bot/base

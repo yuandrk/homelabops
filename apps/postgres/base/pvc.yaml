@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: apps
+  annotations:
+    helm.sh/resource-policy: keep
+    homelab/notes: "Shared Postgres data for immich + n8n. Reclaim=Retain (patch PV after first bind). Do NOT delete without a verified backup."
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
