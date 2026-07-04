@@ -6,6 +6,7 @@ resources:
 - n8n/base
 - immich/base
 - mcp-slack-bot/base
+- stirling-pdf/base
 - whisper/base
 
 namespace: apps
