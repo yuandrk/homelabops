@@ -25,6 +25,11 @@ spec:
       create: true
       autoRestart: true
       authMethod: service-account
+      # Individual/Families plan allows only 1000 API requests per DAY (per account).
+      # Default 600s polling of ~10 items burns ~3000 requests/day, which pins the
+      # account at "rate limit exceeded" permanently (failed retries count too).
+      # 6h polling keeps usage at ~120/day. https://www.1password.dev/service-accounts/rate-limits/
+      pollingInterval: 21600
       serviceAccountToken:
         name: onepassword-token
         key: token
