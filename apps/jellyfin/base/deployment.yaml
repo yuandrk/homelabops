@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: apps
+  labels:
+    app: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      # Pinned to k3s-master: /config uses node-local local-path storage and /data/media is a
+      # hostPath on this node, shared with qBittorrent's download output.
+      nodeSelector:
+        kubernetes.io/hostname: k3s-master
+      containers:
+        - name: jellyfin
+          image: lscr.io/linuxserver/jellyfin:10.11.11
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/London"
+          ports:
+            - name: http
+              containerPort: 8096
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: media
+              mountPath: /data/media
+          # TODO(QSV): for Intel QuickSync HW transcoding, add a hostPath volume /dev/dri +
+          # volumeMount and the render group via supplementalGroups (k3s-master i3-7100U has an
+          # Intel iGPU). Verify group id on-host first; default is direct-play only.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8096
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: jellyfin-config
+        - name: media
+          hostPath:
+            path: /srv/media/downloads/complete
+            type: Directory

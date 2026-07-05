@@ -5,7 +5,9 @@ resources:
 - actualbudget/base
 - n8n/base
 - immich/base
+- jellyfin/base
 - mcp-slack-bot/base
+- qbittorrent/base
 - stirling-pdf/base
 - whisper/base
 
