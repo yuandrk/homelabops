@@ -5,7 +5,6 @@ resources:
 - deployment.yaml
 - service.yaml
 - pvc-config.yaml
-- middleware.yaml
 - ingress.yaml
 
 commonLabels:
