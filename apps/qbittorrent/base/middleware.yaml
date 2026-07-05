@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: qbittorrent-internal-allowlist
+  namespace: apps
+  labels:
+    app: qbittorrent
+spec:
+  # Traefik v3 (k3s v1.33): defense-in-depth so the WebUI only answers LAN + Tailscale clients.
+  # Primary internet-isolation is that this host is NOT in the Cloudflare tunnel / has no public DNS.
+  ipAllowList:
+    sourceRange:
+      - 10.10.0.0/24      # homelab LAN
+      - 100.64.0.0/10     # Tailscale CGNAT range

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: apps
+  labels:
+    app: qbittorrent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      # Pinned to k3s-master: /config uses node-local local-path storage and /downloads is a
+      # hostPath on this node. qBittorrent (writer) and Jellyfin (reader) must share the node.
+      nodeSelector:
+        kubernetes.io/hostname: k3s-master
+      containers:
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent:5.2.2
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/London"
+            - name: WEBUI_PORT
+              value: "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      # TODO(gluetun): to route torrent traffic through a VPN, add a gluetun sidecar here, make
+      # qBittorrent share gluetun's network namespace so it egresses only via the tunnel, and
+      # enable gluetun's kill-switch.
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: qbittorrent-config
+        - name: downloads
+          hostPath:
+            path: /srv/media/downloads
+            type: Directory
