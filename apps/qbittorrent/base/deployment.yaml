@@ -23,7 +23,7 @@ spec:
         kubernetes.io/hostname: k3s-master
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:5.2.2
+          image: lscr.io/linuxserver/qbittorrent:5.2.3
           env:
             - name: PUID
               value: "1000"
