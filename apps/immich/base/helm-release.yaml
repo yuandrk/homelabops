@@ -45,7 +45,6 @@ spec:
       persistence:
         data:
           enabled: true
-          size: 1Gi
           type: emptyDir
 
     # Server component
