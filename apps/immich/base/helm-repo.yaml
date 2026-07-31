@@ -4,6 +4,7 @@ metadata:
   name: immich
   namespace: apps
 spec:
+  type: oci
   interval: 1h
   timeout: 3m
-  url: https://immich-app.github.io/immich-charts
+  url: oci://ghcr.io/immich-app/immich-charts
