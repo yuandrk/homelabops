@@ -15,6 +15,24 @@ spec:
         namespace: networking
   values:
     replicaCount: 2
+  # cloudflared serves Prometheus metrics on :2000 (the chart hardcodes `--metrics 0.0.0.0:2000`
+  # into the container command), but it never declares a containerPort for it. A PodMonitor
+  # cannot select an undeclared port: the operator emits a `keep` action on
+  # __meta_kubernetes_pod_container_port_number, which matches nothing and yields zero targets.
+  # The chart exposes no values knob for ports, so patch one in after rendering.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: cloudflared-cloudflare-tunnel-remote
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/ports
+                value:
+                  - name: metrics
+                    containerPort: 2000
+                    protocol: TCP
   valuesFrom:
     - kind: Secret
       name: cloudflared-token

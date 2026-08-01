@@ -1,7 +1,9 @@
 ---
 # cloudflared runs in-cluster as a 2-replica Deployment in the networking namespace and serves
-# metrics on 0.0.0.0:2000 (see the `--metrics` flag in its container command). The chart does not
-# declare a named containerPort, so scrape by targetPort number.
+# metrics on 0.0.0.0:2000. The upstream chart declares no containerPort for it, so the HelmRelease
+# in infrastructure/networking/cloudflared patches a `metrics` port in via a postRenderer — without
+# a declared port the operator's generated `keep` on __meta_kubernetes_pod_container_port_number
+# matches nothing and this PodMonitor produces zero targets.
 #
 # Replaces the old `cloudflared` ScrapeConfig, which still pointed at 10.10.0.1:9469 — the
 # systemd cloudflared that was retired when the tunnel moved into the cluster. That target had
@@ -22,5 +24,5 @@ spec:
     matchLabels:
       pod: cloudflared
   podMetricsEndpoints:
-    - targetPort: 2000
+    - port: metrics
       path: /metrics
