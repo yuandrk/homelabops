@@ -12,7 +12,7 @@ provider "flux" {
     config_path = var.kubeconfig_path
   }
   git = {
-    url = "ssh://git@github.com/${var.github_owner}/${var.repository_name}.git"
+    url    = "ssh://git@github.com/${var.github_owner}/${var.repository_name}.git"
     branch = var.git_branch
     ssh = {
       username    = "git"
@@ -23,10 +23,13 @@ provider "flux" {
 
 resource "flux_bootstrap_git" "this" {
   depends_on = [tls_private_key.flux]
-  
-  path            = "clusters/prod"
-  version         = var.flux_version
-  components_extra = ["image-reflector-controller", "image-automation-controller"]
+
+  path    = "clusters/prod"
+  version = var.flux_version
+
+  # No components_extra: image-reflector/image-automation controllers were removed
+  # 2026-08-01. Image tag updates are handled by Renovate, so the controllers ran
+  # with zero ImageRepository/ImagePolicy/ImageUpdateAutomation resources.
 }
 
 resource "tls_private_key" "flux" {
