@@ -1,0 +1,26 @@
+---
+# cloudflared runs in-cluster as a 2-replica Deployment in the networking namespace and serves
+# metrics on 0.0.0.0:2000 (see the `--metrics` flag in its container command). The chart does not
+# declare a named containerPort, so scrape by targetPort number.
+#
+# Replaces the old `cloudflared` ScrapeConfig, which still pointed at 10.10.0.1:9469 — the
+# systemd cloudflared that was retired when the tunnel moved into the cluster. That target had
+# been reporting `down` ever since.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cloudflared
+  namespace: monitoring
+  labels:
+    # Must match prometheusSpec.podMonitorSelector in the kube-prometheus-stack HelmRelease.
+    app.kubernetes.io/component: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - networking
+  selector:
+    matchLabels:
+      pod: cloudflared
+  podMetricsEndpoints:
+    - targetPort: 2000
+      path: /metrics

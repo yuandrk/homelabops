@@ -11,6 +11,9 @@ configMapGenerator:
 - name: k3s-nodes-dashboard
   files:
   - nodes.json
+- name: app-usage-dashboard
+  files:
+  - app-usage.json
 
 generatorOptions:
   disableNameSuffixHash: false

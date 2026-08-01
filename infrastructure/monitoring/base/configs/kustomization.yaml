@@ -10,7 +10,7 @@ resources:
 - node-exporter-full-dashboard.yaml
 - prometheus-rules.yaml
 - grafana-ingress.yaml
-- cloudflared-scrapeconfig.yaml
+- cloudflared-podmonitor.yaml
 
 patches:
 - target:
