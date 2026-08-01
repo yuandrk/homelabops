@@ -65,13 +65,18 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 
 ## Monitored Dependencies
 
-Renovate **only monitors** Docker images and Helm charts under `apps/`, currently:
+Renovate monitors Docker images and Helm charts under `apps/` and `infrastructure/`, currently:
 
 - **ActualBudget** - `actualbudget/actual-server`
 - **n8n** - `n8nio/n8n`
 - **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey)
 - **Whisper** - `ghcr.io/speaches-ai/speaches`
-- **MCP Slack Bot** - `ghcr.io/yuandrk/mcp-slack-bot`
+- **Jellyfin** - `jellyfin/jellyfin`
+- **qBittorrent** - `linuxserver/qbittorrent`
+- **Infrastructure charts** - kube-prometheus-stack, loki, alloy, headlamp, cloudflared, nfs-subdir-external-provisioner
+
+App and infrastructure updates land in separate grouped PRs (`app-images`, `app-helm-charts`,
+`infra-images`, `infra-helm-charts`) so one failing chart cannot block the others.
 
 ### Explicitly NOT Monitored
 

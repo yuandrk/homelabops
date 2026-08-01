@@ -17,12 +17,14 @@
 
   "kubernetes": {
     "managerFilePatterns": [
-      "/apps/.+\\.yaml$/"
+      "/apps/.+\\.yaml$/",
+      "/infrastructure/.+\\.yaml$/"
     ]
   },
   "flux": {
     "managerFilePatterns": [
-      "/apps/.+\\.yaml$/"
+      "/apps/.+\\.yaml$/",
+      "/infrastructure/.+\\.yaml$/"
     ]
   },
 
@@ -44,9 +46,22 @@
       "groupName": "app-images"
     },
     {
-      "description": "Group Helm charts",
+      "description": "Group app Helm charts",
       "matchDatasources": ["helm"],
-      "groupName": "helm-charts"
+      "matchFileNames": ["apps/**"],
+      "groupName": "app-helm-charts"
+    },
+    {
+      "description": "Group infrastructure Helm charts separately so a single failing chart does not block the rest",
+      "matchDatasources": ["helm"],
+      "matchFileNames": ["infrastructure/**"],
+      "groupName": "infra-helm-charts"
+    },
+    {
+      "description": "Group infrastructure container images",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["infrastructure/**"],
+      "groupName": "infra-images"
     },
     {
       "description": "Automerge patch updates for stable apps",
