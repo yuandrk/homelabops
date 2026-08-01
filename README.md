@@ -85,6 +85,7 @@ flux get all -A
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
 | **qBittorrent** | Torrent client | `qbit.yuandrk.net` (LAN/Tailscale) |
+| **Glance** | Homelab dashboard | `glance.yuandrk.net` (LAN/Tailscale) |
 
 ## 📊 Current Status
 
