@@ -27,6 +27,6 @@ variable "git_branch" {
 
 variable "flux_version" {
   type        = string
-  description = "FluxCD version to install"
-  default     = "v2.6.0"
+  description = "FluxCD version to install. Pinned to the 2.8 line: Flux 2.9 requires Kubernetes >= v1.34.1 and this cluster runs k3s v1.33."
+  default     = "v2.8.8"
 }
