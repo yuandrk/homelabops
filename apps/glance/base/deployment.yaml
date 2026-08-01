@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glance
+  namespace: apps
+  labels:
+    app: glance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glance
+  template:
+    metadata:
+      labels:
+        app: glance
+    spec:
+      # The upstream image has no USER directive, so runAsNonRoot on its own would fail the pod
+      # at admission ("container has runAsNonRoot and image will run as root"). Pin an explicit
+      # UID instead. Nothing in the binary writes to disk, so 65534 needs no ownership anywhere.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+      containers:
+      - name: glance
+        image: glanceapp/glance:v0.8.5
+        # Image entrypoint is already ["/app/glance", "--config", "/app/config/glance.yml"].
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - secretRef:
+            name: glance-credentials
+        volumeMounts:
+        # Mounted as a directory, deliberately without subPath. Glance watches the config with
+        # fsnotify and reloads on change; with subPath the kubelet never updates the file, so
+        # every config change would need a pod restart.
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /api/healthz
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: glance-config
