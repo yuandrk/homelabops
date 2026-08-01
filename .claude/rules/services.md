@@ -8,7 +8,7 @@
 | ActualBudget | `budget.yuandrk.net` | Financial management |
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
-| Grafana | `grafana.yuandrk.net` | Dashboards (admin/flux) |
+| Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
 | qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.

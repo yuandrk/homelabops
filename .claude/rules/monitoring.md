@@ -3,7 +3,9 @@
 ## Components
 
 - **Prometheus**: Metrics collection (10Gi PVC, 15d retention)
-- **Grafana**: Dashboards at `grafana.yuandrk.net` (admin/flux)
+- **Grafana**: Dashboards at `grafana.yuandrk.net`. `admin/flux` no longer works — read the live
+  credentials with:
+  `kubectl get secret -n monitoring grafana-admin-credentials -o jsonpath='{.data.admin-password}' | base64 -d`
 - **Node Exporter**: System metrics from all K3s nodes
 - **Kube State Metrics**: Cluster state and Flux resources
 - **PodMonitor**: Scrapes Flux controllers in `flux-system` namespace
