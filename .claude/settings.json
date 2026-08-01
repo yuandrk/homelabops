@@ -29,8 +29,7 @@
       "Bash(git show:*)",
       "Bash(git branch:*)",
       "Bash(yq:*)",
-      "Bash(jq:*)",
-      "Bash(./tools/check-system-health.sh:*)"
+      "Bash(jq:*)"
     ],
     "deny": [
       "Read(./age.key)",

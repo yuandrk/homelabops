@@ -12,8 +12,6 @@ terraform.rc
 terraform/kube/kubeconfig
 
 # ===== Keys =====
-Ansible/ssh/ssh_keys/id_rsa
-Ansible/ssh/ssh_keys/id_rsa.pub
 directory_structure.md
 .venv/
 
@@ -32,3 +30,5 @@ age.key
 CLAUDE.md
 Data
 .mcp.json
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

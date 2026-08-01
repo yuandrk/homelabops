@@ -22,7 +22,7 @@ Production-grade homelab infrastructure running K3s with GitOps automation, Infr
 
 ## 📋 Overview
 
-This repository contains Infrastructure as Code and documentation for a 3-node K3s cluster with GitOps automation. Infrastructure is managed via Ansible, Terraform for cloud resources, and FluxCD for continuous deployment.
+This repository contains Infrastructure as Code and documentation for a 3-node K3s cluster with GitOps automation. Terraform manages cloud resources and FluxCD handles continuous deployment; the nodes themselves are configured directly.
 
 ## 🛠 Tech Stack
 
@@ -30,7 +30,7 @@ This repository contains Infrastructure as Code and documentation for a 3-node K
 |----------|-------------|
 | **Container Orchestration** | ![Kubernetes](https://img.shields.io/badge/K3s-326CE5?logo=kubernetes&logoColor=white) ![Helm](https://img.shields.io/badge/Helm-0F1689?logo=helm&logoColor=white) |
 | **GitOps & CD** | ![FluxCD](https://img.shields.io/badge/FluxCD-5468FF?logo=flux&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white) |
-| **Infrastructure as Code** | ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white) ![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white) |
+| **Infrastructure as Code** | ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white) |
 | **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) |
 | **Networking** | ![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white) ![Traefik](https://img.shields.io/badge/Traefik-24A1C1?logo=traefikproxy&logoColor=white) |
 | **Database** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) |
@@ -58,7 +58,7 @@ This repository contains Infrastructure as Code and documentation for a 3-node K
 
 ## 🚀 Quick Start
 
-**Prerequisites:** `kubectl`, `flux`, `terraform`, `ansible` | Ubuntu 24.04 nodes with SSH access
+**Prerequisites:** `kubectl`, `flux`, `terraform` | Ubuntu 24.04 nodes with SSH access
 
 ```bash
 # Clone repository
@@ -73,7 +73,7 @@ kubectl get helmreleases -A                # All deployed
 flux get all -A
 ```
 
-📖 **Detailed Guides:** [K3s Deployment](docs/k3s-deploy-summary.md) · [Ansible](docs/ansible-overview.md) · [Terraform](docs/terraform-guide.md) · [FluxCD](docs/fluxcd-setup.md)
+📖 **Detailed Guides:** [K3s Deployment](docs/k3s-deploy-summary.md) · [Terraform](docs/terraform-guide.md) · [FluxCD](docs/fluxcd-setup.md)
 
 ## 🌐 Services
 
@@ -117,16 +117,13 @@ flux get all -A
 
 ```
 homelabops/
-├── .github/workflows/    # CI/CD (Terraform plan/apply, Renovate)
-├── ansible/              # Node configuration and K3s deployment
+├── .github/workflows/    # CI/CD (Terraform plan/apply)
 ├── apps/                 # Application deployments (FluxCD)
 ├── clusters/             # FluxCD cluster configurations
-├── docs/                 # Comprehensive documentation
+├── docs/                 # Documentation
 ├── infrastructure/       # Core infrastructure + monitoring
-├── scripts/              # Automation utilities
-├── terraform/            # Infrastructure as Code
-│   └── live/homelab/     # AWS OIDC, Cloudflare tunnels
-└── tools/                # Development tools
+└── terraform/            # Infrastructure as Code
+    └── live/homelab/     # AWS OIDC, Cloudflare tunnels
 ```
 
 ## 📚 Documentation
@@ -140,7 +137,6 @@ homelabops/
 | [FluxCD Troubleshooting](docs/fluxcd-troubleshooting.md) | Common issues and solutions |
 | [Monitoring Setup](docs/monitoring-setup.md) | Prometheus/Grafana stack |
 | [Terraform](docs/terraform-guide.md) | Cloud infrastructure management |
-| [Ansible](docs/ansible-overview.md) | Infrastructure automation |
 | [SOPS Secrets](docs/sops-secrets.md) | Secrets management with age encryption |
 | [GPU Setup](docs/gpu-setup.md) | NVIDIA GPU configuration for K3s |
 

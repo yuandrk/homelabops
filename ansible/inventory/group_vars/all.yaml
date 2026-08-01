@@ -1,2 +1,0 @@
-# Shared variables for all hosts 
-ansible_ssh_private_key_file: ~/.ssh/ansible

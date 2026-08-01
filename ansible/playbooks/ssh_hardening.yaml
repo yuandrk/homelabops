@@ -1,8 +1,0 @@
----
-- name: Harden SSH on every node, one by one
-  hosts: masters,workers
-  become: true
-  serial: 1
-  max_fail_percentage: 0
-  roles:
-    - ssh_hardening
