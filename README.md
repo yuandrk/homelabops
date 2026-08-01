@@ -84,7 +84,7 @@ flux get all -A
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
-| **Whisper** | Speech-to-text API (speaches) | internal only |
+| **qBittorrent** | Torrent client | `qbit.yuandrk.net` (LAN/Tailscale) |
 
 ## 📊 Current Status
 

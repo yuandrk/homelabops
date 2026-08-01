@@ -18,7 +18,7 @@ spec:
         app: qbittorrent
     spec:
       # Pinned to k3s-master: /config uses node-local local-path storage and /downloads is a
-      # hostPath on this node. qBittorrent (writer) and Jellyfin (reader) must share the node.
+      # hostPath on this node (/srv/media/downloads).
       nodeSelector:
         kubernetes.io/hostname: k3s-master
       containers:

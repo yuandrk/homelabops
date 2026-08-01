@@ -70,8 +70,6 @@ Renovate monitors Docker images and Helm charts under `apps/` and `infrastructur
 - **ActualBudget** - `actualbudget/actual-server`
 - **n8n** - `n8nio/n8n`
 - **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey)
-- **Whisper** - `ghcr.io/speaches-ai/speaches`
-- **Jellyfin** - `jellyfin/jellyfin`
 - **qBittorrent** - `linuxserver/qbittorrent`
 - **Infrastructure charts** - kube-prometheus-stack, loki, alloy, headlamp, cloudflared, nfs-subdir-external-provisioner
 

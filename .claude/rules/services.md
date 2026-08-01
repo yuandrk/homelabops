@@ -9,13 +9,17 @@
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards (admin/flux) |
-| Jellyfin | `jellyfin.yuandrk.net` | Media server, LAN/Tailscale only (not in Cloudflare tunnel) |
-| qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only |
-| Whisper | internal (`whisper.apps.svc`) | Speech-to-text API (speaches), no ingress |
+| qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
 > Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
 > Removed 2026-08-01: Stirling-PDF (broken rollout, unused), MCP Slack Bot (unused).
+> Removed 2026-08-01: Jellyfin (0 ingress requests in 14d), Whisper (0 `/v1/audio` requests ever
+> in retained logs). Media files survive at hostPath `/srv/media` on k3s-master — only the
+> `jellyfin-config` and `whisper-model-cache` PVCs were pruned.
+
+To decide whether an app is still used, query Traefik metrics rather than guessing — see
+[usage-metrics.md](../../docs/usage-metrics.md).
 
 ## Infrastructure Services
 

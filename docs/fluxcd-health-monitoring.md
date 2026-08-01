@@ -170,7 +170,7 @@ actualbudget-6c5f8b7d9c-x2x4q              1/1     Running   0          33h
 immich-server-7d9b5c6f8d-p29g9             1/1     Running   0          33h
 immich-machine-learning-5b6f5f9fc5-rx5pj   1/1     Running   0          33h
 n8n-7f9c5d6b8d-k4m2n                       1/1     Running   0          33h
-whisper-5b5cf776c7-q8r3t                   1/1     Running   0          33h
+qbittorrent-86745ffc54-mbd4b               1/1     Running   0          33h
 ```
 
 ### Check Monitoring Stack

@@ -4,7 +4,7 @@ argument-hint: "<name> [port] [storageGi]"
 ---
 
 Scaffold a new application following the existing app pattern (see `apps/n8n/base/` and
-`apps/whisper/base/`). Do NOT apply anything to the cluster — only create files and let
+`apps/qbittorrent/base/`). Do NOT apply anything to the cluster — only create files and let
 Flux deploy on the next reconcile.
 
 Arguments:

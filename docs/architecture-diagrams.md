@@ -46,7 +46,7 @@ graph TB
             Immich[🖼️ Immich<br/>server + ML + valkey<br/>photos.yuandrk.net]
             ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net]
             N8N[⚙️ n8n<br/>n8n.yuandrk.net]
-            Whisper[🎙️ Whisper<br/>internal]
+            QBit[⬇️ qBittorrent<br/>qbit.yuandrk.net · LAN only]
         end
 
         subgraph "networking namespace"
@@ -138,7 +138,7 @@ graph TB
     class Router,Switch network
     class S3,OIDC,Terraform,Ansible infra
     class Master,Worker1,Worker3 compute
-    class CoreDNS,Traefik,FluxCD,Immich,ActualBudget,N8N,Whisper,MCPBot,Cloudflared,Headlamp,MetricsServer,LocalPathProv,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv,OnePassword container
+    class CoreDNS,Traefik,FluxCD,Immich,ActualBudget,N8N,QBit,Cloudflared,Headlamp,MetricsServer,LocalPathProv,Prometheus,Grafana,NodeExporter,KubeStateMetrics,Loki,Alloy,NFSProv,OnePassword container
     class LocalPath,NFS,PostgreSQL,GitRepo,HelmCharts data
 ```
 
@@ -301,7 +301,7 @@ graph TB
         Valkey[⚡ immich-valkey<br/>Redis-compatible cache]
         ActualApp[💰 actualbudget]
         N8nApp[⚙️ n8n]
-        WhisperApp[🎙️ whisper<br/>internal, speaches]
+        QBitApp[⬇️ qbittorrent<br/>k3s-master only]
     end
 
     subgraph "Other Namespaces"
@@ -310,7 +310,8 @@ graph TB
     end
 
     subgraph "Storage Backends"
-        LocalPV[💾 local-path PVCs<br/>actualbudget 5Gi · n8n 5Gi<br/>immich-ml 10Gi · whisper 10Gi]
+        LocalPV[💾 local-path PVCs<br/>actualbudget 5Gi · n8n 5Gi<br/>immich-ml 10Gi · qbittorrent 1Gi]
+        MediaHost[📼 hostPath /srv/media<br/>k3s-master]
         NFSPV[🗄️ NFS 500Gi RWX<br/>worker1 10.10.0.2:/srv/nfs/immich]
         PG[🐘 PostgreSQL native<br/>worker3 10.10.0.5:5432]
     end
@@ -341,7 +342,8 @@ graph TB
     %% Storage
     ActualApp --> LocalPV
     N8nApp --> LocalPV
-    WhisperApp --> LocalPV
+    QBitApp --> LocalPV
+    QBitApp --> MediaHost
     ImmichML --> LocalPV
     ImmichApp --> NFSPV
     ImmichApp --> PG
@@ -356,7 +358,7 @@ graph TB
     class Photos,Budget,N8nExt,HeadlampExt,GrafanaExt,Webhook external
     class CFT tunnel
     class TraefikSvc,WebhookSvc host
-    class ImmichApp,ImmichML,Valkey,ActualApp,N8nApp,WhisperApp,MCPBotApp,HeadlampApp,GrafanaApp k8s
+    class ImmichApp,ImmichML,Valkey,ActualApp,N8nApp,QBitApp,HeadlampApp,GrafanaApp k8s
     class LocalPV,NFSPV,PG storage
 ```
 
@@ -368,7 +370,7 @@ Placement below reflects the live cluster; only the Immich stack is pinned (node
 graph TB
     subgraph "k3s-master (amd64, 4c/16Gi)"
         MasterNode[🖥️ control-plane<br/>10.10.0.1 / 192.168.1.223]
-        MasterWork[🔀 Traefik · CoreDNS · Headlamp<br/>🔄 Flux core controllers<br/>🔑 1Password operator<br/>⚙️ n8n · 🎙️ whisper<br/>🚇 cloudflared replica]
+        MasterWork[🔀 Traefik · CoreDNS · Headlamp<br/>🔄 Flux core controllers<br/>⚙️ n8n · ⬇️ qBittorrent<br/>🚇 cloudflared replica<br/>🤖 Hermes agent + gateway — outside k3s]
     end
 
     subgraph "k3s-worker1 (arm64 Raspberry Pi, 4c/4Gi)"
