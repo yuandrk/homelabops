@@ -35,11 +35,6 @@ locals {
       hostname = "photos.yuandrk.net"
       service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
-    {
-      name     = "stirling-pdf"
-      hostname = "stirling-pdf.yuandrk.net"
-      service  = "http://traefik.kube-system.svc.cluster.local:80"
-    },
   ]
 
   tunnel_services_map = {

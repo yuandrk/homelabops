@@ -47,7 +47,6 @@ graph TB
             ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net]
             N8N[⚙️ n8n<br/>n8n.yuandrk.net]
             Whisper[🎙️ Whisper<br/>internal]
-            MCPBot[🤖 MCP Slack Bot<br/>internal]
         end
 
         subgraph "networking namespace"
@@ -303,7 +302,6 @@ graph TB
         ActualApp[💰 actualbudget]
         N8nApp[⚙️ n8n]
         WhisperApp[🎙️ whisper<br/>internal, speaches]
-        MCPBotApp[🤖 mcp-slack-bot<br/>internal]
     end
 
     subgraph "Other Namespaces"
@@ -370,7 +368,7 @@ Placement below reflects the live cluster; only the Immich stack is pinned (node
 graph TB
     subgraph "k3s-master (amd64, 4c/16Gi)"
         MasterNode[🖥️ control-plane<br/>10.10.0.1 / 192.168.1.223]
-        MasterWork[🔀 Traefik · CoreDNS · Headlamp<br/>🔄 Flux core controllers<br/>🔑 1Password operator<br/>⚙️ n8n · 🎙️ whisper · 🤖 mcp-slack-bot<br/>🚇 cloudflared replica]
+        MasterWork[🔀 Traefik · CoreDNS · Headlamp<br/>🔄 Flux core controllers<br/>🔑 1Password operator<br/>⚙️ n8n · 🎙️ whisper<br/>🚇 cloudflared replica]
     end
 
     subgraph "k3s-worker1 (arm64 Raspberry Pi, 4c/4Gi)"

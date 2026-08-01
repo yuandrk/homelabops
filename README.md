@@ -85,7 +85,6 @@ flux get all -A
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
 | **Whisper** | Speech-to-text API (speaches) | internal only |
-| **MCP Slack Bot** | Slack bot (MCP) | internal only |
 
 ## 📊 Current Status
 

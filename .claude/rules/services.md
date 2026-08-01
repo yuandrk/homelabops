@@ -9,11 +9,13 @@
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards (admin/flux) |
+| Jellyfin | `jellyfin.yuandrk.net` | Media server, LAN/Tailscale only (not in Cloudflare tunnel) |
+| qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only |
 | Whisper | internal (`whisper.apps.svc`) | Speech-to-text API (speaches), no ingress |
-| MCP Slack Bot | internal | Slack bot, no service/ingress |
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
 > Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
+> Removed 2026-08-01: Stirling-PDF (broken rollout, unused), MCP Slack Bot (unused).
 
 ## Infrastructure Services
 
