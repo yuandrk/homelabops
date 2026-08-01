@@ -64,6 +64,11 @@
       "groupName": "infra-images"
     },
     {
+      "description": "linuxserver/qbittorrent still carries legacy tags named after its Ubuntu base (14.x, 20.x). Renovate ranks those above the real 5.x releases, so PR #44 proposed 5.2.3 -> 20.04.1, an image last pushed 2021-11-29. Cap the range below the legacy tags.",
+      "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
+      "allowedVersions": "<14"
+    },
+    {
       "description": "Automerge patch updates for stable apps",
       "matchUpdateTypes": ["patch"],
       "matchPackageNames": [
