@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: perlite
+  namespace: apps
+  labels:
+    app: perlite
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+  # Not publicly reachable: perlite is deliberately absent from local.tunnel_services in
+  # terraform/live/homelab/cloudflare, so the tunnel's catch-all answers 404 for this host.
+  # Kept for consistency and for the day local DNS exists — use the NodePort until then.
+  - host: perlite.yuandrk.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: perlite
+            port:
+              number: 8080
