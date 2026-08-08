@@ -6,6 +6,5 @@ resources:
 - n8n/base
 - immich/base
 - qbittorrent/base
-- glance/base
 
 namespace: apps

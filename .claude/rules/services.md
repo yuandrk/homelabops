@@ -10,7 +10,6 @@
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
 | qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
-| Glance | `192.168.1.223:30081` | Homelab dashboard, LAN/Tailscale only (no `tunnel_services` entry, so no public DNS). Reached by NodePort because there is no local DNS for the `glance.yuandrk.net` Ingress. Stateless — config lives in the `glance-config` ConfigMap and hot-reloads without a restart |
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
 > Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
@@ -18,6 +17,8 @@
 > Removed 2026-08-01: Jellyfin (0 ingress requests in 14d), Whisper (0 `/v1/audio` requests ever
 > in retained logs). Media files survive at hostPath `/srv/media` on k3s-master — only the
 > `jellyfin-config` and `whisper-model-cache` PVCs were pruned.
+> Removed 2026-08-08: Glance (dashboard on NodePort 30081, not wanted after a week). The
+> `glance-credentials` vault item in 1Password outlives the manifest and is deleted by hand.
 
 To decide whether an app is still used, query Traefik metrics rather than guessing — see
 [usage-metrics.md](../../docs/usage-metrics.md).
