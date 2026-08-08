@@ -50,8 +50,10 @@ data:
         }
 
         # Syncthing keeps deleted/overwritten notes in .stversions. Not upstream — added
-        # because this vault is a live Syncthing folder.
-        location ~ /\.st {
+        # because this vault is a live Syncthing folder. Spell the three directory names
+        # out: a bare /\.st also matches Perlite's own /.styles/, which serves every
+        # stylesheet the page loads.
+        location ~ /\.st(folder|ignore|versions) {
             deny all;
         }
 
