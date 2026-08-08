@@ -7,5 +7,6 @@ resources:
 - immich/base
 - qbittorrent/base
 - glance/base
+- perlite/base
 
 namespace: apps

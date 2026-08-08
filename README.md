@@ -86,6 +86,7 @@ flux get all -A
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
 | **qBittorrent** | Torrent client | `qbit.yuandrk.net` (LAN/Tailscale) |
 | **Glance** | Homelab dashboard | `192.168.1.223:30081` (LAN/Tailscale) |
+| **Perlite** | Obsidian vault renderer | `192.168.1.223:30082` (LAN/Tailscale) |
 
 ## 📊 Current Status
 

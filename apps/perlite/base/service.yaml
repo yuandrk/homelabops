@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: perlite
+  namespace: apps
+  labels:
+    app: perlite
+spec:
+  # NodePort rather than ClusterIP, same reasoning as glance (30081) and qbittorrent (30080):
+  # there is no local DNS for perlite.yuandrk.net, Traefik routes by Host header, and a
+  # host-less catch-all Ingress would be reachable through the Cloudflare tunnel — which for
+  # this app means publishing the entire vault. NodePort keeps it on the node interfaces:
+  # LAN and Tailscale only. Perlite has no authentication of its own, so this is the whole
+  # security boundary.
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30082
+    protocol: TCP
+    name: http
+  selector:
+    app: perlite

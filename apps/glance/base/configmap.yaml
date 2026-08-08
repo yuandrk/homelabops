@@ -63,6 +63,11 @@ data:
                     url: http://qbit.yuandrk.net
                     check-url: http://qbittorrent.apps.svc.cluster.local:8080
                     icon: di:qbittorrent
+                  - title: Perlite
+                    # NodePort link, not the ingress host: perlite is LAN/Tailscale only.
+                    url: http://192.168.1.223:30082
+                    check-url: http://perlite.apps.svc.cluster.local:8080
+                    icon: di:obsidian
 
               - type: custom-api
                 title: Todoist — today & overdue
