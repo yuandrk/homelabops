@@ -11,7 +11,6 @@
 | Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
 | qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
 | Glance | `192.168.1.223:30081` | Homelab dashboard, LAN/Tailscale only (no `tunnel_services` entry, so no public DNS). Reached by NodePort because there is no local DNS for the `glance.yuandrk.net` Ingress. Stateless — config lives in the `glance-config` ConfigMap and hot-reloads without a restart |
-| Perlite | `192.168.1.223:30082` | Read-only web renderer for the Obsidian vault, LAN/Tailscale only (no `tunnel_services` entry). Serves `/home/yuandrk/vault/my_own` from k3s-master as a read-only hostPath, so the pod is pinned there. Two containers (php-fpm + nginx) sharing an emptyDir, because the upstream image ships no web server. The pod runs as uid 1000 — the vault is `0700`, so nothing else can read it. **No authentication**: whoever reaches the port reads the whole vault |
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
 > Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
