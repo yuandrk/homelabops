@@ -1,0 +1,96 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fleet
+  namespace: apps
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: fleet
+      version: "v7.0.15"
+      sourceRef:
+        kind: HelmRepository
+        name: fleet
+        namespace: apps
+  # The chart runs its DB migrations as a pre-install/pre-upgrade Helm hook, which
+  # can fire while fleet-mysql is still booting on a first reconcile. Retries are
+  # the backstop; the release converges on the next attempt.
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    replicas: 1
+    imageTag: v4.90.0
+
+    # fleetdm/fleet ships a single amd64 manifest, so it cannot run on k3s-worker1.
+    nodeSelector:
+      kubernetes.io/hostname: k3s-worker3
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1500m
+        memory: 1536Mi
+
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      hosts:
+        - host: fleet.yuandrk.net
+          paths:
+            - path: /
+              pathType: Prefix
+      # TLS terminates at Cloudflare; the tunnel speaks plain HTTP to Traefik.
+      tls: []
+
+    fleet:
+      listenPort: 8080
+      tls:
+        enabled: false
+      autoApplySQLMigrations: true
+
+    # dedicated: false suppresses the vuln-processing CronJob; the env var below
+    # stops the main pod running it in-process. Flip both to enable CVE scanning.
+    vulnProcessing:
+      dedicated: false
+
+    database:
+      secretName: fleet-credentials
+      address: fleet-mysql.apps.svc.cluster.local:3306
+      database: fleet
+      username: fleet
+      passwordKey: mysql-password
+      maxOpenConns: 10
+      maxIdleConns: 10
+
+    cache:
+      address: fleet-valkey.apps.svc.cluster.local:6379
+      database: "0"
+      usePassword: false
+
+    osquery:
+      logging:
+        filesystem:
+          # emptyDir sizeLimit, not a PVC — osquery logs are ephemeral here.
+          volumeSize: 2Gi
+
+    environments:
+      FLEET_VULNERABILITIES_DISABLE_SCHEDULE: "true"
+      # Drop the chart's empty default so envsFrom below is the only definition.
+      FLEET_SERVER_PRIVATE_KEY: null
+
+    envsFrom:
+      - name: FLEET_SERVER_PRIVATE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: fleet-credentials
+            key: server-private-key

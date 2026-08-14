@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-mysql
+  namespace: apps
+  labels:
+    app: fleet-mysql
+spec:
+  type: ClusterIP
+  selector:
+    app: fleet-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fleet-mysql
+  namespace: apps
+  labels:
+    app: fleet-mysql
+spec:
+  serviceName: fleet-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-mysql
+  template:
+    metadata:
+      labels:
+        app: fleet-mysql
+    spec:
+      # Fleet's server image is amd64-only and MySQL is pinned next to it so the
+      # local-path RWO volume never strands on the arm64 Pi (k3s-worker1).
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker3
+      containers:
+        - name: mysql
+          # Fleet requires >= 8.0.44 and tests against 8.4.8. Do not move to 9.6.x,
+          # which upstream lists as incompatible.
+          image: mysql:8.4.8
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-credentials
+                  key: mysql-root-password
+            - name: MYSQL_USER
+              value: "fleet"
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-credentials
+                  key: mysql-password
+            - name: MYSQL_DATABASE
+              value: "fleet"
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h localhost -u root -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h localhost -u root -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 8Gi
