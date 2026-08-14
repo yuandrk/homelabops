@@ -6,5 +6,6 @@ resources:
 - n8n/base
 - immich/base
 - qbittorrent/base
+- fleet/base
 
 namespace: apps

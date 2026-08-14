@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-valkey
+  namespace: apps
+  labels:
+    app: fleet-valkey
+spec:
+  type: ClusterIP
+  selector:
+    app: fleet-valkey
+  ports:
+    - name: valkey
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-valkey
+  namespace: apps
+  labels:
+    app: fleet-valkey
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-valkey
+  template:
+    metadata:
+      labels:
+        app: fleet-valkey
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker3
+      containers:
+        - name: valkey
+          image: valkey/valkey:8.1.9-alpine
+          # Fleet uses Redis purely as a cache/queue, so persistence is off and
+          # there is no PVC — losing the contents on restart is harmless.
+          args: ["--save", ""]
+          ports:
+            - name: valkey
+              containerPort: 6379
+          livenessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
