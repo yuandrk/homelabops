@@ -68,6 +68,21 @@ EOF
 chmod 600 "$OUT"
 
 echo "make-kubeconfig.sh: wrote $OUT" >&2
+
+# browserless rejects every request without its token, and Hermes has no way to obtain it at
+# runtime: the sandbox account cannot read Secrets by design, and the 1Password CLI is not
+# installed on this host. Drop it next to the kubeconfig, which is the same trust level.
+TOKEN_OUT="${TOKEN_OUT:-$(dirname "$OUT")/sandbox/browserless.token}"
+mkdir -p "$(dirname "$TOKEN_OUT")"
+if kubectl -n "$NS" get secret hermes-sandbox-credentials \
+        -o jsonpath='{.data.browserless-token}' 2>/dev/null | base64 -d >"$TOKEN_OUT"; then
+    chmod 600 "$TOKEN_OUT"
+    echo "make-kubeconfig.sh: wrote $TOKEN_OUT" >&2
+else
+    rm -f "$TOKEN_OUT"
+    echo "make-kubeconfig.sh: could not read the browserless token (is the 1Password sync done?)" >&2
+fi
+
 KUBECONFIG="$OUT" kubectl auth whoami >&2 || true
 
 # Prove the scoping actually holds rather than assuming it.
