@@ -137,6 +137,43 @@ spec:
       automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: k3s-worker3
+      # kube-router programs a pod's firewall chain only after it observes the pod, which takes
+      # a few seconds. A job that starts immediately therefore runs with NO network policy at
+      # all — measured, not hypothetical: identical isolation tests returned "kube API
+      # reachable" from a Job and "blocked" from a long-lived pod in the same namespace.
+      #
+      # This gate closes that window. It polls a destination the policy must block; while the
+      # policy is missing the connect succeeds and we keep waiting, and the workload only starts
+      # once the connect actually fails. The direction is one-way (unfiltered -> filtered), so
+      # once it fails the isolation is live for the rest of the pod's life.
+      initContainers:
+        - name: wait-for-netpol
+          image: busybox:1.37
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              i=0
+              while nc -z -w 2 10.43.0.1 443 2>/dev/null; do
+                i=\$((i+1))
+                if [ \$i -ge 45 ]; then
+                  echo "network policy never took effect after 90s - refusing to run" >&2
+                  exit 1
+                fi
+                sleep 2
+              done
+              echo "egress policy active (kube API unreachable)"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -194,8 +231,11 @@ echo "run-job.sh: $JOB ($IMAGE)" >&2
 # Wait for a pod to leave Pending before following logs — `kubectl logs -f` errors out if no
 # container has started. Admission failures (quota, PodSecurity) never produce a pod at all, so
 # report the Job's events rather than spinning until the timeout.
+#
+# The budget is generous because Pending covers both the image pull and the wait-for-netpol gate
+# above, which is allowed up to 90s of its own.
 pod=""
-deadline=$((SECONDS + 120))
+deadline=$((SECONDS + 300))
 while [ "$SECONDS" -lt "$deadline" ]; do
     pod=$(kubectl -n "$NS" get pod -l "job-name=$JOB" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
     if [ -n "$pod" ]; then

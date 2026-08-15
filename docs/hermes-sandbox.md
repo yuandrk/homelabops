@@ -102,7 +102,18 @@ run-job.sh python:3.12-slim ./probe.py
 run-job.sh node:22-slim ./probe.js
 ```
 
-Every Job it creates gets: `backoffLimit: 0` (no retry storms), `activeDeadlineSeconds: 900`,
+Every Job starts with a `wait-for-netpol` init container that blocks until the network policy is
+actually in force. This is not belt-and-braces: kube-router programs a pod's firewall chain only
+after it observes the pod, so a short-lived Job would otherwise run **entirely unfiltered** for
+the first few seconds. It was measured — the same isolation test reported the Kubernetes API and
+Traefik as reachable from a Job, and blocked from a long-lived pod in the same namespace minutes
+later. The init container polls a destination the policy must block and only lets the workload
+start once that connect fails; it gives up after 90s rather than running unprotected.
+
+If you hand-write a Job instead of using `run-job.sh`, copy that init container, or accept that
+the first seconds of the run have no network isolation.
+
+Beyond that, every Job gets: `backoffLimit: 0` (no retry storms), `activeDeadlineSeconds: 900`,
 `ttlSecondsAfterFinished: 600`, `restartPolicy: Never`,
 `automountServiceAccountToken: false` (code inside gets no Kubernetes token), an `emptyDir`
 workspace, and a `restricted` securityContext — non-root, `drop: [ALL]`, `seccompProfile:
