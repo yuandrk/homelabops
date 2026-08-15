@@ -11,6 +11,14 @@
 | Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
 | qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
 | Fleet | `fleet.yuandrk.net` | osquery device management. Helm chart + its own MySQL (`fleet-mysql`, 8Gi local-path) and Valkey (`fleet-valkey`, no persistence), all pinned to k3s-worker3 — the Fleet image is amd64-only. Server URL and admin are set in the first-run wizard, not in the manifests. CVE scanning is off (`vulnProcessing.dedicated: false` + `FLEET_VULNERABILITIES_DISABLE_SCHEDULE`) |
+| SearXNG | ClusterIP only | Metasearch for Hermes, in `hermes-sandbox`. No Ingress/NodePort by design — Hermes reaches it by ClusterIP from the k3s-master host. JSON API and `method: GET` are non-default and set in `searxng-settings.yml`; the limiter is off (it would reject programmatic requests) |
+| browserless | ClusterIP only | Headless Chromium/CDP for Hermes, in `hermes-sandbox`. Every route needs `?token=` from the `hermes-sandbox-credentials` vault item |
+
+> `hermes-sandbox` is the Hermes agent's workspace: PodSecurity baseline, default-deny network,
+> quota with `persistentvolumeclaims: 0`, and a scoped `hermes-runner` account instead of the
+> cluster-admin kubeconfig on k3s-master. Guardrail against mistakes, not a boundary against
+> hostile code — no gVisor/Kata, so the node kernel is shared. See
+> [hermes-sandbox.md](../../docs/hermes-sandbox.md).
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
 > Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).

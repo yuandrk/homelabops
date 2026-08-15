@@ -5,3 +5,4 @@ resources:
 - 1password-operator/base
 - headlamp/base
 - monitoring/base
+- hermes-sandbox/base

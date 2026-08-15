@@ -1,0 +1,35 @@
+# Overrides only — `use_default_settings: true` keeps the packaged defaults for everything else.
+#
+# secret_key is deliberately absent: it comes from the SEARXNG_SECRET env var
+# (searx/settings_defaults.py maps it to server.secret_key) and has no built-in default, so a
+# missing secret fails the pod at startup instead of silently serving with "ultrasecretkey".
+#
+# Rendered through kustomize configMapGenerator, so editing this file changes the ConfigMap hash
+# and rolls the Deployment — the entrypoint only reads settings.yml at boot.
+use_default_settings: true
+
+general:
+  instance_name: "hermes-searxng"
+  enable_metrics: false
+
+server:
+  # This instance is ClusterIP-only and single-consumer. The limiter's bot detection would
+  # reject Hermes' programmatic requests, and it is the only feature that would need Valkey.
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  method: "GET"
+
+search:
+  # The whole point of this deployment: the JSON API is not enabled by default.
+  formats:
+    - html
+    - json
+  safe_search: 0
+  autocomplete: ""
+
+outgoing:
+  request_timeout: 6.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 20

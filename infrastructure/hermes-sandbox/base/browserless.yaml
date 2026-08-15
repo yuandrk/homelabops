@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: browserless
+  namespace: hermes-sandbox
+  labels:
+    app: browserless
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: browserless
+  template:
+    metadata:
+      labels:
+        app: browserless
+        # Consumed by the allow-node-to-services NetworkPolicy — without this label the
+        # service is unreachable from Hermes on the k3s-master host.
+        hermes.sandbox/role: service
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker3
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: browserless
+          # The image already declares USER blessuser, so no runAsUser here: forcing a uid
+          # would break ownership of PLAYWRIGHT_BROWSERS_PATH. runAsNonRoot is also omitted
+          # because the image's USER is a name, not a numeric id, and the kubelet cannot
+          # verify a non-numeric user — it would refuse to start the container.
+          image: ghcr.io/browserless/chromium:v2.38.1
+          env:
+            - name: CONCURRENT
+              value: "2"
+            - name: TIMEOUT
+              value: "60000"
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-sandbox-credentials
+                  key: browserless-token
+          ports:
+            - name: http
+              containerPort: 3000
+          volumeMounts:
+            # Chromium keeps renderer shared memory here. The Kubernetes default /dev/shm is
+            # 64Mi, which makes tabs crash on any non-trivial page.
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              # Must cover the 1Gi memory-backed /dev/shm below, which is charged to the
+              # container's cgroup.
+              memory: 3Gi
+          # Every HTTP route is behind ?token=, and a probe cannot read a Secret, so there is no
+          # authenticated URL to GET here. A TCP probe confirms the server is accepting
+          # connections; the real end-to-end check is the CDP smoke test in docs/hermes-sandbox.md.
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: browserless
+  namespace: hermes-sandbox
+  labels:
+    app: browserless
+spec:
+  # ClusterIP only — Hermes connects over CDP from the k3s-master host by ClusterIP.
+  # Nothing here should be reachable from the LAN.
+  type: ClusterIP
+  selector:
+    app: browserless
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP

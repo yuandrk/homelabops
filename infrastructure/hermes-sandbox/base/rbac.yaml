@@ -1,0 +1,98 @@
+# The account Hermes uses instead of ~/.kube/config (which is a copy of k3s.yaml and therefore
+# system:masters). Scope is a single namespace and a deliberately small verb set.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hermes-runner
+  namespace: hermes-sandbox
+---
+# Long-lived token. Since Kubernetes 1.24 a ServiceAccount no longer auto-creates one, so it has
+# to be requested explicitly. This manifest carries NO secret material — kube-controller-manager
+# populates .data.token after apply — so it is safe in git.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-runner-token
+  namespace: hermes-sandbox
+  annotations:
+    kubernetes.io/service-account.name: hermes-runner
+type: kubernetes.io/service-account-token
+---
+# Pods created in this namespace bind to the `default` SA unless told otherwise. Turning
+# automount off here means code running inside a sandbox Job gets no Kubernetes token even if
+# the Job spec forgets to say so.
+#
+# This stops a Job from *accidentally* holding cluster credentials. It is not a defence against
+# a Job that wants them: whoever holds the hermes-runner token can create a pod that mounts any
+# Secret in this namespace, or that sets serviceAccountName: hermes-runner, and Kubernetes does
+# not check whether the pod's creator may read what the pod mounts. Blast radius is this
+# namespace's own low-value credentials, which is the level of protection intended here.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: hermes-sandbox
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: hermes-runner
+  namespace: hermes-sandbox
+rules:
+  # Run and inspect workloads.
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch, create, delete]
+  - apiGroups: [""]
+    resources: [pods/log, pods/status]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/attach, pods/portforward]
+    verbs: [create, get]
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, watch, create, delete]
+  - apiGroups: [batch]
+    resources: [jobs/status]
+    verbs: [get, list]
+  # How files get into a pod: write the payload to a ConfigMap, mount it. 1MiB ceiling applies.
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list, create, update, delete]
+  # Needed to stand up a throwaway Postgres/Redis for an integration test and to read the
+  # ClusterIP of the long-lived services.
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [get, list, create, delete]
+  # Diagnosing why a pod will not start (image pull, quota rejection, admission).
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [get, list, watch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch]
+  # Read-only visibility into the guardrails, so Hermes can explain its own limits.
+  - apiGroups: [""]
+    resources: [resourcequotas, limitranges]
+    verbs: [get, list]
+  # Deliberately absent: secrets, persistentvolumeclaims, nodes, namespaces, serviceaccounts,
+  # rbac.*, CRDs, deployments, and anything at all outside this namespace.
+  #
+  # Note that withholding `secrets` keeps Hermes from reading them directly, but does not make
+  # them unreachable — see the note on the default ServiceAccount above. The boundary that
+  # actually holds is the namespace one.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hermes-runner
+  namespace: hermes-sandbox
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hermes-runner
+subjects:
+  - kind: ServiceAccount
+    name: hermes-runner
+    namespace: hermes-sandbox

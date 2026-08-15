@@ -1,0 +1,58 @@
+# Budget for the whole namespace: two long-lived services (searxng, browserless) plus
+# whatever disposable Jobs Hermes is running at the time.
+#
+# requests.* is the real reservation against k3s-worker3 (8 CPU / 16Gi, ~29% used at time of
+# writing); limits.* is only a burst ceiling, which is why it is allowed to exceed requests.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: hermes-sandbox
+  namespace: hermes-sandbox
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    # The limits are what actually bind concurrency, so they are sized from the intended
+    # workload rather than picked round: searxng + browserless take 3 CPU / 4Gi of limit, and
+    # run-job.sh defaults a job to 1 CPU / 1Gi. 8 CPU / 10Gi therefore leaves room for roughly
+    # five concurrent default-sized jobs. Sizing these at 6 CPU / 8Gi would have capped it at
+    # three while `pods: 12` advertised four times that, failing as an opaque FailedCreate.
+    limits.cpu: "8"
+    limits.memory: 10Gi
+    requests.ephemeral-storage: 8Gi
+    limits.ephemeral-storage: 16Gi
+    # `pods`, not `count/pods`: the compute-resource form counts only non-terminal pods, so
+    # Succeeded/Failed job pods waiting out their TTL do not eat the budget. `count/pods` would
+    # count them and the namespace would wedge after a dozen quick jobs.
+    pods: "12"
+    count/jobs.batch: "10"
+    # Hard block on persistent storage: v1 of the sandbox is emptyDir-only, so a runaway job
+    # cannot leave anything behind on a node or on the NFS server.
+    persistentvolumeclaims: "0"
+---
+# Required, not optional: a ResourceQuota on requests.* rejects any pod that does not declare
+# requests, and Hermes creates pods imperatively. The LimitRange supplies the defaults so a
+# minimal Job spec is still admitted.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: hermes-sandbox
+  namespace: hermes-sandbox
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 1Gi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+        ephemeral-storage: 256Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
+        ephemeral-storage: 8Gi
+      min:
+        cpu: 10m
+        memory: 16Mi
