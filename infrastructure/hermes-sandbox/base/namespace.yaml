@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hermes-sandbox
+  labels:
+    # Pod Security Standards. `baseline` is the enforced floor because it already blocks
+    # everything that protects the node itself: privileged containers, hostPath, hostNetwork,
+    # hostPID/hostIPC, host ports and added capabilities.
+    #
+    # The `restricted` delta (runAsNonRoot, drop-ALL, seccomp RuntimeDefault) is deliberately
+    # NOT enforced namespace-wide: it breaks `pip install` into site-packages, every
+    # root-by-default image (python:3.12-slim, node:22-slim) and chromium. Instead the Job
+    # template in docs/hermes-sandbox.md sets a restricted securityContext per workload, so
+    # restricted is the default a caller has to opt *out* of rather than a hard admission wall.
+    # audit/warn stay at restricted so every deviation is still logged.
+    pod-security.kubernetes.io/enforce: baseline
+    # Pinned, not `latest`: a k8s upgrade can tighten what `baseline` means, and with `latest`
+    # that would start rejecting workloads on a day nothing in this repo changed. audit/warn
+    # stay on `latest` so a future tightening shows up as a warning first.
+    pod-security.kubernetes.io/enforce-version: v1.34
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

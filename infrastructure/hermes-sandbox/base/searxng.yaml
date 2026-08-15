@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: hermes-sandbox
+  labels:
+    app: searxng
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+        # Consumed by the allow-node-to-services NetworkPolicy — without this label the
+        # service is unreachable from Hermes on the k3s-master host.
+        hermes.sandbox/role: service
+    spec:
+      # k3s-worker3 is the only node with real headroom (8 CPU / 16Gi). k3s-worker1 is arm64
+      # with 3.8Gi and k3s-master runs the control plane plus Hermes itself.
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker3
+      automountServiceAccountToken: false
+      securityContext:
+        # The image ships everything chowned to 977:977 but sets no USER, so it would otherwise
+        # run as root. Running as 977 directly also skips the entrypoint's root-only branch.
+        runAsUser: 977
+        runAsGroup: 977
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: searxng
+          image: docker.io/searxng/searxng:2026.8.14-094c33d40
+          # Two lines short of `restricted` otherwise, which would emit a PodSecurity warning
+          # into kustomize-controller's log on every reconcile. Nothing here needs a capability:
+          # granian binds 8080, above the privileged range. (browserless cannot follow suit —
+          # its image declares a non-numeric USER, see the note there.)
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          env:
+            # Default is "::". The cluster is IPv4-only (cluster-cidr 10.42.0.0/16), so bind
+            # explicitly rather than relying on v6-mapped-v4 behaviour inside the pod netns.
+            - name: GRANIAN_HOST
+              value: "0.0.0.0"
+            - name: SEARXNG_SETTINGS_PATH
+              value: /etc/searxng/settings.yml
+            # entrypoint.sh chowns its config/data dirs when it can. settings.yml is a
+            # read-only subPath mount, so let it warn instead of failing a chown every boot.
+            - name: FORCE_OWNERSHIP
+              value: "false"
+            - name: SEARXNG_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-sandbox-credentials
+                  key: searxng-secret-key
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            # subPath, not a directory mount: the entrypoint's setup() only generates a
+            # settings.yml when one is absent, and /etc/searxng itself must stay writable.
+            - name: settings
+              mountPath: /etc/searxng/settings.yml
+              subPath: settings.yml
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: settings
+          configMap:
+            name: searxng-settings
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: searxng
+  namespace: hermes-sandbox
+  labels:
+    app: searxng
+spec:
+  # ClusterIP only. Hermes reaches this from the k3s-master host by ClusterIP directly
+  # (verified working), so there is no reason to expose it on the LAN via NodePort or Ingress.
+  type: ClusterIP
+  selector:
+    app: searxng
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

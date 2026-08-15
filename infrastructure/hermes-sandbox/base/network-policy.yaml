@@ -1,0 +1,128 @@
+# k3s runs without --disable-network-policy, so kube-router enforces these for real
+# (verify with `iptables -L KUBE-ROUTER-FORWARD -n -v` on the node — the drop counters move).
+#
+# NetworkPolicy rules are additive/OR, never subtractive. That matters below: the egress rule
+# carves 10.0.0.0/8 out of the internet, which includes CoreDNS at 10.43.0.10, and the separate
+# allow-dns rule is what puts DNS back. Expressing the block as an `except` alone would leave
+# DNS dead with no error anywhere.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: hermes-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: hermes-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Outbound internet (PyPI, npm, GitHub, search engines) minus every private range. The broad
+# RFC1918 carve-out is intentional — it covers the pod network 10.42/16, the service network
+# 10.43/16, the node link 10.10.0/24 and the home LAN 192.168.1/24 in one rule instead of a
+# list that has to be maintained. 100.64/10 is Tailscale; 169.254/16 is link-local metadata.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internet-egress
+  namespace: hermes-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16
+---
+# So a disposable Job can call the long-lived services (e.g. query searxng) without being able
+# to reach anything else in the cluster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-intra-namespace
+  namespace: hermes-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+  egress:
+    - to:
+        - podSelector: {}
+---
+# Hermes runs on the k3s-master host, outside the cluster, and reaches services by ClusterIP
+# (confirmed working: curl to a ClusterIP from the host returns). That traffic is DNAT'd to the
+# pod IP, so what the policy sees as the source is a node address, not a pod address.
+#
+# The source CIDR was measured, not guessed — get it wrong and the services are simply
+# unreachable from the host while every manifest still looks correct:
+#
+#   k3s-master $ ip route get 10.42.3.53      # a pod on k3s-worker3
+#   10.42.3.53 via 10.42.3.0 dev flannel.1 src 10.42.0.0
+#
+# so the source is 10.42.0.0, k3s-master's flannel.1 address. It survives POSTROUTING unchanged:
+# FLANNEL-POSTRTG has `-s 10.42.0.0/24 -d 10.42.0.0/16 -j RETURN` ahead of its MASQUERADE rules,
+# and kube-proxy only marks for masquerade when the source is outside 10.42.0.0/16.
+#
+# 10.42.0.0/31 is therefore the rule that matters: it is exactly flannel.1 (.0) and cni0 (.1) on
+# k3s-master, and nothing else. A /24 here would have quietly granted ingress to every pod
+# scheduled on master — Traefik, CoreDNS, cloudflared, qBittorrent — which is not the intent.
+# 10.10.0.0/24, the node link network, is kept as a fallback for paths that do not go through
+# flannel. Scoped to role=service so disposable Jobs stay unreachable from outside the namespace.
+#
+# Kubelet probes are NOT listed here and do not need to be. The pods run on k3s-worker3, so
+# probes come from that node's own addresses, and kube-router emits a per-pod rule ahead of the
+# policy chains that accepts them (verified on worker3):
+#   -A KUBE-POD-FW-... -m addrtype --src-type LOCAL -j ACCEPT
+#     "rule to permit the traffic traffic to pods when source is the pod's local node"
+# The flux-system pods are the working control: they sit behind an ingress policy that allows
+# only their own namespace, have HTTP liveness/readiness probes, and stay Ready.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-node-to-services
+  namespace: hermes-sandbox
+spec:
+  podSelector:
+    matchLabels:
+      hermes.sandbox/role: service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.42.0.0/31
+        - ipBlock:
+            cidr: 10.10.0.0/24
