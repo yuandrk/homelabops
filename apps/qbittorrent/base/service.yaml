@@ -12,6 +12,8 @@ spec:
     - name: http
       port: 8080
       targetPort: 8080
-      nodePort: 30080
       protocol: TCP
-  type: NodePort
+  # ClusterIP is enough now that qbit.home.yuandrk.net resolves to k3s-master's
+  # Tailscale address and Traefik routes on the Host header. The NodePort existed
+  # only because LAN-only names had no working DNS.
+  type: ClusterIP

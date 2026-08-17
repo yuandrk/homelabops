@@ -46,7 +46,7 @@ graph TB
             Immich[🖼️ Immich<br/>server + ML + valkey<br/>photos.yuandrk.net]
             ActualBudget[💰 ActualBudget<br/>budget.yuandrk.net]
             N8N[⚙️ n8n<br/>n8n.yuandrk.net]
-            QBit[⬇️ qBittorrent<br/>qbit.yuandrk.net · LAN only]
+            QBit[⬇️ qBittorrent<br/>qbit.home.yuandrk.net · tailnet only]
         end
 
         subgraph "networking namespace"
@@ -192,7 +192,7 @@ flowchart LR
     class Cloudflared,TraefikSvc,WebhookSvc,Ingress,Service,Pod k3s
 ```
 
-LAN access paths (no tunnel): Traefik listens on node ports 80/443 via svclb (addresses 192.168.1.223 / 192.168.1.137), and immich-server is additionally exposed on NodePort `30283`.
+Non-tunnel access paths: Traefik listens on node ports 80/443 via svclb (addresses 192.168.1.223 / 192.168.1.137) and on k3s-master's Tailscale address `100.96.117.64`. Hosts under `*.home.yuandrk.net` resolve to that Tailscale address, so they work from any tailnet device and nowhere else. immich-server is additionally exposed on NodePort `30283` for the mobile app.
 
 ## GitOps Workflow
 

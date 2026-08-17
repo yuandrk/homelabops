@@ -51,6 +51,12 @@ locals {
   }
 
   tunnel_id = "4a6abf9a-d178-4a56-9586-a3d77907c5f1"
+
+  # Tailscale address of k3s-master, which is also where Traefik runs, so a single
+  # wildcard covers every internal service. 100.64.0.0/10 is CGNAT and unroutable from
+  # the internet. If the node ever leaves and rejoins the tailnet with a new address,
+  # this is the only line to change.
+  internal_ingress_ip = "100.96.117.64"
 }
 
 # DNS records for each service
@@ -63,6 +69,24 @@ resource "cloudflare_dns_record" "services" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
+}
+
+# Internal services do not go through the tunnel. This DNS-only wildcard points
+# *.home.yuandrk.net at k3s-master's Tailscale address, so any Ingress with a
+# .home.yuandrk.net host is reachable from the tailnet and nowhere else. Adding an
+# internal service needs no Terraform change - just the Ingress host.
+#
+# proxied must stay false: Cloudflare will not proxy a CGNAT address, and proxying
+# would defeat the point, which is handing the client the real address.
+# ttl = 1 means "automatic" and is only valid for proxied records, hence 300.
+resource "cloudflare_dns_record" "internal_wildcard" {
+  zone_id = data.cloudflare_zone.root.zone_id
+  name    = "*.home"
+  content = local.internal_ingress_ip
+  type    = "A"
+  ttl     = 300
+  proxied = false
+  comment = "Tailscale-only ingress (k3s-master). Managed by Terraform."
 }
 
 # Tunnel configuration - use the list directly
