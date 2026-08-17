@@ -9,7 +9,7 @@
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
-| qBittorrent | `qbit.yuandrk.net` | Torrent client, LAN/Tailscale only. Downloads to hostPath `/srv/media/downloads` on k3s-master |
+| qBittorrent | `qbit.home.yuandrk.net` | Torrent client, tailnet only (see the naming rule below). Downloads to hostPath `/srv/media/downloads` on k3s-master |
 | Fleet | `fleet.yuandrk.net` | osquery device management. Helm chart + its own MySQL (`fleet-mysql`, 8Gi local-path) and Valkey (`fleet-valkey`, no persistence), all pinned to k3s-worker3 — the Fleet image is amd64-only. Server URL and admin are set in the first-run wizard, not in the manifests. CVE scanning is off (`vulnProcessing.dedicated: false` + `FLEET_VULNERABILITIES_DISABLE_SCHEDULE`) |
 | SearXNG | ClusterIP only | Metasearch for Hermes, in `hermes-sandbox`. No Ingress/NodePort by design — Hermes reaches it by ClusterIP from the k3s-master host. JSON API and `method: GET` are non-default and set in `searxng-settings.yml`; the limiter is off (it would reject programmatic requests) |
 | browserless | ClusterIP only | Headless Chromium/CDP for Hermes, in `hermes-sandbox`. Every route needs `?token=` from the `hermes-sandbox-credentials` vault item |
@@ -43,6 +43,26 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 - **NFS Provisioner**: External storage provisioner in `storage` namespace (used by Immich)
 - **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130) — currently no GPU consumers
 - **1Password Operator**: Secrets sync (`onepassword` namespace, HelmRelease in `flux-system`)
+
+## Public vs internal: the hostname decides
+
+| Suffix | Reachable from | How it is set up |
+|--------|----------------|------------------|
+| `<app>.yuandrk.net` | The internet | Append to `local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf` **and** set the Ingress host |
+| `<app>.home.yuandrk.net` | Tailnet only | Just set the Ingress host — **no Terraform change** |
+
+One DNS-only wildcard `*.home.yuandrk.net A → 100.96.117.64` (k3s-master's Tailscale address)
+covers every internal service. `100.64.0.0/10` is CGNAT, so the name resolves publicly but only
+a tailnet device can connect. There is no DNS server anywhere in this setup — do not add one to
+solve internal naming.
+
+Do **not** reach for a NodePort to make a service LAN-only; that was the old workaround from
+when internal names did not resolve. Use a `.home.yuandrk.net` Ingress instead.
+
+This gates names and routing, not access: Traefik listens on `0.0.0.0:80` on every node, so a
+LAN device can still reach an internal app via `192.168.1.223` + `Host` header. Source-IP
+allowlists do not work here (klipper masquerades the client IP — see memory
+`klipper-masquerades-client-ip`). Full details: [network-architecture.md](../../docs/network-architecture.md).
 
 ## Cloudflare Tunnel Routing
 

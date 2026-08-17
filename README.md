@@ -84,8 +84,12 @@ flux get all -A
 | **ActualBudget** | Financial management | `budget.yuandrk.net` |
 | **n8n** | Workflow automation | `n8n.yuandrk.net` |
 | **Headlamp** | Kubernetes dashboard | `headlamp.yuandrk.net` |
-| **qBittorrent** | Torrent client | `qbit.yuandrk.net` (LAN/Tailscale) |
+| **qBittorrent** | Torrent client | `qbit.home.yuandrk.net` (Tailscale only) |
 | **Fleet** | osquery device management | `fleet.yuandrk.net` |
+
+`*.yuandrk.net` is public via the Cloudflare tunnel. `*.home.yuandrk.net` resolves to
+k3s-master's Tailscale address and is reachable only from the tailnet — see
+[Network Architecture](docs/network-architecture.md).
 
 ## 📊 Current Status
 

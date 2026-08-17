@@ -95,9 +95,72 @@ K3s Services: 10.43.0.0/16
 
 ---
 
+## 🔒 Tailscale
+
+k3s-master is a Tailscale node **and** a subnet router. Nothing else in the cluster runs
+Tailscale — workers are not on the tailnet.
+
+| Property | Value |
+|----------|-------|
+| Tailnet | `tail1fbf9e.ts.net` |
+| k3s-master tailnet address | `100.96.117.64` |
+| Advertised subnet route | `10.10.0.0/24` (the wired switch LAN) |
+| MagicDNS | Enabled (resolver `100.100.100.100`) |
+
+The subnet route is what makes the wired-only nodes reachable from outside that switch:
+`k3s-worker3` (10.10.0.5) has no Wi-Fi interface, yet a tailnet device can reach it directly.
+
+`tailscaled` on k3s-master is a host-level systemd service, not managed by Flux.
+
+> MagicDNS names (`k3s-master.tail1fbf9e.ts.net`) resolve **only** through `100.100.100.100`.
+> They are not in public DNS, so they cannot be used as a CNAME target from Cloudflare.
+
+---
+
 ## 🌍 DNS Architecture
 
-### DNS Setup
+There are three ways to reach a service, and the hostname says which one applies:
+
+| Path | Hostname | Resolves to | Who can reach it |
+|------|----------|-------------|------------------|
+| Cloudflare tunnel | `<app>.yuandrk.net` | Cloudflare proxy IPs | The internet |
+| Tailscale | `<app>.home.yuandrk.net` | `100.96.117.64` | Tailnet devices only |
+| Direct | — | `192.168.1.223` / `10.10.0.1` | Home LAN |
+
+### Split-horizon without a DNS server
+
+The zone has a catch-all `*.yuandrk.net A → <Cloudflare proxy>` (proxied), so **every** name
+in the zone resolves to Cloudflare unless a more specific record overrides it. The tunnel has
+ingress rules for the public services and a terminal `http_status:404`, so any other name is
+publicly dead.
+
+Internal services are carved out by one DNS-only wildcard, managed in
+`terraform/live/homelab/cloudflare/main.tf` as `cloudflare_dns_record.internal_wildcard`:
+
+```
+*.home.yuandrk.net  A  100.96.117.64   (proxied = false, TTL 300)
+```
+
+`100.64.0.0/10` is CGNAT and unroutable across the internet, so the name resolves everywhere
+but only a tailnet device can actually connect. Per RFC 4592 the closest wildcard wins, so
+`*.home.yuandrk.net` beats `*.yuandrk.net` for anything under `home.`.
+
+**No DNS server is involved.** A local resolver (Pi-hole) was removed in May 2026 and is not
+needed for this: the split is done with records, not with a service that can go down.
+
+Adding a service:
+- **public** → append an object to `local.tunnel_services` in Terraform, Ingress host `<name>.yuandrk.net`
+- **internal** → Ingress host `<name>.home.yuandrk.net`, no Terraform change at all
+
+> This separates names and routing, not permissions. Traefik still listens on `0.0.0.0:80` on
+> every node, so anything on the home Wi-Fi can reach an internal app by hitting
+> `192.168.1.223` with the right `Host` header. Source-IP filtering on Traefik is not an
+> option here — klipper (k3s ServiceLB) unconditionally masquerades the client address, which
+> is why an earlier `ipAllowList` attempt was reverted in `42eeedf`. Real per-service access
+> control would mean the Tailscale Kubernetes operator.
+
+### Resolver chain
+
 ```
 Host nodes (k3s-master, workers)
         ↓
@@ -109,8 +172,14 @@ K3s Pods
    CoreDNS (cluster service 10.43.0.10:53)
    ├─ Service discovery (.cluster.local)
    ├─ Node hostnames via NodeHosts plugin (k3s-master → 10.10.0.1, etc.)
-   └─ Upstream forward: 1.1.1.1, 8.8.8.8 (independent of host resolver)
+   └─ forward . /etc/resolv.conf  (i.e. via the node's systemd-resolved)
 ```
+
+Pods have no tailnet membership, so a pod resolving `<app>.home.yuandrk.net` gets
+`100.96.117.64` and cannot connect. If a pod ever needs to call an internal service by name,
+k3s's stock hook is a `coredns-custom` ConfigMap in `kube-system` — the live Corefile already
+ends with `import /etc/coredns/custom/*.override` and `import /etc/coredns/custom/*.server`.
+That ConfigMap does not exist today; nothing currently needs it.
 
 ### DNS Configuration
 

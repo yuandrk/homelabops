@@ -9,6 +9,15 @@ output "services" {
   }
 }
 
+# Tailnet-only services (no tunnel, no public reachability)
+output "internal_ingress" {
+  description = "Wildcard for tailnet-only services"
+  value = {
+    pattern = "*.home.yuandrk.net"
+    target  = local.internal_ingress_ip
+  }
+}
+
 # Tunnel configuration
 output "tunnel_config" {
   description = "Tunnel infrastructure details"
