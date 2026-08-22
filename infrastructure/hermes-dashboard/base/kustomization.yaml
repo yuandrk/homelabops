@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Every file below also sets its own namespace, but declaring it here is what stops a future
+# file that forgets to from landing silently in `default`.
+namespace: hermes-dashboard
+
+resources:
+- namespace.yaml
+- service.yaml
+- middleware.yaml
+- ingress.yaml

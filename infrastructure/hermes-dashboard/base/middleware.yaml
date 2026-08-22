@@ -1,0 +1,20 @@
+# Same shape as infrastructure/headlamp/base/middleware.yaml, for the same reason: TLS
+# terminates at Cloudflare and the tunnel speaks plain HTTP to Traefik, so without this the
+# backend sees an http:// request and builds http:// URLs.
+#
+# For Hermes this is load-bearing twice over. Its OIDC provider reconstructs the OAuth
+# redirect_uri from the request, and Okta rejects a non-https redirect_uri; and
+# dashboard_auth/cookies.py sets the session cookie's `Secure` flag from request.url.scheme.
+#
+# Necessary but NOT sufficient: uvicorn only honours X-Forwarded-Proto from peers listed in
+# FORWARDED_ALLOW_IPS, which defaults to 127.0.0.1 -- a Traefik pod is not that. The matching
+# systemd drop-in on k3s-master is what makes this header count. See docs/hermes-dashboard.md.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hermes-https-headers
+  namespace: hermes-dashboard
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"

@@ -1,0 +1,15 @@
+# Routing-only namespace: it never holds a pod. The Hermes dashboard itself is a host process
+# on k3s-master (user unit hermes-dashboard.service, uvicorn on :9119), deliberately outside
+# k3s because it is the agent's control channel and has to survive the cluster being down.
+# All this namespace contains is the Service/EndpointSlice/Ingress shim that lets Traefik
+# publish that host process as hermes.yuandrk.net.
+#
+# Kept separate from `hermes-sandbox` on purpose: that namespace is the agent's *job
+# workspace* (PodSecurity baseline, default-deny NetworkPolicy, persistentvolumeclaims: 0),
+# and a public route for a host process is not part of that workspace.
+#
+# No Pod Security labels here: admission only ever evaluates pods, and there are none.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hermes-dashboard

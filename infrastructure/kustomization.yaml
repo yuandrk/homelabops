@@ -6,3 +6,4 @@ resources:
 - headlamp/base
 - monitoring/base
 - hermes-sandbox/base
+- hermes-dashboard/base
