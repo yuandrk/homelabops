@@ -13,6 +13,7 @@
 | Fleet | `fleet.yuandrk.net` | osquery device management. Helm chart + its own MySQL (`fleet-mysql`, 8Gi local-path) and Valkey (`fleet-valkey`, no persistence), all pinned to k3s-worker3 — the Fleet image is amd64-only. Server URL and admin are set in the first-run wizard, not in the manifests. CVE scanning is off (`vulnProcessing.dedicated: false` + `FLEET_VULNERABILITIES_DISABLE_SCHEDULE`) |
 | SearXNG | ClusterIP only | Metasearch for Hermes, in `hermes-sandbox`. No Ingress/NodePort by design — Hermes reaches it by ClusterIP from the k3s-master host. JSON API and `method: GET` are non-default and set in `searxng-settings.yml`; the limiter is off (it would reject programmatic requests) |
 | browserless | ClusterIP only | Headless Chromium/CDP for Hermes, in `hermes-sandbox`. Every route needs `?token=` from the `hermes-sandbox-credentials` vault item |
+| Hermes dashboard | `hermes.yuandrk.net` | **Not a pod** — a host process on k3s-master (`hermes-dashboard.service`, uvicorn :9119) fronted by a selector-less Service + hand-written EndpointSlice in the `hermes-dashboard` namespace. Auth is Okta OIDC via Hermes' own `self_hosted` provider; access = Okta app assignment to `homelab-admins`. Its config and systemd drop-in live on the host, outside git. See [hermes-dashboard.md](../../docs/hermes-dashboard.md) |
 
 > `hermes-sandbox` is the Hermes agent's workspace: PodSecurity baseline, default-deny network,
 > quota with `persistentvolumeclaims: 0`, and a scoped `hermes-runner` account instead of the

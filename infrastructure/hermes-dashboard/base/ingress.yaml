@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-dashboard
+  namespace: hermes-dashboard
+  annotations:
+    # `web` only. websecure would need a certificate Traefik does not have -- see the
+    # `tls: []` note in apps/fleet/base/helm-release.yaml.
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Reference format is <namespace>-<name>@kubernetescrd, not a bare name.
+    traefik.ingress.kubernetes.io/router.middlewares: hermes-dashboard-hermes-https-headers@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    # Public: this hostname also has to exist in local.tunnel_services in
+    # terraform/live/homelab/cloudflare/main.tf, otherwise the name does not resolve.
+    - host: hermes.yuandrk.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-dashboard
+                port:
+                  number: 80

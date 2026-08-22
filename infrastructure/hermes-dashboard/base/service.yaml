@@ -1,0 +1,49 @@
+# The repo's first Ingress -> off-cluster backend. Everything else here fronts a Deployment,
+# but the Hermes dashboard is a host process on k3s-master, so there is no pod to select.
+#
+# The pattern is a Service with NO selector plus a hand-written EndpointSlice. Without a
+# selector the endpoint controller leaves the Service alone instead of continuously clearing
+# its endpoints, so the addresses below are what Traefik dials.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-dashboard
+  namespace: hermes-dashboard
+spec:
+  type: ClusterIP
+  ports:
+    # `name` is not decorative: a multi-port-capable Service and its EndpointSlice are matched
+    # by port NAME, so this string has to equal the one in the EndpointSlice below. Get it
+    # wrong and the Service resolves to no endpoints and Traefik answers 502.
+    - name: http
+      port: 80
+      targetPort: 9119
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: hermes-dashboard-host
+  namespace: hermes-dashboard
+  labels:
+    # This label is the only thing binding the slice to the Service. It is not inferred from
+    # the name.
+    kubernetes.io/service-name: hermes-dashboard
+addressType: IPv4
+ports:
+  - name: http
+    port: 9119
+    protocol: TCP
+endpoints:
+  # k3s-master's LAN address. Hermes binds 0.0.0.0:9119 there, and cluster pods route to node
+  # IPs directly, so a Traefik pod on any node can reach it.
+  #
+  # Hardcoded because there is nothing to discover it from: the process is not in k8s. If
+  # k3s-master ever changes LAN address this is the line to edit -- the same trade-off the
+  # Tailscale address in terraform/live/homelab/cloudflare/main.tf already makes.
+  - addresses:
+      - 192.168.1.223
+    conditions:
+      # Nothing health-checks a hand-written slice, so this is an assertion, not an
+      # observation: Traefik will keep sending traffic here even if Hermes is stopped.
+      ready: true
