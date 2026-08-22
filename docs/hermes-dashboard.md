@@ -80,15 +80,45 @@ replace step 2.
 | | |
 |---|---|
 | Issuer | `https://okta.yuandrk.net` (same as Headlamp and the k3s apiserver) |
-| App | `Hermes Dashboard`, OIDC Web app, `client_id` `0oa16pzv08uDQV7Fy698` |
+| App | `Hermes Dashboard`, OIDC **Native** app, **public client** (`token_endpoint_auth_method: none`), `client_id` `0oa16q11mp5oL7Brc698` |
 | Redirect URI | `https://hermes.yuandrk.net/auth/callback` — **must** end in `/auth/callback`, the provider validates this and fails fast otherwise |
 | Authorization | Okta **app assignment** only — the app is assigned to `Andriuk corp` |
 
 Hermes uses its own bundled `self_hosted` provider
-(`plugins/dashboard_auth/self_hosted/`), a confidential client doing authorization-code + PKCE
-and verifying the ID token against the discovered `jwks_uri`. No oauth2-proxy is involved and
-none would help: Hermes has no trusted-header auth mode, so a forward-auth proxy could only
-stack in front of its own `/login`.
+(`plugins/dashboard_auth/self_hosted/`), doing authorization-code + PKCE and verifying the ID
+token against the discovered `jwks_uri`. No oauth2-proxy is involved and none would help: Hermes
+has no trusted-header auth mode, so a forward-auth proxy could only stack in front of its own
+`/login`.
+
+### It must be a public client — a confidential one cannot work against Okta
+
+This is not a preference. `config.yaml` carries **no** `client_secret`, deliberately.
+
+With a secret set, `_token_endpoint_auth` picks its method from the IdP's advertised
+`token_endpoint_auth_methods_supported`, and its post-body branch fires only when
+`client_secret_post` is advertised **and `client_secret_basic` is not**. Okta advertises both, so
+the HTTP Basic branch always wins — while `complete_login` still puts `client_id` in the request
+body. Okta rejects that pairing:
+
+```
+401 invalid_request — "Cannot supply multiple client credentials. Use one of the following:
+credentials in the Authorization header, credentials in the post body, or a client_assertion."
+```
+
+RFC 6749 §2.3.1 agrees with Okta: a client must not use more than one authentication method per
+request. There is no config knob to force the post-body branch, so the only ways out are a public
+client or patching upstream. We took the public client — which is what
+`plugins/dashboard_auth/self_hosted/plugin.yaml` describes as the provider's primary design
+anyway ("authorization-code + PKCE, public client").
+
+Because Okta forbids `token_endpoint_auth_method: none` on **Web** apps and refuses to change
+`application_type` after creation (`400 'application_type' cannot be modified`), the app had to be
+recreated as a **Native** app. Security rests on PKCE `S256`, exact redirect-URI matching, and app
+assignment — not on a client secret.
+
+A quick way to confirm client auth is accepted without a browser: POST a deliberately invalid
+code to the token endpoint with just `client_id` + `code_verifier`. `invalid_grant` means the
+client-auth shape passed; `invalid_request` or `invalid_client` means it did not.
 
 It reads `groups` from the ID token but only for display — **it does not authorize on them.**
 Access control is entirely "is this user assigned to the app in Okta". Removing someone from
@@ -104,12 +134,10 @@ Re-point the assignment at `homelab-admins` if that stops being what you want.
 This is the real gap. Two files live only on k3s-master:
 
 - `/home/yuandrk/.hermes/config.yaml` (mode 0600) — holds `dashboard.oauth.self_hosted.*`
-  including the Okta **client secret**
 - `/home/yuandrk/.config/systemd/user/hermes-dashboard.service.d/proxy.conf`
 
-Timestamped backups of the config sit next to it as `config.yaml.bak-*`. The Okta client
-credentials are also in the 1Password `homelab` vault as `hermes-dashboard-oidc`; they are
-**not** synced into k8s, because Hermes does not run in k8s.
+Timestamped backups of the config sit next to it as `config.yaml.bak-*`. There is no client
+secret to store anywhere — this is a public client.
 
 ## `basic_auth` is gone
 
