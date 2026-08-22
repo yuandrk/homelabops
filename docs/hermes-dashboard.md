@@ -82,7 +82,7 @@ replace step 2.
 | Issuer | `https://okta.yuandrk.net` (same as Headlamp and the k3s apiserver) |
 | App | `Hermes Dashboard`, OIDC Web app, `client_id` `0oa16pzv08uDQV7Fy698` |
 | Redirect URI | `https://hermes.yuandrk.net/auth/callback` — **must** end in `/auth/callback`, the provider validates this and fails fast otherwise |
-| Authorization | Okta **app assignment** only — the app is assigned to `homelab-admins` |
+| Authorization | Okta **app assignment** only — the app is assigned to `Andriuk corp` |
 
 Hermes uses its own bundled `self_hosted` provider
 (`plugins/dashboard_auth/self_hosted/`), a confidential client doing authorization-code + PKCE
@@ -92,19 +92,39 @@ stack in front of its own `/login`.
 
 It reads `groups` from the ID token but only for display — **it does not authorize on them.**
 Access control is entirely "is this user assigned to the app in Okta". Removing someone from
-`homelab-admins` is what revokes access.
+`Andriuk corp` is what revokes access.
+
+That group is the org's general "Main users" group, not the `homelab-admins` admin boundary that
+Headlamp and the apiserver use. It was chosen deliberately, but it means **anyone later added as
+a main user silently gains the agent's control channel** — there is no second gate behind it.
+Re-point the assignment at `homelab-admins` if that stops being what you want.
 
 ## What is not in git
 
 This is the real gap. Two files live only on k3s-master:
 
 - `/home/yuandrk/.hermes/config.yaml` (mode 0600) — holds `dashboard.oauth.self_hosted.*`
-  including the Okta **client secret**, plus the `basic_auth` hash and session-signing key
+  including the Okta **client secret**
 - `/home/yuandrk/.config/systemd/user/hermes-dashboard.service.d/proxy.conf`
 
 Timestamped backups of the config sit next to it as `config.yaml.bak-*`. The Okta client
-credentials belong in the 1Password `homelab` vault as well; they are **not** synced into k8s,
-because Hermes does not run in k8s.
+credentials are also in the 1Password `homelab` vault as `hermes-dashboard-oidc`; they are
+**not** synced into k8s, because Hermes does not run in k8s.
+
+## `basic_auth` is gone
+
+The shared username/password provider was removed from `config.yaml` once SSO was verified —
+upstream is explicit that it is for a trusted network only, and this dashboard is now reachable
+from the internet. `/api/auth/providers` should list `self-hosted` and nothing else, and
+`POST /auth/password-login` answers `404 Unknown provider` for any provider name.
+
+Its `secret` was the HMAC key the `basic` provider signed its own session tokens with; the OIDC
+provider does not use it (it carries Okta's tokens and PKCE), so removing the block did not
+affect SSO sessions.
+
+**This removed the fallback.** If Okta is unreachable there is no second way into the web UI —
+recovery means restoring `dashboard.basic_auth` from a `config.yaml.bak-preremove-*` backup over
+SSH and restarting the unit.
 
 ## Operations
 
@@ -125,7 +145,8 @@ kubectl get endpointslice -n hermes-dashboard
 kubectl -n kube-system exec deploy/traefik -- wget -qS -O /dev/null http://192.168.1.223:9119/
 ```
 
-**Rollback:** comment out `dashboard.oauth.self_hosted` in `config.yaml` and
-`systemctl --user restart hermes-dashboard` — the `basic` username/password provider is still
-configured and keeps working. Removing the `hermes` entry from `local.tunnel_services` in
-`terraform/live/homelab/cloudflare/main.tf` withdraws the public name entirely.
+**Rollback:** restore a `config.yaml.bak-*` over `config.yaml` and
+`systemctl --user restart hermes-dashboard`. Since `basic_auth` is gone, disabling OIDC alone
+leaves no way in — restore a backup that still contains it. Removing the `hermes` entry from
+`local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf` withdraws the public name
+entirely, leaving `192.168.1.223:9119` on the LAN.
