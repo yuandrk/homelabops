@@ -40,7 +40,7 @@ spec:
         - name: mysql
           # Fleet requires >= 8.0.44 and tests against 8.4.8. Do not move to 9.6.x,
           # which upstream lists as incompatible.
-          image: mysql:8.4.8
+          image: mysql:8.4.11
           ports:
             - name: mysql
               containerPort: 3306
