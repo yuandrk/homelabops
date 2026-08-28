@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/yuandrk/Documents/homelabops/.codex/hooks/guard-mutations.sh'"
+          },
+          {
+            "type": "command",
+            "command": "'/Users/yuandrk/Documents/homelabops/.codex/hooks/guard-secrets.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
