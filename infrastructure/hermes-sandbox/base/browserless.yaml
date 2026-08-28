@@ -32,7 +32,7 @@ spec:
           # would break ownership of PLAYWRIGHT_BROWSERS_PATH. runAsNonRoot is also omitted
           # because the image's USER is a name, not a numeric id, and the kubelet cannot
           # verify a non-numeric user — it would refuse to start the container.
-          image: ghcr.io/browserless/chromium:v2.38.1
+          image: ghcr.io/browserless/chromium:v2.56.0
           env:
             - name: CONCURRENT
               value: "2"
