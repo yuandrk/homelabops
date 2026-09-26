@@ -12,7 +12,7 @@ This configuration **only monitors**:
 
 Everything else is **explicitly disabled**:
 - ❌ GitHub Actions (separate manual updates)
-- ❌ Terraform providers/modules (managed via CI/CD workflows)
+- ⚠️ Terraform: only the cloudflare stack (`terraform/live/homelab/cloudflare`), via its committed lock file
 - ❌ FluxCD system components (manual upgrades only)
 - ❌ npm/pip/other package managers
 
@@ -25,7 +25,7 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 | Setting | Value |
 |---------|-------|
 | Schedule | `* 0-5 * * 1` — Mondays 00:00–05:00 (Europe/London) |
-| Managers | `kubernetes`, `flux`, `helm-values`, `helmv3` only |
+| Managers | `kubernetes`, `flux`, `helm-values`, `helmv3`, `terraform` (cloudflare stack only) |
 | File scope | `apps/**/*.yaml` (kubernetes + flux managers via `managerFilePatterns`) |
 | PR limit | 3 concurrent, `rebaseWhen: behind-base-branch` |
 | Dashboard | Dependency Dashboard issue enabled |
@@ -55,7 +55,7 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 ### Explicit Exclusions
 
 - **GitHub Actions disabled** - `enabled: false` for `github-actions` manager
-- **Terraform disabled** - `enabled: false` for `terraform` and `terraform-version` managers
+- **Terraform disabled** - `enabled: false` for `terraform` and `terraform-version` managers, **except** `terraform/live/homelab/cloudflare/**`, which is re-enabled with `rangeStrategy: update-lockfile` (group `terraform-cloudflare`). The constraint stays `~> 5.0`; Renovate bumps the committed `.terraform.lock.hcl`, and the PR runs `terraform-plan.yml` before the bump reaches main. Before 2026-09-26 the lock file was gitignored, so CI silently floated to the newest provider and an apply broke on cloudflare 5.26.0
 
 ### Update Policy & Grouping
 
@@ -81,7 +81,7 @@ App and infrastructure updates land in separate grouped PRs (`app-images`, `app-
 These are intentionally disabled and require manual updates:
 - ❌ **FluxCD system components** - `clusters/prod/flux-system/gotk-components.yaml`
 - ❌ **GitHub Actions** - `.github/workflows/*.yml`
-- ❌ **Terraform providers/modules** - `terraform/**/*.tf` (managed by CI/CD workflows)
+- ❌ **Terraform providers/modules** outside the cloudflare stack - `terraform/**/*.tf`
 - ❌ **npm/pip/go.mod** - Not applicable to this Kubernetes-focused homelab
 
 ## How It Works
@@ -100,7 +100,7 @@ These are intentionally disabled and require manual updates:
 **What Renovate Ignores**:
 - FluxCD system manifests in `clusters/prod/flux-system/`
 - GitHub Actions workflow files
-- Terraform configuration files
+- Terraform configuration files (except the cloudflare stack's provider lock)
 - Any other package managers or dependency types
 
 ## Common Customizations
@@ -130,7 +130,7 @@ If you want to re-enable Terraform monitoring, remove the disable rule and optio
 ]
 ```
 
-**Note**: Terraform is currently managed via GitHub Actions CI/CD workflows, so Renovate monitoring is disabled.
+**Note**: Only the cloudflare stack is monitored (see Explicit Exclusions). A lock-file bump regenerated on Linux carries only that platform's `h1:` hash; if `terraform init` on a Mac then complains, run `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64` and commit.
 
 ### Enable Automerge for Patch Updates
 
