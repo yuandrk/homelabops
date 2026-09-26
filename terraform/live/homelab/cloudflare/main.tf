@@ -40,6 +40,11 @@ locals {
       hostname = "fleet.yuandrk.net"
       service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
+    {
+      name     = "kite"
+      hostname = "kite.yuandrk.net"
+      service  = "http://traefik.kube-system.svc.cluster.local:80"
+    },
     # The Hermes dashboard is a host process on k3s-master, not a pod, so Traefik reaches it
     # through the selector-less Service in infrastructure/hermes-dashboard/base. Routing it
     # through Traefik rather than straight at 192.168.1.223:9119 is what gives it the

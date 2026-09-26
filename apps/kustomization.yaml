@@ -7,5 +7,6 @@ resources:
 - immich/base
 - qbittorrent/base
 - fleet/base
+- kite/base
 
 namespace: apps

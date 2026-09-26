@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kite-config
+  namespace: apps
+  labels:
+    app: kite
+data:
+  # Loaded via KITE_CONFIG_FILE on every startup; the sections below become read-only in
+  # the UI. ${VAR} placeholders are expanded from env (kite-credentials), so no secrets here.
+  config.yaml: |
+    # Break-glass local login for when Okta is unreachable
+    superUser:
+      username: admin
+      password: "${KITE_ADMIN_PASSWORD}"
+    clusters:
+      - name: homelab
+        inCluster: true
+        default: true
+        prometheusURL: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+    oauth:
+      - name: okta
+        issuer: https://okta.yuandrk.net
+        clientId: "${OKTA_CLIENT_ID}"
+        clientSecret: "${OKTA_CLIENT_SECRET}"
+        scopes: openid,profile,email,groups
+        usernameClaim: email
+        groupsClaim: groups
+        enabled: true
+    # Access is gated by Okta app assignment (no allowedGroups, so a broken groups claim
+    # can't lock us out). Users not mapped here log in with no permissions.
+    rbac:
+      roleMapping:
+        - name: admin
+          users: ["me@yuandrk.net"]
+          oidcGroups: ["IT"]

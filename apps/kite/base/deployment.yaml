@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kite
+  namespace: apps
+  labels:
+    app: kite
+spec:
+  replicas: 1
+  # SQLite on a RWO volume: never run two pods at once
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kite
+  template:
+    metadata:
+      labels:
+        app: kite
+    spec:
+      serviceAccountName: kite
+      containers:
+        - name: kite
+          image: ghcr.io/kite-org/kite:v0.15.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_DSN
+              value: "/data/db.sqlite"
+            # Pin the OAuth callback origin: behind cloudflared -> Traefik the forwarded
+            # proto is http, and Okta rejects a non-HTTPS redirect_uri
+            - name: HOST
+              value: "https://kite.yuandrk.net"
+            - name: KITE_CONFIG_FILE
+              value: "/etc/kite/config.yaml"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: kite-credentials
+                  key: jwt_secret
+            - name: KITE_ENCRYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kite-credentials
+                  key: encrypt_key
+            - name: KITE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kite-credentials
+                  key: admin_password
+            - name: OKTA_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: kite-credentials
+                  key: okta_client_id
+            - name: OKTA_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: kite-credentials
+                  key: okta_client_secret
+          volumeMounts:
+            - name: kite-data
+              mountPath: /data
+            - name: kite-config
+              mountPath: /etc/kite
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      volumes:
+        - name: kite-data
+          persistentVolumeClaim:
+            claimName: kite-pvc
+        - name: kite-config
+          configMap:
+            name: kite-config
