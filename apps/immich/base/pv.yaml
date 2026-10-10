@@ -1,0 +1,29 @@
+# Static NFS volume for the Immich library, served by k3s-master from /srv/data/immich.
+# immich-server stays on k3s-worker3 for its Intel iGPU, so the files reach it over NFS.
+# The export itself is host config outside git (/etc/exports.d/immich.exports on k3s-master),
+# limited to k3s-worker3 (10.10.0.5). Retain: deleting the claim never touches the photos.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-library-master
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: apps
+    name: immich-library-v2
+  # Same client options the old worker1 volume used.
+  mountOptions:
+    - async
+    - rsize=1048576
+    - wsize=1048576
+    - nconnect=4
+    - noatime
+    - nodiratime
+  nfs:
+    server: 10.10.0.1
+    path: /srv/data/immich

@@ -4,6 +4,7 @@ namespace: apps
 resources:
   - helm-repo.yaml
   - helm-release.yaml
+  - pv.yaml
   - pvc.yaml
   - ingress.yaml
   - service-nodeport.yaml

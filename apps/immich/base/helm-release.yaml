@@ -23,11 +23,11 @@ spec:
               - secretRef:
                   name: immich-credentials
 
-    # Library storage
+    # Library storage: static NFS volume on k3s-master (pv.yaml)
     immich:
       persistence:
         library:
-          existingClaim: immich-library
+          existingClaim: immich-library-v2
 
     # Valkey (Redis replacement)
     valkey:

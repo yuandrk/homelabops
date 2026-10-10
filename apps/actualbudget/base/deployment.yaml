@@ -7,6 +7,9 @@ metadata:
     app: actualbudget
 spec:
   replicas: 1
+  # Recreate: /data is SQLite on a single host path, so two pods must never write it at once.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: actualbudget
@@ -15,6 +18,10 @@ spec:
       labels:
         app: actualbudget
     spec:
+      # Pinned to k3s-master: /data is a hostPath there (/srv/data/actualbudget), covered by the
+      # nightly restic backup. Moved off k3s-worker1 after its USB-SSD hung in 2026-10.
+      nodeSelector:
+        kubernetes.io/hostname: k3s-master
       containers:
       - name: actualbudget
         image: actualbudget/actual-server:26.8.1
@@ -40,5 +47,6 @@ spec:
             memory: 1Gi
       volumes:
       - name: actual-data
-        persistentVolumeClaim:
-          claimName: actualbudget-data
+        hostPath:
+          path: /srv/data/actualbudget
+          type: Directory

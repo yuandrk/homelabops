@@ -1,3 +1,5 @@
+# Old library on k3s-worker1 (dynamic nfs-immich volume). Unused since the move to
+# k3s-master; kept bound as the rollback path until the cleanup commit removes it.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -7,6 +9,22 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: nfs-immich
+  resources:
+    requests:
+      storage: 500Gi
+---
+# Library on k3s-master, pre-bound to the static PV in pv.yaml. storageClassName "" keeps
+# the default local-path class from claiming it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library-v2
+  namespace: apps
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: immich-library-master
   resources:
     requests:
       storage: 500Gi
