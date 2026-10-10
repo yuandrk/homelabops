@@ -14,6 +14,9 @@ spec:
         name: nfs-subdir-external-provisioner
         namespace: storage
   values:
+    # Disabled while the Immich library moves to k3s-master as a static PV. Nothing provisions
+    # from nfs-immich any more, and a running replica would hard-mount worker1's export.
+    replicaCount: 0
     nfs:
       server: 10.10.0.2
       path: /srv/nfs/immich
