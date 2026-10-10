@@ -15,6 +15,12 @@ spec:
         name: grafana
         namespace: monitoring
   values:
+    # Log collection must cover every node, including the disposable k3s-worker1 (docs/backup.md).
+    controller:
+      tolerations:
+        - key: homelab.yuandrk.net/disposable
+          operator: Exists
+          effect: NoSchedule
     alloy:
       configMap:
         content: |

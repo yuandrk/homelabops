@@ -46,3 +46,9 @@ spec:
       enabled: false
     resultsCache:
       enabled: false
+    # loki-canary runs on every node, including the disposable k3s-worker1 (docs/backup.md).
+    lokiCanary:
+      tolerations:
+        - key: homelab.yuandrk.net/disposable
+          operator: Exists
+          effect: NoSchedule
