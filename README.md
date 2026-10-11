@@ -127,8 +127,8 @@ Alloy in the cluster, with restic and Tailscale on the host.
 
 Nothing here pretends to be finished:
 
-- **Alerts reach no one yet.** Alertmanager is off, and the custom rules are not loaded
-  ([monitoring](docs/monitoring.md#alerting-reaches-no-one)).
+- **No alerting yet.** Alertmanager is off and there are no custom rules. Both wait until it
+  is clear what deserves a notification ([monitoring](docs/monitoring.md#alerting-reaches-no-one)).
 - **k3s-master is a single point of failure** for both the control plane and the data. There is
   a [rebuild runbook](docs/runbooks/rebuild-k3s-master.md), but it has not been rehearsed.
 - **Infrastructure charts float** on `>=` ranges, so their major upgrades skip review

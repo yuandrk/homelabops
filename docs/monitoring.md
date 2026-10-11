@@ -21,14 +21,15 @@ Cluster Stats, Flux Control Plane, Nodes, Node Exporter and Node Exporter Full.
 - **Nothing sends notifications.** Alertmanager is `enabled: false`. When the USB-SSD of
   k3s-worker1 hung on 2026-10-05, nothing paged anyone, and a failed backup only shows up in
   `journalctl`.
-- **The custom rules are not loaded.** `homelab-monitoring-rules` (18 alerts in `node.rules`,
-  `kubernetes.rules` and `flux.rules`) is labelled `app`, `prometheus` and `role`, but not
-  `release: kube-prometheus-stack`, and the live Prometheus selects rules by exactly that label
-  (`ruleSelector`, checked 2026-10-11). After adding the label, confirm the groups appear:
+- **There are no custom rules.** The chart's default rules are loaded and evaluated, but they
+  notify no one. The old `homelab-monitoring-rules` was never loaded and was removed on
+  2026-10-11 ([decisions.md](decisions.md#2026-10-11--custom-alert-rules-removed-until-they-have-a-purpose)).
+  A new `PrometheusRule` goes in `infrastructure/monitoring/base/configs/` with the label
+  `release: kube-prometheus-stack` (see the table below). Confirm that Prometheus loaded it:
 
   ```bash
   kubectl get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules \
-    | jq -r '.data.groups[].name' | grep -E 'node|kubernetes|flux'
+    | jq -r '.data.groups[].name'
   ```
 
   The Prometheus image has no `wget` or `curl`, so `kubectl exec` into it does not help.
@@ -77,7 +78,8 @@ kubectl get secret -n monitoring grafana-admin-credentials \
 
 ## Still missing
 
-- Alert delivery: Alertmanager, or a Grafana contact point, plus the `release` label on the rules.
+- Alerting: the rules worth waking up for, and a way to deliver them (Alertmanager, or a
+  Grafana contact point).
 - Loki retention. Nothing in the HelmRelease sets it, and local-path does not cap the volume at
   10Gi, so logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts
   evicting pods there, and the native PostgreSQL on that disk runs out of space as well.

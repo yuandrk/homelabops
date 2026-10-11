@@ -16,15 +16,17 @@ terraform/live/homelab/   cloudflare/ (applied by CI); aws-bootstrap/, aws-oidc/
 
 ## Flux Kustomizations
 
-Flux pulls `main` from the GitRepository `flux-system` every minute. The root Kustomization
-(`flux-system`, path `clusters/prod`) creates the seven below. The arrows are `dependsOn`:
+Flux pulls `main` from the GitRepository `flux-system` every minute. That poll is the only
+trigger: there is no webhook ([decisions.md](decisions.md#2026-10-11--no-flux-webhook)). The
+root Kustomization (`flux-system`, path `clusters/prod`) creates the seven below. The arrows are
+`dependsOn`:
 
 ```mermaid
 flowchart LR
     infra["infrastructure<br/>./infrastructure"] --> secrets["secrets<br/>clusters/prod/secrets"]
     infra --> net["infrastructure-networking<br/>cloudflared"]
     storage["storage<br/>NFS provisioner"] --> apps["apps<br/>./apps"]
-    monc["monitoring-controllers<br/>Prometheus stack, Loki, Alloy"] --> monconf["monitoring-configs<br/>rules, monitors, dashboards"]
+    monc["monitoring-controllers<br/>Prometheus stack, Loki, Alloy"] --> monconf["monitoring-configs<br/>monitors, dashboards"]
     secrets --> monconf
 ```
 
@@ -88,11 +90,6 @@ After the merge, Flux prunes the Deployment, Service, Ingress and PVCs. These yo
   HelmRelease, which sits under `monitoring-controllers`' path, carried
   `kustomize.toolkit.fluxcd.io/name: infrastructure`. Untangle it carefully: dropping the path
   from one side makes that side prune what it believes it owns.
-- **The Flux webhook is a dead end.** There is no `Receiver`, in git or in the cluster, and
-  GitHub has no webhook for it, yet `flux-webhook.yuandrk.net` is still published through the
-  tunnel to the `webhook-receiver` Service. The 1-minute poll is what picks up merges. Either
-  remove the route from `local.tunnel_services` or add a Receiver and a GitHub webhook
-  ([TODO](TODO.md#cleanup)).
 - **The NFS provisioner is scaled to zero but still wired in.** `apps` depends on `storage`,
   whose health check is that provisioner's Deployment. Removing it means editing
   `clusters/prod/storage.yaml` and `apps.yaml` together.

@@ -5,8 +5,9 @@
 What runs, the selector labels that decide what Prometheus picks up, and what is still missing
 are in [monitoring.md](../../docs/monitoring.md). Two things to keep in mind when touching it:
 
-- **Alertmanager is disabled**, so alert rules notify no one. The custom `PrometheusRule` also
-  lacks the `release: kube-prometheus-stack` label, which the default `ruleSelector` needs.
+- **Alertmanager is disabled**, so alert rules notify no one, and there are no custom rules.
+  A new `PrometheusRule` needs the `release: kube-prometheus-stack` label, or the `ruleSelector`
+  ignores it.
 - **Grafana**: dashboards at `grafana.yuandrk.net`. `admin/flux` no longer works. Read the live
   credentials with:
   `kubectl get secret -n monitoring grafana-admin-credentials -o jsonpath='{.data.admin-password}' | base64 -d`

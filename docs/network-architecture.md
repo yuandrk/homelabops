@@ -176,7 +176,7 @@ etc. resolve without DNS. k3s-worker1 has no such entries:
 |---|---|
 | Tunnel | `homeserver`, ID `4a6abf9a-d178-4a56-9586-a3d77907c5f1`. The tunnel itself was created outside Terraform |
 | Routes | `local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf`, ending in `http_status:404` |
-| Backends | `traefik.kube-system.svc.cluster.local:80` for every app. `flux-webhook.yuandrk.net` goes to `webhook-receiver.flux-system.svc.cluster.local:80`, where no Receiver listens ([gitops.md](gitops.md#traps-in-this-repo)) |
+| Backends | `traefik.kube-system.svc.cluster.local:80` for every hostname |
 | Connector | `cloudflared` HelmRelease, 2 replicas, namespace `networking`, token from 1Password |
 
 ## Commands

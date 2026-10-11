@@ -24,6 +24,21 @@ Newest first. Add an entry when a change would make a future reader ask "why on 
 
 ## Log
 
+### 2026-10-11 · No Flux webhook
+
+`flux-webhook.yuandrk.net` was published through the tunnel to Flux's `webhook-receiver`
+Service, but no `Receiver` was ever created and GitHub never called it. Nothing used it: Flux's
+one-minute poll of `main` is what picks up merges. The route was removed rather than completed,
+which leaves one public hostname fewer. [gitops.md](gitops.md#flux-kustomizations)
+
+### 2026-10-11 · Custom alert rules removed until they have a purpose
+
+`homelab-monitoring-rules` (18 alerts) lacked the `release: kube-prometheus-stack` label, so
+Prometheus never loaded it, and with Alertmanager off it would have reached no one anyway.
+Rather than fix rules nobody had chosen, they were deleted. New rules get written for what
+actually needs attention, together with a way to deliver them
+([monitoring.md](monitoring.md#alerting-reaches-no-one)).
+
 ### 2026-10-10 · Important data on k3s-master, in three copies
 
 The USB-SSD of k3s-worker1 hung on 2026-10-05 and took photos and the budget down for five

@@ -55,9 +55,8 @@ The docs currently cannot answer these questions, so give them extra care:
 - why k3s-worker1 rebooted at about 07:19 UTC on 2026-10-11 (its boot list and the end of the
   previous boot's journal);
 - UFW's default policy on k3s-worker3;
-- in the cluster: whether Prometheus loaded the `homelab-monitoring-rules` groups, whether
-  Headlamp's OIDC client ID matches the API server's `oidc-client-id`, and which images run
-  with the tag `latest`.
+- in the cluster: whether Headlamp's OIDC client ID matches the API server's `oidc-client-id`,
+  and which images run with the tag `latest`.
 
 ### Rules
 

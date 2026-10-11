@@ -5,7 +5,7 @@ next to their context:
 
 - [backup.md](backup.md#still-missing): the offsite copy that has not completed, n8n's database
   dump, backup alerting, the live SQLite copy
-- [monitoring.md](monitoring.md#still-missing): alert delivery, rule labels, Loki retention
+- [monitoring.md](monitoring.md#still-missing): alerting, Loki retention
 - [off-git.md](off-git.md): every **Not recorded** value, and the open questions
 
 Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the same day.
@@ -45,8 +45,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       `apps`, and the old worker1 claims kept as a rollback path in `c36a446`. Then, on
       k3s-worker1, stop `nfs-server`, drop its export and delete `/srv/nfs/immich`
       ([off-git.md](off-git.md#k3s-worker1))
-- [ ] Remove the dead `flux-webhook` tunnel route, or create a Receiver and a GitHub webhook
-      for it ([gitops.md](gitops.md#traps-in-this-repo))
 - [ ] Host leftovers: the inactive `k3s-agent` unit and its token file on k3s-master;
       `tailscaled`, `sops` and a dead kubeconfig on k3s-worker3 ([off-git.md](off-git.md))
 - [ ] SOPS leftovers: `.sops.yaml`, the `sops -d` permission and age-key read denies in

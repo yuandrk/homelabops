@@ -71,8 +71,6 @@ allowlists do not work here (klipper masquerades the client IP — see
 
 ## Cloudflare Tunnel Routing
 
-cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see [decisions.md](../../docs/decisions.md#2026-05-24--cloudflared-moved-into-the-cluster)). All tunnel ingresses target in-cluster Service DNS:
-
-- `flux-webhook.yuandrk.net` → `http://webhook-receiver.flux-system.svc.cluster.local:80`. Dead: no
-  `Receiver` exists and GitHub sends no webhook, so Flux relies on its 1-minute poll
-- Everything else → `http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000)
+cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see [decisions.md](../../docs/decisions.md#2026-05-24--cloudflared-moved-into-the-cluster)). Every tunnel ingress targets
+`http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000).
+There is no Flux webhook route: Flux polls `main` every minute.

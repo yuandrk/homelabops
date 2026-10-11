@@ -132,7 +132,7 @@ h_dns() {
   grep -E 'k3s-|10\.10\.0\.' /etc/hosts
   echo "## public names, as this host resolves them"
   local n
-  for n in "inventory-probe-$RANDOM.yuandrk.net" inventory-probe.home.yuandrk.net photos.yuandrk.net flux-webhook.yuandrk.net; do
+  for n in "inventory-probe-$RANDOM.yuandrk.net" inventory-probe.home.yuandrk.net photos.yuandrk.net; do
     printf '%s -> %s\n' "$n" "$(getent ahostsv4 "$n" | awk 'NR==1 {print $1}')"
   done
 }
@@ -379,7 +379,7 @@ c_monitoring() {
   echo "## which Flux Kustomization last applied each object (label kustomize.toolkit.fluxcd.io/name)"
   local o
   for o in helmrelease/kube-prometheus-stack helmrelease/loki helmrelease/alloy \
-    prometheusrule/homelab-monitoring-rules podmonitor/flux-system deploy/flux-kube-state-metrics; do
+    podmonitor/flux-system deploy/flux-kube-state-metrics; do
     printf '%s: %s\n' "$o" "$(k -n monitoring get "$o" -o jsonpath='{.metadata.labels.kustomize\.toolkit\.fluxcd\.io/name}' 2>&1)"
   done
   echo "## Prometheus rule selector"
