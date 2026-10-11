@@ -1,11 +1,9 @@
 # Architecture
 
 Three nodes, one control plane. Flux applies the cluster from `main`, CI applies the Cloudflare
-edge with Terraform, and a few services run on the hosts outside Kubernetes on purpose.
-
-This page holds what stays true from week to week. For what is running right now, ask the
-cluster (`flux get all -A`, `kubectl get pods -A -o wide`), not the docs. For why things are
-the way they are, see [decisions.md](decisions.md).
+edge with Terraform, and a few services run on the hosts outside Kubernetes on purpose. This page
+holds what stays true from week to week; for what runs right now, ask the cluster
+(`flux get all -A`, `kubectl get pods -A -o wide`).
 
 ## Principles
 
@@ -21,19 +19,20 @@ the way they are, see [decisions.md](decisions.md).
 6. **What must survive a broken cluster runs on the host**: the backups, Tailscale and the
    Hermes agent.
 7. **An app stays only while it is used.** It is removed on Traefik request data, not on memory
-   ([usage-metrics.md](usage-metrics.md)).
+   ([monitoring.md](monitoring.md#is-an-app-still-used)).
 8. **Terraform runs from CI**: plan on the PR, apply on merge to `main`.
 
 ## Nodes
 
 | Node | Hardware | Network | Role |
 |------|----------|---------|------|
-| `k3s-master` | Intel i3-7100U, 16 GB, 1 TB NVMe | `10.10.0.1` wired, `192.168.1.223` Wi-Fi, `100.96.117.64` Tailscale | Control plane, important data under `/srv/data`, NFS server, Tailscale subnet router, restic, Hermes |
-| `k3s-worker3` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel iGPU + NVIDIA MX130 | `10.10.0.5` wired, `192.168.1.246` Wi-Fi | The heavy worker: Immich compute, Fleet, Prometheus, Loki, the Hermes sandbox. Native PostgreSQL |
+| `k3s-master` | Intel i3-7100U, 16 GB, 1 TB NVMe (Crucial P3) | `10.10.0.1` wired, `192.168.1.223` Wi-Fi, `100.96.117.64` Tailscale | Control plane, important data under `/srv/data`, NFS server, Tailscale subnet router, restic, Hermes |
+| `k3s-worker3` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel UHD 620 + NVIDIA MX130 | `10.10.0.5` wired, `192.168.1.246` Wi-Fi | The heavy worker: Immich compute, Fleet, Prometheus, Loki, the Hermes sandbox. Native PostgreSQL |
 | `k3s-worker1` | Raspberry Pi 4, 4 GB, 1 TB USB SSD | `10.10.0.2` wired, `192.168.1.137` Wi-Fi | Disposable: DaemonSets only, plus the local restic repository |
 
-The wired LAN is an unmanaged gigabit switch. Each node reaches the internet over its own
-home Wi-Fi link ([network-architecture.md](network-architecture.md)).
+The wired LAN is an unmanaged gigabit switch, and each node reaches the internet over its own
+home Wi-Fi link ([network-architecture.md](network-architecture.md)). There is no k3s-worker2: that
+Raspberry Pi (`10.10.0.4`) was decommissioned in May 2026.
 
 ## What is pinned, and why
 
@@ -64,17 +63,11 @@ flowchart LR
     traefik --> hermes["Hermes dashboard<br/>host process on :9119"]
 ```
 
-- **Public**: an `<app>.yuandrk.net` CNAME points at the tunnel. cloudflared has dialed out to
-  Cloudflare and forwards to in-cluster Service DNS, so no node address or NodePort appears in
-  the tunnel config. Adding one is an entry in `local.tunnel_services` in Terraform.
-- **Tailnet**: one DNS-only wildcard, `*.home.yuandrk.net`, resolves to k3s-master's Tailscale
-  address. It resolves anywhere, but only a tailnet device can connect. No Terraform change is
-  needed per app.
-- **LAN**: Traefik listens on every node, so the home Wi-Fi can reach any app by IP plus `Host`
-  header. The hostname split controls names and routing, not permissions
-  ([network-architecture.md](network-architecture.md#split-horizon-without-a-dns-server)).
-- **Exception**: the Hermes dashboard is a host process behind a selector-less Service
-  ([hermes-dashboard.md](hermes-dashboard.md)).
+The tunnel forwards to in-cluster Service names, so no node address or NodePort appears in its
+config. The `*.home` names resolve anywhere but connect only from the tailnet. The home LAN
+reaches any app by IP and `Host` header, so the hostname split controls names and routing, not
+permissions ([network-architecture.md](network-architecture.md#split-horizon-without-a-dns-server)).
+The Hermes dashboard is the exception to "everything is a pod" ([hermes-dashboard.md](hermes-dashboard.md)).
 
 ## How changes get in
 
@@ -91,7 +84,7 @@ flowchart LR
     operator --> cluster
 ```
 
-Development is trunk-based. There is no `dev` branch and no staging: a merge to `main` is a
+Development is trunk-based: there is no `dev` branch and no staging, so a merge to `main` is a
 deploy. See [gitops.md](gitops.md), [terraform-guide.md](terraform-guide.md) and
 [renovate-config.md](renovate-config.md).
 
@@ -116,9 +109,7 @@ flowchart LR
     restic -->|"06:15, S3 API"| b2[("Backblaze B2")]
 ```
 
-Not covered: n8n's database in PostgreSQL (apart from dumps taken by hand before an upgrade),
-the local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus, Loki), and Hermes' home
-directory on k3s-master, see [backup.md](backup.md) and [off-git.md](off-git.md).
+What the backup leaves out is listed in [backup.md](backup.md#not-in-the-backup).
 
 ## Outside the cluster on purpose
 
@@ -128,10 +119,5 @@ directory on k3s-master, see [backup.md](backup.md) and [off-git.md](off-git.md)
 | Tailscale | k3s-master | It is the way in when other things are broken |
 | Hermes agent and dashboard | k3s-master | The agent's control channel must keep working when the cluster does not |
 
-PostgreSQL on k3s-worker3 is a native install too, but the reason for that is not recorded.
-
-## Further reading
-
-- [access.md](access.md): who logs in where, and the way in when Okta is down
-- [monitoring.md](monitoring.md): metrics, logs, dashboards, and the alerting gap
-- [hermes-sandbox.md](hermes-sandbox.md): the agent's scoped workspace in the cluster
+PostgreSQL on k3s-worker3 is a native install too, for a reason nobody recorded
+([TODO](TODO.md#unknowns)).

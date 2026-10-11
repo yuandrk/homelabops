@@ -3,7 +3,7 @@ description: Upgrade an app to a target version following the version-upgrade pa
 argument-hint: "<app> <version>"
 ---
 
-Upgrade **$1** to version **$2** using the version-upgrade pattern from deployment-workflow.md.
+Upgrade **$1** to version **$2**.
 
 1. Find the current deployed version:
    ```bash

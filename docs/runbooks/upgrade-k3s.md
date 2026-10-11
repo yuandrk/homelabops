@@ -1,7 +1,5 @@
 # Upgrade k3s
 
-Last done on 2026-08-01: all three nodes went from v1.33.x to v1.34.9+k3s1 (`10a939b`).
-
 ## Swap the binary, never re-run the install script
 
 The install script rewrites the systemd unit from whatever flags it is given. k3s-worker3 keeps
@@ -16,7 +14,7 @@ server, is not touched either way.
 
 - Go one minor version at a time: the server first, then the agents.
 - Check that Flux supports the target Kubernetes version (`flux check --pre`). The coupling
-  runs both ways: Flux v2.9 needed Kubernetes 1.34.1 or newer.
+  runs both ways: a Flux upgrade can need a newer Kubernetes too.
 - Back up the server state with k3s stopped, then start it again:
 
   ```bash
@@ -25,16 +23,13 @@ server, is not touched either way.
   sudo systemctl start k3s
   ```
 
-  The last run left `/root/k3s-backup-pre-1.34` on k3s-master and `/root/k3s-v1.33.*.bin` on
-  the workers.
-
 ## Per node
 
 The order is k3s-master, then k3s-worker3, then k3s-worker1. The Pi is arm64, the others are
 amd64.
 
 ```bash
-V='v1.34.9+k3s1'                     # target version
+V='v1.XX.Y+k3s1'                     # the target version
 BIN=k3s                              # k3s-arm64 on k3s-worker1
 URL="https://github.com/k3s-io/k3s/releases/download/${V/+/%2B}"
 

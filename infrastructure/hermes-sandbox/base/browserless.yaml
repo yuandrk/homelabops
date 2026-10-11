@@ -62,7 +62,8 @@ spec:
               memory: 3Gi
           # Every HTTP route is behind ?token=, and a probe cannot read a Secret, so there is no
           # authenticated URL to GET here. A TCP probe confirms the server is accepting
-          # connections; the real end-to-end check is the CDP smoke test in docs/hermes-sandbox.md.
+          # connections; the end-to-end check is the token-authenticated /pressure request in
+          # docs/hermes-sandbox.md.
           readinessProbe:
             tcpSocket:
               port: http

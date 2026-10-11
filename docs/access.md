@@ -4,10 +4,9 @@ Who can log in where, and the way in when Okta is down.
 
 ## Identity provider
 
-Okta, issuer `https://okta.yuandrk.net`. That is the org authorization server behind a custom
-domain (`c21d197`), not `/oauth2/default`. Every OIDC client in the homelab uses this issuer.
-Okta's own state (apps, groups, assignments) is not exported anywhere, so this page is its only
-description.
+Okta, issuer `https://okta.yuandrk.net`: the org authorization server behind a custom domain
+(`c21d197`), not `/oauth2/default`. Every OIDC client in the homelab uses this issuer. Okta's own
+state (apps, groups, assignments) is not exported anywhere, so this page is its only description.
 
 - **Groups.** `IT` (described as "Homelab admins (Kite)") and `Andriuk corp` ("Main users").
   Both hold only Yurii's own accounts.
@@ -19,17 +18,14 @@ description.
 
 | Surface | How you log in | Who gets in | Break-glass |
 |---------|----------------|-------------|-------------|
-| Kubernetes API through Headlamp, `headlamp.yuandrk.net` | Okta OIDC with PKCE. Headlamp hands the user's ID token to the k3s API server, which validates it (OIDC flags in `/etc/rancher/k3s/config.yaml` on k3s-master) | Okta: **no Headlamp app was found** ([below](#headlamps-okta-app-is-missing)). Kubernetes: `ClusterRoleBinding/headlamp-okta-admin` makes `https://okta.yuandrk.net#me@yuandrk.net` cluster-admin. Anyone else authenticates and then gets 403 | The `headlamp-admin` ServiceAccount token, [expired since 2026-08-09](#the-headlamp-break-glass-token-has-expired), or `kubectl` on k3s-master |
-| Kite, `kite.yuandrk.net` | Okta OIDC, Web app, `client_secret_post`, callback `/api/auth/callback` | Okta: assignment to group `IT`. Kite gives the admin role from the `groups` claim and by email | Local `admin`, password in `kite-credentials` |
-| Hermes dashboard, `hermes.yuandrk.net` | Okta OIDC, Native app, public client with PKCE | Okta: assignment to `Andriuk corp`. Groups are read but not checked | None online: restore `basic_auth` from a config backup over SSH ([hermes-dashboard.md](hermes-dashboard.md#basic_auth-is-gone)) |
+| Kubernetes API through Headlamp, `headlamp.yuandrk.net` | Okta OIDC with PKCE. Headlamp hands the user's ID token to the k3s API server, which validates it (OIDC flags in `/etc/rancher/k3s/config.yaml` on k3s-master) | Okta: the Headlamp app, which [may be missing](#recreating-headlamps-okta-app). Kubernetes: `ClusterRoleBinding/headlamp-okta-admin` makes `https://okta.yuandrk.net#me@yuandrk.net` cluster-admin. Anyone else authenticates and then gets 403 | [The ServiceAccount token](#break-glass), or `kubectl` on k3s-master |
+| Kite, `kite.yuandrk.net` | Okta OIDC, Web app, `client_secret_post`, callback `/api/auth/callback` | Okta: assignment to group `IT`. Kite gives the admin role from the `groups` claim and by email. Its OAuth, RBAC and super-user settings come from the `kite-config` ConfigMap, so the UI shows them read-only: change them in git | Local `admin`, password in `kite-credentials` |
+| Hermes dashboard, `hermes.yuandrk.net` | Okta OIDC, Native app, public client with PKCE | Okta: assignment to `Andriuk corp`. Groups are read but not checked | None online: restore `basic_auth` over SSH ([hermes-dashboard.md](hermes-dashboard.md#basic_auth-is-gone)) |
 | Grafana, `grafana.yuandrk.net` | Local login | `grafana-admin-credentials` | The same login |
 | Immich, ActualBudget, n8n, Fleet | Each app's own login | Whatever is set in the app's UI, which is not in git | |
 | qBittorrent, `qbit.home.yuandrk.net` | Its own login | Tailnet, and the LAN through the `Host` header | |
-| SSH to the nodes | Keys only. Port 2222, except **22 on k3s-worker3** | `yuandrk`, who can then sudo without a password | |
+| SSH to the nodes | Keys only, on the [ports listed here](network-architecture.md#listening-ports) | `yuandrk`, who can then sudo without a password | |
 | Admin kubeconfig | `/etc/rancher/k3s/k3s.yaml` on k3s-master (root-only), copied to `~/.kube/config` | `system:masters`, readable by anything running as `yuandrk`, Hermes included ([hermes-sandbox.md](hermes-sandbox.md#what-this-is-and-is-not)) | |
-
-Kite's OAuth, RBAC and super-user settings come from the `kite-config` ConfigMap through
-`KITE_CONFIG_FILE`, so the UI shows them read-only. Change them in git.
 
 k3s's bundled `kubectl` reads `/etc/rancher/k3s/k3s.yaml` whenever `KUBECONFIG` is unset, even
 when `~/.kube/config` exists. As `yuandrk` that file is unreadable, so anything that does not
@@ -48,15 +44,32 @@ here pins the scheme its own way, and a new one behind the tunnel needs the same
 | Kite | `HOST=https://kite.yuandrk.net` pins the callback origin |
 | Hermes dashboard | The middleware, plus `FORWARDED_ALLOW_IPS` on the host, plus `dashboard.public_url` ([hermes-dashboard.md](hermes-dashboard.md#why-x-forwarded-proto-needs-two-separate-fixes)) |
 
-## Headlamp's Okta app is missing
+## Break-glass
 
-The inventory of 2026-10-11 listed the Okta org's apps: Kite, the Hermes dashboard, a bookmark
-tile, an app for an Okta MCP client, and Okta's own. None is for Headlamp or the k3s API, and
-none has the client ID that the API server's `oidc-client-id` names. Either the listing missed
-the app, or Headlamp's Okta login no longer works. With the break-glass token expired too,
-Headlamp may have no working login at all.
+When Okta is down:
 
-Try logging in at `headlamp.yuandrk.net`. If it fails, recreate the app:
+- **Kite**: the local `admin` login.
+- **Headlamp**: a token for the `headlamp-admin` ServiceAccount (cluster-admin), kept in the
+  1Password item `headlamp-token`. The one there was minted on 2025-08-09 with
+  `--duration=8760h` and **expired on 2026-08-09** ([TODO](TODO.md#first)). Until it is renewed,
+  use `kubectl` on k3s-master. To renew it:
+
+  ```bash
+  kubectl create token headlamp-admin -n kube-system --duration=8760h
+  ```
+
+  Paste the result into the item's `token` field. The cluster copy updates within 6 hours
+  ([secrets.md](secrets.md#sync-is-slow-on-purpose-every-6-hours)), and the token expires again
+  in a year.
+- **Hermes dashboard**: no web login. Restore `basic_auth` over SSH, then use
+  `http://192.168.1.223:9119` on the LAN ([hermes-dashboard.md](hermes-dashboard.md#basic_auth-is-gone)).
+- Nothing else depends on Okta.
+
+## Recreating Headlamp's Okta app
+
+The inventory of 2026-10-11 found no Okta app with the client ID that the API server's
+`oidc-client-id` names, so Headlamp's login may not work ([TODO](TODO.md#first)). If logging in at
+`headlamp.yuandrk.net` fails, recreate the app:
 
 - Okta: a Web app with authorization code and PKCE, sign-in redirect
   `https://headlamp.yuandrk.net/oidc-callback`, assigned to `IT`.
@@ -64,28 +77,6 @@ Try logging in at `headlamp.yuandrk.net`. If it fails, recreate the app:
   `clientSecret`; `issuerURL` and `scopes` stay).
 - k3s-master: the same client ID as `oidc-client-id` in `/etc/rancher/k3s/config.yaml`, then
   restart k3s. The API server rejects any ID token whose audience is a different client.
-
-## The Headlamp break-glass token has expired
-
-The `headlamp-token` item in 1Password holds a token for the `headlamp-admin` ServiceAccount
-(cluster-admin). It was minted on 2025-08-09 with `--duration=8760h`, and its `exp` claim is
-2026-08-09. To renew it:
-
-```bash
-kubectl create token headlamp-admin -n kube-system --duration=8760h
-```
-
-Paste the result into the item's `token` field. The cluster copy updates within 6 hours
-([secrets.md](secrets.md#sync-is-slow-on-purpose-every-6-hours)). A token minted this way
-expires again in a year.
-
-## If Okta is down
-
-- **Kite**: the local `admin` login.
-- **Headlamp**: the ServiceAccount token, once it is renewed. Until then, `kubectl` on k3s-master.
-- **Hermes dashboard**: no web login. Use `http://192.168.1.223:9119` on the LAN after restoring
-  `basic_auth` over SSH.
-- Nothing else depends on Okta.
 
 ## Troubleshooting
 

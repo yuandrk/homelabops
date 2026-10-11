@@ -6,33 +6,37 @@ What is collected, where to look, and what does not work yet.
 
 | Piece | Details |
 |-------|---------|
-| Prometheus (kube-prometheus-stack) | 15 days on a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
-| Grafana | `grafana.yuandrk.net`, local admin from `grafana-admin-credentials`. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab` (the PostgreSQL on k3s-worker3) |
-| Loki | SingleBinary, filesystem storage on a 10Gi `local-path` volume on k3s-worker3. local-path does not enforce the size: in October 2026 Loki held 15 GB. Chunks and results caches are off |
-| Alloy | A DaemonSet on every node (it tolerates the disposable taint) that ships **pod** logs to Loki. Host journals are not collected |
+| Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
+| Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab`, which still points at `k3s-worker1:5432`, where no PostgreSQL runs ([TODO](TODO.md#monitoring)) |
+| Loki | SingleBinary on a 10Gi `local-path` volume on k3s-worker3, caches off. local-path does not enforce the size and no retention is set, so it grows on that node's disk ([TODO](TODO.md#monitoring)) |
+| Alloy | A DaemonSet on every node, the disposable one included, that ships **pod** logs to Loki. Host journals are not collected |
 | Alertmanager | Disabled |
 
-Dashboards are code: ConfigMaps in `infrastructure/monitoring/base/configs/` that the Grafana
-sidecar loads. They are App Usage (Traefik, see [usage-metrics.md](usage-metrics.md)), Flux
-Cluster Stats, Flux Control Plane, Nodes, Node Exporter and Node Exporter Full.
+Dashboards are ConfigMaps in `infrastructure/monitoring/base/configs/`, loaded by the Grafana
+sidecar. Without the tunnel:
+
+```bash
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+kubectl get secret -n monitoring grafana-admin-credentials \
+  -o jsonpath='{.data.admin-password}' | base64 -d
+```
 
 ## Alerting reaches no one
 
-- **Nothing sends notifications.** Alertmanager is `enabled: false`. When the USB-SSD of
-  k3s-worker1 hung on 2026-10-05, nothing paged anyone, and a failed backup only shows up in
-  `journalctl`.
-- **There are no custom rules.** The chart's default rules are loaded and evaluated, but they
-  notify no one. The old `homelab-monitoring-rules` was never loaded and was removed on
-  2026-10-11 ([decisions.md](decisions.md#2026-10-11--custom-alert-rules-removed-until-they-have-a-purpose)).
-  A new `PrometheusRule` goes in `infrastructure/monitoring/base/configs/` with the label
-  `release: kube-prometheus-stack` (see the table below). Confirm that Prometheus loaded it:
+Alertmanager is off, so nothing notifies anyone: a hung disk or a failed backup is seen only by
+whoever looks ([TODO](TODO.md#monitoring)). The chart's default rules are loaded and evaluated.
+There are no custom rules
+([why](decisions.md#2026-10-11--custom-alert-rules-removed-until-they-have-a-purpose)).
 
-  ```bash
-  kubectl get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules \
-    | jq -r '.data.groups[].name'
-  ```
+A new `PrometheusRule` goes in `infrastructure/monitoring/base/configs/` with the label
+`release: kube-prometheus-stack`. Check that Prometheus loaded it. The image has no `curl` or
+`wget`, so go through the API server rather than `kubectl exec`:
 
-  The Prometheus image has no `wget` or `curl`, so `kubectl exec` into it does not help.
+```bash
+kubectl get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules \
+  | jq -r '.data.groups[].name'
+```
 
 ## Labels decide what gets picked up
 
@@ -47,41 +51,41 @@ Most "no data" problems here have been a missing label:
 | Datasource ConfigMap | `grafana_datasource: "1"` | Grafana sidecar |
 
 A PodMonitor can only select a port the container **declares**. The cloudflared chart serves
-metrics on `:2000` without declaring it, so its HelmRelease patches the port in after rendering
-(`5da007a`).
+metrics on `:2000` without declaring it, so its HelmRelease patches the port in after rendering.
 
 ## Flux metrics
 
-The controllers are scraped through the PodMonitor `flux-system` on port `http-prom`. That
-selector still lists the image-automation and image-reflector controllers, which were removed on
-2026-08-01. This is harmless.
+The controllers are scraped through the PodMonitor `flux-system` on port `http-prom`. The state of
+Flux objects (`gotk_resource_info`, behind the Flux Cluster Stats dashboard) comes from
+kube-state-metrics custom-resource state, configured twice: in the stack's own
+kube-state-metrics and in a separate `flux-kube-state-metrics` Deployment
+([TODO](TODO.md#monitoring)).
 
-The state of Flux objects (`gotk_resource_info`, behind the Flux Cluster Stats dashboard) comes
-from kube-state-metrics custom-resource state. It is configured **twice**: in the stack's own
-kube-state-metrics, and in a separate `flux-kube-state-metrics` Deployment left over from
-debugging that dashboard. One of them is redundant.
+## Is an app still used?
 
-## Access
+Answer it with data before removing an app. Traefik counts requests per service and Prometheus
+scrapes it; k3s's bundled Traefik serves those metrics by default (port `metrics`), so no
+`HelmChartConfig` is needed. The dashboard **App Usage (Traefik)** (uid `app-usage`, default range 14 days) shows
+requests per service, the idle ones, the request rate and the response bytes. From a shell:
 
 ```bash
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
-kubectl get secret -n monitoring grafana-admin-credentials \
-  -o jsonpath='{.data.admin-password}' | base64 -d
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 19090:9090
+curl -s --get --data-urlencode 'query=sort_desc(sum by (service) (increase(traefik_service_requests_total[14d])))' \
+  http://127.0.0.1:19090/api/v1/query | jq -r '.data.result[] | "\(.metric.service)\t\(.value[1]|tonumber|floor)"'
 ```
+
+Service labels look like `apps-immich-server-2283@kubernetes`: namespace, service, port. The
+Prometheus retention (`retention` in its HelmRelease) caps the window. A longer one needs a bigger
+volume first, and since that volume is `local-path`, growing it means recreating it and losing
+the history.
 
 ## Blind spots
 
+Cross-check these before deleting anything:
+
+- **Traffic that skips ingress.** qBittorrent seeds over the torrent protocol while its web UI
+  sits at zero requests, so check `container_network_transmit_bytes_total`. A ClusterIP-only
+  service never appears in Traefik's numbers: read its logs, e.g.
+  `kubectl logs -n apps deploy/<app> | grep -v /health`.
 - **Host processes.** restic, Tailscale, the NFS server, PostgreSQL and Hermes are visible only
   as machines through node-exporter. Their own health is unobserved.
-- **Traffic that skips ingress.** See [usage-metrics.md](usage-metrics.md#blind-spots).
-
-## Still missing
-
-- Alerting: the rules worth waking up for, and a way to deliver them (Alertmanager, or a
-  Grafana contact point).
-- Loki retention. Nothing in the HelmRelease sets it, and local-path does not cap the volume at
-  10Gi, so logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts
-  evicting pods there, and the native PostgreSQL on that disk runs out of space as well.
-- An alert on a failed backup ([backup.md](backup.md#still-missing)).
-- Dropping one of the two Flux state collectors.

@@ -76,14 +76,14 @@ Requests, changes and data each take one path, and the rule for each is written 
 - **Secrets never touch git.** A 1Password vault feeds the 1Password operator, which creates the
   Kubernetes Secrets, with polling tuned to the API's rate limit. [→ secrets](docs/secrets.md)
 - **Apps have to earn their place.** Traefik request metrics decide removals: Jellyfin and
-  Whisper went after 14 days of zero traffic. [→ usage metrics](docs/usage-metrics.md)
+  Whisper went after 14 days of zero traffic. [→ usage metrics](docs/monitoring.md#is-an-app-still-used)
 - **Terraform from CI, with no stored cloud keys.** GitHub Actions assumes an AWS role through
   OIDC, plans are commented on PRs, and the merge applies them.
   [→ terraform](docs/terraform-guide.md)
-- **Operated with Claude Code, under guardrails.** Rules load into every session. There is a
-  read-only Flux diagnostician and a manifest reviewer, hooks warn before direct `kubectl`
-  mutations, and the docs are written so an agent never needs private memory to understand a
-  decision. [→ tooling](docs/gitops.md#working-with-claude-code)
+- **Operated with Claude Code, under guardrails.** One short page loads into every session: the
+  rules, a map of the docs and the known traps. There is a read-only Flux diagnostician and a
+  manifest reviewer, hooks warn before direct `kubectl` mutations, and the docs are written so an
+  agent never needs private memory to understand a decision. [→ CLAUDE.md](CLAUDE.md)
 
 ## Hardware
 
@@ -143,13 +143,14 @@ apps/                   user-facing apps, one directory per app
 infrastructure/         operator, monitoring, cloudflared, Headlamp, Hermes sandbox and dashboard
 terraform/live/homelab/ Cloudflare (applied by CI), AWS state bucket and OIDC role, Flux bootstrap
 docs/                   architecture, decisions, runbooks, component deep-dives
-.claude/                rules, commands, agents and hooks for Claude Code
+CLAUDE.md               how to work here: rules, a map of the docs, traps
+.claude/                commands, agents and hooks for Claude Code
 ```
 
 ## Documentation
 
-Start with [architecture](docs/architecture.md) and [decisions](docs/decisions.md). Everything
-else is indexed in [docs/README.md](docs/README.md), including the runbooks and the
+Start with [architecture](docs/architecture.md) and [decisions](docs/decisions.md).
+[CLAUDE.md](CLAUDE.md) maps every doc to the moment you need it, including the runbooks and the
 [inventory of everything outside git](docs/off-git.md).
 
 ## License

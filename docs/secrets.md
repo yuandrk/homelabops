@@ -1,7 +1,8 @@
 # Secrets
 
 Every credential lives in one 1Password vault, `homelab`. The cluster reads it through the
-1Password Operator. Nothing secret is committed to git, encrypted or not.
+1Password Operator. Nothing secret is committed to git, encrypted or not
+([why](decisions.md#2026-05-17--secrets-in-1password-instead-of-sops)).
 
 ## The chain
 
@@ -12,7 +13,7 @@ Every credential lives in one 1Password vault, `homelab`. The cluster reads it t
 Secret onepassword/onepassword-token      ← created by hand: the one secret Flux cannot create
    │
    ▼
-1Password Operator                        ← HelmRelease 1password-operator, namespace onepassword
+1Password Operator                        ← HelmRelease 1password-operator in flux-system, runs in onepassword
    │  watches OnePasswordItem resources
    ▼
 OnePasswordItem <name>                    ← namespace X, itemPath vaults/homelab/items/<item>
@@ -21,68 +22,45 @@ OnePasswordItem <name>                    ← namespace X, itemPath vaults/homel
 Secret <name> in namespace X              ← consumed by the workload
 ```
 
-- The chart is 1Password's `connect`, but only the operator is installed (`connect.create:
-  false`, `authMethod: service-account`). There is no Connect server.
-- `onepassword-token` is the root of trust. It is not in git and cannot be: without it the
-  operator reads nothing, so every other secret depends on it. Creating it is a bootstrap step,
-  see [the rebuild runbook](runbooks/rebuild-k3s-master.md).
+- Only the operator is installed from 1Password's `connect` chart (`connect.create: false`,
+  `authMethod: service-account`). There is no Connect server.
+- `onepassword-token` is the root of trust: without it the operator reads nothing. It is not in
+  git and cannot be, so creating it is a bootstrap step
+  ([rebuild runbook](runbooks/rebuild-k3s-master.md#5-secrets-and-flux)).
 - Each field of a 1Password item becomes a key of the Secret, named after the field's label.
+- The items are in `clusters/prod/secrets/`, except cloudflared's, which sits next to its
+  HelmRelease in `infrastructure/networking/cloudflared/`. Each one's `itemPath` names its vault
+  item.
 
 ## Sync is slow on purpose: every 6 hours
 
-`pollingInterval: 21600`. The Individual/Families plan allows 1,000 API requests per day per
-account. The default 10-minute poll over ~10 items used about 3,000 and kept the account
-permanently rate-limited (failed retries count too). Polling every 6 hours costs about 120 a day.
-
-A new `OnePasswordItem` is synced as soon as Flux applies it. A **change** to an existing item
-reaches the cluster on the next poll, up to six hours later. To pull it now, restart the
-operator, which syncs everything on startup:
+`pollingInterval: 21600`. The Individual/Families plan allows 1,000 API requests a day, and the
+default 10-minute poll over about ten items kept the account rate-limited. A new
+`OnePasswordItem` syncs as soon as Flux applies it. A **change** to an existing item arrives on
+the next poll, up to six hours later. To pull it now, restart the operator, which syncs
+everything on startup; `autoRestart: true` then restarts the Deployments that use a changed
+Secret:
 
 ```bash
 kubectl -n onepassword get deploy                    # find the operator Deployment
 kubectl -n onepassword rollout restart deploy/<name>
 ```
 
-`autoRestart: true` then restarts the Deployments that consume a changed Secret.
+## Vault items used outside the cluster
 
-## What is in the vault
-
-In-cluster, one `OnePasswordItem` per Secret:
-
-| Secret (namespace) | 1Password item | Used by |
-|--------------------|----------------|---------|
-| `cloudflared-token` (networking) | `cloudflared-tunnel-token` | cloudflared HelmRelease, via `valuesFrom` |
-| `grafana-admin-credentials` (monitoring) | same name | Grafana's local admin |
-| `postgres-credentials` (monitoring) | same name | Grafana's PostgreSQL datasource |
-| `headlamp-oidc` (kube-system) | `headlamp-oidc-okta` | Headlamp's Okta client |
-| `headlamp-oidc` (flux-system) | `headlamp-oidc-authentik` | nothing: a leftover from the Authentik era |
-| `headlamp-token` (kube-system) | same name | nothing in-cluster: it stores Headlamp's break-glass token, see [access.md](access.md) |
-| `immich-credentials` (apps) | same name | Immich environment |
-| `n8n-credentials` (apps) | same name | n8n database login and `N8N_ENCRYPTION_KEY` |
-| `fleet-credentials` (apps) | same name | Fleet and its MySQL |
-| `kite-credentials` (apps) | same name | Kite's Okta client and local admin |
-| `hermes-sandbox-credentials` (hermes-sandbox) | same name | SearXNG secret key, browserless token |
-
-The cloudflared item sits next to cloudflared in `infrastructure/networking/cloudflared/`. All
-the others are in `clusters/prod/secrets/`.
-
-Outside the cluster, the same vault holds, next to a few items unrelated to the homelab:
+Next to a few items unrelated to the homelab, the vault holds:
 
 - `restic homelab`: the restic repository password. Without it neither backup can be read.
-- `Backblaze B2 — restic homelab`: the bucket-scoped B2 key for the offsite backup
-  ([backup.md](backup.md#offsite-copy-backblaze-b2)). A second item, `Backblaze B2 — restic repo`,
-  also exists, and what it is for is not recorded.
+- `Backblaze B2 — restic homelab`: the bucket-scoped B2 key for the offsite backup, fields
+  `keyID (B2_ACCOUNT_ID)` and `applicationKey` ([backup.md](backup.md#offsite-copy-backblaze-b2)).
 - `Restic — Obsidian vault backup`: for the vault backup on k3s-master.
-- `hermes-dashboard-oidc`: presumably the Hermes dashboard's Okta client.
-- `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)`: what they hold is not recorded.
+- `hermes-dashboard-oidc`, `Backblaze B2 — restic repo`, `k3s-sudo` and
+  `legacy-key-yuandrk (from k3s-worker3)`: what they hold is not recorded
+  ([TODO](TODO.md#unknowns)).
 
-No item holds Hermes' sandbox kubeconfig (`~/.hermes/kube-sandbox.conf`), whatever older notes
-said. Regenerate it with `infrastructure/hermes-sandbox/make-kubeconfig.sh` instead.
-
-These items have lost their consumer and can be deleted: `pgadmin-credentials`,
-`stirling-pdf-credentials` and `mcp-slack-bot-credentials` (their apps were removed), and
-`headlamp-oidc-authentik` once the unused `headlamp-oidc` item in `flux-system`, which reads it,
-is gone from git.
+Hermes' sandbox kubeconfig is in no item: regenerate it
+([hermes-sandbox.md](hermes-sandbox.md#access)). Items whose consumer is gone are listed for
+deletion in [TODO](TODO.md#cleanup).
 
 ## Adding a secret
 
@@ -114,10 +92,3 @@ CRD. `apps` does not wait for `secrets`, so on a first deploy a pod can sit in
   other Kustomizations own, and a single item aimed at a missing namespace stops it reconciling
   **every** secret, not just that one (see [hermes-sandbox.md](hermes-sandbox.md#removing-it)).
 - The vault item outlives the manifest. Delete it by hand in 1Password.
-
-## History
-
-Until 2026-05-17 secrets were SOPS/age-encrypted files in git. Commit `91b41dc` moved all eight
-to 1Password and removed the decryption config from Flux. `.sops.yaml`, the `sops -d`
-permission in `.claude/settings.json` and `.claude/hooks/guard-secrets.sh` are leftovers of
-that setup.
