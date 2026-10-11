@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: immich
-      version: "0.13.1"
+      version: "0.13.4"
       sourceRef:
         kind: HelmRepository
         name: immich
@@ -41,7 +41,8 @@ spec:
             main:
               image:
                 repository: docker.io/valkey/valkey
-                tag: 9.1-alpine
+                # Full version on purpose: the short 9.2-alpine tag pointed at 9.2.0-rc1.
+                tag: 9.1.2-alpine
       persistence:
         data:
           enabled: true
@@ -62,8 +63,10 @@ spec:
                 - 993   # render group (host GID for /dev/dri/renderD128)
           containers:
             main:
+              # repository is the chart default; it is spelled out so Renovate can see the tag.
               image:
-                tag: v3.1.0
+                repository: ghcr.io/immich-app/immich-server
+                tag: v3.3.1
               envFrom:
                 - secretRef:
                     name: immich-credentials
@@ -111,7 +114,8 @@ spec:
           containers:
             main:
               image:
-                tag: v3.1.0
+                repository: ghcr.io/immich-app/immich-machine-learning
+                tag: v3.3.1
               resources:
                 requests:
                   cpu: 500m
