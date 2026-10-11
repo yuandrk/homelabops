@@ -13,8 +13,10 @@ This configuration **only monitors**:
 Everything else is **explicitly disabled**:
 - ❌ GitHub Actions (separate manual updates)
 - ⚠️ Terraform: only the cloudflare stack (`terraform/live/homelab/cloudflare`), via its committed lock file
-- ❌ FluxCD system components (manual upgrades only)
 - ❌ npm/pip/other package managers
+
+Flux itself is monitored too: the `flux` manager matches `gotk-components.yaml` by default, so
+Flux releases arrive as `fluxcd/flux2` PRs.
 
 This keeps Renovate focused on what matters most in a Kubernetes homelab: container images and Helm charts.
 
@@ -30,7 +32,7 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 | PR limit | 3 concurrent, `rebaseWhen: behind-base-branch` |
 | Dashboard | Dependency Dashboard issue enabled |
 | Security | `vulnerabilityAlerts` + `osvVulnerabilityAlerts` enabled |
-| Grouping | `app-images` (Docker images in `apps/`), `helm-charts` (helm datasource) |
+| Grouping | `app-images`, `app-helm-charts`, `infra-images`, `infra-helm-charts`, `immich`, `terraform-cloudflare` |
 | Automerge | Patch updates of `actualbudget/actual-server` only |
 
 ## Configuration Explained
@@ -39,7 +41,7 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 
 - **`extends: ["config:recommended"]`** - Uses Renovate's recommended default settings
 - **`timezone: "Europe/London"`** + **`schedule: ["* 0-5 * * 1"]`** - Renovate only runs early Monday morning to batch updates into one weekly window
-- **`enabledManagers`** - **CRITICAL**: Only enables `kubernetes`, `flux`, `helm-values`, and `helmv3` managers (disables everything else by default)
+- **`enabledManagers`** - **CRITICAL**: Only enables `kubernetes`, `flux`, `helm-values`, `helmv3` and `terraform` (the last for the cloudflare stack only); everything else is off
 
 ### Pull Request Management
 
@@ -49,8 +51,9 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 
 ### File Matching
 
-- **`managerFilePatterns`** restricts the `kubernetes` and `flux` managers to `apps/**/*.yaml`
-- **Note**: `clusters/` (FluxCD system components) and `infrastructure/` are outside the matched patterns
+- **`managerFilePatterns`** points the `kubernetes` and `flux` managers at `apps/` and `infrastructure/`
+- **Note**: these patterns add to the managers' defaults rather than replace them, which is why the
+  `flux` manager still picks up `clusters/prod/flux-system/gotk-components.yaml`
 
 ### Explicit Exclusions
 
@@ -62,6 +65,19 @@ The source of truth is [`renovate.json`](../renovate.json) in the repository roo
 - **App Docker images grouped** - All Docker image updates in `apps/` bundled into "app-images" PRs
 - **Helm charts grouped** - All Helm chart updates bundled into "helm-charts" PRs
 - **Patch automerge** - Patch updates for ActualBudget auto-merge after CI passes
+- **Immich in its own group** - server, machine-learning and chart land together in an `immich`
+  PR, apart from `app-images`, because an Immich upgrade migrates its database
+
+### Version traps
+
+Renovate cannot tell some pre-releases and incompatible lines from normal releases. Known cases:
+
+| Package | Trap | Guard |
+|---------|------|-------|
+| `lscr.io/linuxserver/qbittorrent` | Legacy Ubuntu-named tags (14.x, 20.x) rank above 5.x | `allowedVersions: "<14"` |
+| `mysql` (Fleet) | 26.x is Oracle's innovation track; Fleet supports 8.x only and MySQL cannot be downgraded in place | `allowedVersions: "<8.5"` |
+| `valkey/valkey` | A short tag such as `9.2-alpine` can point at a release candidate (`9.2.0-rc1`) | Pin full versions (`9.1.2-alpine`); Renovate then skips the `-rcN` tags |
+| `n8nio/n8n` | Betas use plain semver tags (on 2026-10-11 `2.43.3` was `beta`, `stable` was `2.42.6`) | None in config. Before merging, check that the tag's digest matches `n8nio/n8n:stable` |
 
 ## Monitored Dependencies
 
@@ -69,9 +85,15 @@ Renovate monitors Docker images and Helm charts under `apps/` and `infrastructur
 
 - **ActualBudget** - `actualbudget/actual-server`
 - **n8n** - `n8nio/n8n`
-- **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey)
+- **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey). The server and ML
+  images need `repository:` next to `tag:` in the HelmRelease values, or Renovate cannot see them
 - **qBittorrent** - `linuxserver/qbittorrent`
+- **Flux** - `clusters/prod/flux-system/gotk-components.yaml`
 - **Infrastructure charts** - kube-prometheus-stack, loki, alloy, headlamp, cloudflared, nfs-subdir-external-provisioner
+
+**Not visible to Renovate:** Fleet's `imageTag` in `apps/fleet/base/helm-release.yaml` (a bare tag
+with no repository). Fleet chart versions map 1:1 to Fleet releases, so bump `imageTag` together
+with the chart.
 
 App and infrastructure updates land in separate grouped PRs (`app-images`, `app-helm-charts`,
 `infra-images`, `infra-helm-charts`) so one failing chart cannot block the others.
@@ -79,7 +101,6 @@ App and infrastructure updates land in separate grouped PRs (`app-images`, `app-
 ### Explicitly NOT Monitored
 
 These are intentionally disabled and require manual updates:
-- ❌ **FluxCD system components** - `clusters/prod/flux-system/gotk-components.yaml`
 - ❌ **GitHub Actions** - `.github/workflows/*.yml`
 - ❌ **Terraform providers/modules** outside the cloudflare stack - `terraform/**/*.tf`
 - ❌ **npm/pip/go.mod** - Not applicable to this Kubernetes-focused homelab
@@ -98,7 +119,7 @@ These are intentionally disabled and require manual updates:
 - Container images referenced in HelmRelease `values` sections
 
 **What Renovate Ignores**:
-- FluxCD system manifests in `clusters/prod/flux-system/`
+- `clusters/prod/` apart from `flux-system/gotk-components.yaml`
 - GitHub Actions workflow files
 - Terraform configuration files (except the cloudflare stack's provider lock)
 - Any other package managers or dependency types
@@ -182,7 +203,7 @@ renovate --dry-run --token=$GITHUB_TOKEN yuandrk/homelabops
 
 1. **Focused Monitoring**: Only monitor what matters (Docker images + Helm charts)
 2. **Separate Concerns**: Terraform and GitHub Actions have their own update mechanisms
-3. **Manual FluxCD Upgrades**: FluxCD system components upgraded manually for stability
+3. **Flux Upgrades via PR**: review the `fluxcd/flux2` PR diff; it should only change versions and controller images
 4. **Test Updates**: Use a dev branch to test major updates before merging to main
 5. **Monitor Dashboard**: Check the Dependency Dashboard issue regularly
 6. **Group Updates**: Related dependencies grouped together (app-images, infra-images, helm-charts)

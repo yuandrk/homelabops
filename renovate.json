@@ -77,6 +77,16 @@
       "allowedVersions": "<14"
     },
     {
+      "description": "Fleet supports MySQL 8.x only (tested against 8.4; 9.6.x is listed as incompatible). Docker Hub's mysql 26.x is Oracle's innovation track, and MySQL cannot downgrade an upgraded data dictionary in place. PR #65 proposed 8.4.11 -> 26.7.0.",
+      "matchPackageNames": ["mysql"],
+      "allowedVersions": "<8.5"
+    },
+    {
+      "description": "Immich server, machine-learning and chart get their own PR: an Immich upgrade migrates its database, so it is rolled out and checked apart from the small app bumps. Must stay below the app-images rule to override its groupName.",
+      "matchPackageNames": ["ghcr.io/immich-app/**"],
+      "groupName": "immich"
+    },
+    {
       "description": "Automerge patch updates for stable apps",
       "matchUpdateTypes": ["patch"],
       "matchPackageNames": [
