@@ -40,6 +40,7 @@ deliberately left out, because a copy of it here would go stale.
 | [off-git.md](off-git.md) | Everything Flux cannot rebuild: host config, external accounts, open questions |
 | [runbooks/rebuild-k3s-master.md](runbooks/rebuild-k3s-master.md) | Bringing back the node that holds everything (draft) |
 | [runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md) | Upgrading k3s without losing the flags that live only in the unit file |
+| [runbooks/inventory.md](runbooks/inventory.md) | Collect what is actually on the hosts and in the cluster, to check these docs against it |
 | [TODO.md](TODO.md) | Open work that does not belong to one doc |
 
 ## Keeping them honest

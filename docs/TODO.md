@@ -17,8 +17,8 @@ Last reviewed 2026-10-11.
       ([gitops.md](gitops.md#traps-in-this-repo))
 - [ ] Check whether the Flux webhook works: `kubectl get receivers -A` ([off-git.md](off-git.md#open-questions))
 - [ ] Rotate the Headlamp break-glass token ([access.md](access.md#the-headlamp-break-glass-token-has-probably-expired))
-- [ ] Read the rebuild runbook against the live host and fill in its **verify** steps
-      ([runbooks/rebuild-k3s-master.md](runbooks/rebuild-k3s-master.md))
+- [ ] Run the [inventory](runbooks/inventory.md) and reconcile the docs with it: the
+      **Not recorded** cells in off-git.md and the **verify** steps of the rebuild runbook
 
 ## Resources
 

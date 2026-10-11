@@ -9,8 +9,8 @@ here.
 
 The **Copy** column says where that state survives a dead disk: `restic` means the nightly
 backups ([backup.md](backup.md)), `1Password` means vault `homelab`, and `doc` means only the
-description in these docs. **Not recorded** marks values nobody has written down yet. Fill
-them in from the live host the next time you are on it.
+description in these docs. **Not recorded** marks values nobody has written down yet. The
+[inventory runbook](runbooks/inventory.md) collects them from the live hosts.
 
 ## k3s-master
 

@@ -17,6 +17,9 @@ constraints, failure modes, and state outside git. Index: [docs/README.md](../..
   goes in [TODO.md](../../docs/TODO.md).
 - Match the existing style: plain prose, tables for reference, no emoji headings, no "✅ status"
   blocks.
+- **To check the docs against reality**, use [docs/runbooks/inventory.md](../../docs/runbooks/inventory.md).
+  Its raw report stays out of git (the repository is public). Only the reconciled facts go into
+  the docs.
 
 ## When you change X, update Y
 

@@ -2,7 +2,7 @@
 
 > **Draft, never rehearsed.** Assembled from the other docs, not from a real rebuild. Steps
 > marked **verify** depend on values that are not recorded yet ([off-git.md](../off-git.md)).
-> Fill them in from the live host before you need this page.
+> Collect them with the [inventory](inventory.md) before you need this page.
 
 k3s-master is the single point of failure. It runs the control plane, holds every piece of
 important data, exports the Immich library over NFS, routes the tailnet into the LAN and runs
