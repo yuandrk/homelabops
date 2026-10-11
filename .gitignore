@@ -9,6 +9,8 @@ plan.bin
 .terraformrc
 terraform.rc
 .terraform.lock.hcl
+# The CI-applied stack pins its providers; without this CI floats to the newest ~> 5.0
+!terraform/live/homelab/cloudflare/.terraform.lock.hcl
 terraform/kube/kubeconfig
 
 # ===== Keys =====

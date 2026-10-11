@@ -13,7 +13,7 @@
   },
   "osvVulnerabilityAlerts": true,
 
-  "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3"],
+  "enabledManagers": ["kubernetes", "flux", "helm-values", "helmv3", "terraform"],
 
   "kubernetes": {
     "managerFilePatterns": [
@@ -38,6 +38,14 @@
       "description": "Disable Terraform updates",
       "matchManagers": ["terraform", "terraform-version"],
       "enabled": false
+    },
+    {
+      "description": "Except the CI-applied cloudflare stack: its committed lock file pins the provider, and a Renovate PR runs terraform-plan before the bump reaches main. Unpinned, CI floated to cloudflare 5.26.0 on 2026-09-26 and the apply failed on the new include_shadow_metadata attribute.",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/live/homelab/cloudflare/**"],
+      "enabled": true,
+      "rangeStrategy": "update-lockfile",
+      "groupName": "terraform-cloudflare"
     },
     {
       "description": "Group app Docker images",
