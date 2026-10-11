@@ -34,10 +34,10 @@ Steps:
    - set the real image;
    - decide exposure by hostname: `$1.yuandrk.net` is public and also needs an entry in
      `local.tunnel_services` (`terraform/live/homelab/cloudflare/main.tf`); `$1.home.yuandrk.net`
-     is tailnet-only and needs nothing else (see `services.md`);
+     is tailnet-only and needs nothing else (see `CLAUDE.md`);
    - if its data matters, pin it to k3s-master with the data under `/srv/data` (only k3s-master
      is backed up);
    - if it needs secrets, they live in 1Password (vault `homelab`) and reach the cluster through a
      `OnePasswordItem` under `clusters/prod/secrets/`, never inline (see `docs/secrets.md#adding-a-secret`);
-   - add it to the Services table in `README.md` and in `.claude/rules/services.md` (see `docs.md`);
+   - add it to the Services table in `README.md` (see `CLAUDE.md`);
    - then commit → push → `/reconcile apps`.

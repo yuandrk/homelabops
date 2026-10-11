@@ -4,7 +4,7 @@ argument-hint: "[apps|infrastructure|monitoring-configs|monitoring-controllers|s
 allowed-tools: Bash(flux reconcile:*), Bash(flux get:*), Bash(kubectl get:*)
 ---
 
-Reconcile Flux following the deployment-workflow.md pattern.
+Reconcile Flux after a change has been pushed to `main`.
 
 Target Kustomization: **$1** (default to `apps` if no argument was given).
 

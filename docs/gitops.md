@@ -2,18 +2,6 @@
 
 How a change gets from this repository into the cluster, and the traps specific to this repo.
 
-## Layout
-
-```
-clusters/prod/            Flux entry point: one file per Flux Kustomization
-  flux-system/            Flux itself, written by bootstrap (gotk-components.yaml, gotk-sync.yaml)
-  secrets/                OnePasswordItem resources (secrets.md)
-apps/<app>/base/          user-facing apps, namespace apps
-infrastructure/           1Password operator, Headlamp, monitoring, cloudflared, storage, hermes-*
-terraform/live/homelab/   cloudflare/ (applied by CI); aws-bootstrap/, aws-oidc/, fluxcd/ (applied once by hand)
-.claude/                  rules, commands, agents and hooks for Claude Code
-```
-
 ## Flux Kustomizations
 
 Flux pulls `main` from the GitRepository `flux-system` every minute. That poll is the only
@@ -49,8 +37,7 @@ flowchart LR
 4. Decide where its data lives. If losing it would hurt, pin the app to k3s-master and keep the
    data under `/srv/data`. Only k3s-master is backed up, and a `local-path` volume stays on
    whichever node it was first created on.
-5. Update the docs that list apps: the Services table in `README.md` and
-   `.claude/rules/services.md`.
+5. Add it to the Services table in `README.md`.
 6. Open a PR, merge it, then `/reconcile apps`.
 
 ## Upgrading
@@ -68,8 +55,8 @@ possible:
 - [ ] its `OnePasswordItem` and its line in `clusters/prod/secrets/kustomization.yaml`, in the
       **same** commit ([why](secrets.md#removing-a-secret))
 - [ ] its entry in `local.tunnel_services`, if it was public
-- [ ] the Services table in `README.md`, `.claude/rules/services.md`, and a line in the
-      removal log in [decisions.md](decisions.md#removed-apps)
+- [ ] the Services table in `README.md`, and a line in the removal log in
+      [decisions.md](decisions.md#removed-apps)
 
 After the merge, Flux prunes the Deployment, Service, Ingress and PVCs. These you clean up by hand:
 
@@ -104,16 +91,3 @@ flux reconcile kustomization apps -n flux-system
 flux events --for Kustomization/apps -n flux-system
 kubectl get pods -A --field-selector=status.phase!=Running
 ```
-
-## Working with Claude Code
-
-`.claude/` makes the repository operable by Claude Code without handing it the keys:
-
-- **Rules** (`.claude/rules/`) load into every session: services and naming, the deploy
-  workflow, Flux CLI usage, Terraform, monitoring, and how to keep these docs honest.
-- **Commands**: `/cluster-status` (read-only health snapshot), `/reconcile`, `/new-app`,
-  `/upgrade-app`.
-- **Agents**: `flux-doctor` diagnoses a failing reconcile without changing the cluster.
-  `manifest-reviewer` checks rendered manifests before a commit.
-- **Hooks** warn before a local `kubectl apply/delete/edit/patch/replace/scale` or `terraform apply`,
-  since those bypass GitOps, and before committing key material.

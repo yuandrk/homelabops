@@ -21,7 +21,8 @@ they reach `main`. You do not edit files and you do not touch the cluster.
    - Service selector matches Deployment pod labels; Service port == Ingress backend port == container port.
    - Ingress: `ingressClassName: traefik`, `traefik.ingress.kubernetes.io/router.entrypoints: web`,
      host `<name>.yuandrk.net` (public: must also be in `local.tunnel_services` in Terraform) or
-     `<name>.home.yuandrk.net` (tailnet-only). Flag a NodePort used to make something LAN-only.
+     `<name>.home.yuandrk.net` (tailnet-only). Flag a NodePort used to make something LAN-only;
+     Immich's `immich-server-nodeport` (30283, for the mobile app) is the one deliberate exception.
    - PVC: `storageClassName: local-path`, ReadWriteOnce, a sane size.
 4. **Image**: tag is pinned and not a leftover `REPLACE_ME` / `:latest` placeholder.
 5. **Secrets hygiene**: no plaintext secrets inline. Secrets live in 1Password and reach the cluster
