@@ -31,6 +31,7 @@ Two rules came out of it:
 | Immich library: originals, uploads, Immich's own nightly DB dumps (`backups/`), thumbs, encoded video | `/srv/data/immich` | NFS. `immich-server` stays on k3s-worker3 for the Intel iGPU. Static PV `immich-library-master` in [apps/immich/base/pv.yaml](../apps/immich/base/pv.yaml) |
 | ActualBudget (SQLite) | `/srv/data/actualbudget` | hostPath, Deployment pinned to k3s-master |
 | n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | local-path PVCs |
+| Database dumps taken by hand before an upgrade that migrates a DB (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted. First ones: Immich, n8n and Fleet on 2026-10-11 |
 
 The NFS export is host config outside git:
 
