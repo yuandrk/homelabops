@@ -64,7 +64,9 @@ gate.
   first.
   A Claude Code hook warns about a local `terraform apply`.
 - Never commit `terraform.tfvars` or state. `.gitignore` covers both.
-- Renovate does not touch Terraform. Provider versions are bumped by hand.
+- Renovate bumps the Cloudflare provider through the stack's committed `.terraform.lock.hcl`
+  ([renovate-config.md](renovate-config.md#what-it-covers)). The other stacks' providers are
+  bumped by hand.
 
 ## Troubleshooting
 

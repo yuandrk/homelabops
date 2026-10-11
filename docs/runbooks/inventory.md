@@ -50,7 +50,6 @@ The docs currently cannot answer these questions, so give them extra care:
 
 - what `/etc/k3s-resolv.conf` holds on each node (the pods' upstream DNS);
 - the Samba shares on k3s-master, and the folders and devices Syncthing syncs there;
-- what writes `/srv/data/db-dumps` on k3s-master;
 - whether the offsite (B2) backup has a snapshot by now, and how the weekly `restic check`
   ended (the run outcomes and the boot list show it);
 - why k3s-worker1 rebooted at about 07:19 UTC on 2026-10-11 (its boot list and the end of the

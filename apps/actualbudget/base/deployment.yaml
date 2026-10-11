@@ -24,7 +24,7 @@ spec:
         kubernetes.io/hostname: k3s-master
       containers:
       - name: actualbudget
-        image: actualbudget/actual-server:26.8.1
+        image: actualbudget/actual-server:26.10.0
         ports:
         - containerPort: 5006
           name: http

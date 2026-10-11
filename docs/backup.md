@@ -31,6 +31,7 @@ Two rules came out of it:
 | Immich library: originals, uploads, Immich's own nightly DB dumps (`backups/`), thumbs, encoded video | `/srv/data/immich` | NFS. `immich-server` stays on k3s-worker3 for the Intel iGPU. Static PV `immich-library-master` in [apps/immich/base/pv.yaml](../apps/immich/base/pv.yaml) |
 | ActualBudget (SQLite) | `/srv/data/actualbudget` | hostPath, Deployment pinned to k3s-master |
 | n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | local-path PVCs |
+| Database dumps taken by hand before an upgrade that migrates a DB (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted. First ones: Immich, n8n and Fleet on 2026-10-11 |
 
 The NFS export is host config outside git:
 
@@ -43,10 +44,11 @@ The NFS export is host config outside git:
 `no_root_squash` is needed because Immich writes as root. Only k3s-worker3 is allowed.
 
 **Not in the backup:** `/srv/media` (re-downloadable media), the Postgres instance on k3s-worker3
-(Immich's database is covered by Immich's own dumps in `library/backups`, but n8n's is not),
-local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus, Loki), Hermes' home `~/.hermes`
-on k3s-master (its config, API keys and memory), and cluster state (git is the source of truth,
-apart from what [off-git.md](off-git.md) lists).
+(Immich's database is covered by Immich's own dumps in `library/backups`, n8n's only by the
+manual pre-upgrade dumps in `/srv/data/db-dumps`), local-path volumes on k3s-worker3 (Fleet's
+MySQL, Prometheus, Loki), Hermes' home `~/.hermes` on k3s-master (its config, API keys and
+memory), and cluster state (git is the source of truth, apart from what
+[off-git.md](off-git.md) lists).
 
 ## The backup
 
@@ -80,16 +82,20 @@ shell.
 | Password | the same `/etc/restic/password` (1Password item `restic homelab`) |
 | Nightly | `restic-b2-backup.timer`, 06:15 UTC, after the local run. Same paths, minus Immich `thumbs/` and `encoded-video/` (~19 GB that Immich regenerates), so ~80 GB. `--limit-upload 5120` (5 MiB/s, ~60% of the 73 Mbit/s uplink that k3s-master reaches over Wi-Fi, which keeps the Cloudflare tunnel usable). Retention: `--keep-daily 7 --keep-weekly 4 --keep-monthly 12` |
 | Monthly check | `restic-b2-check.timer`, first Sunday 08:00 UTC: `check --read-data-subset=2%` (~1.6 GB of downloads) |
-| Account caps | B2 → Caps & Alerts. The storage cap must stay above the repository's size, or every upload fails with `Cannot upload files, storage cap exceeded`, lock files included |
 
 The key sits in a root-only file on purpose. The Obsidian vault's own B2 backup
 (`~/.config/systemd/user/vault-backup.*`, bucket `obsidian-backup-yuandrk`) keeps its key in
 `~/.restic-env`, which anything running as `yuandrk` can read, Hermes included. A separate key
 for this bucket means that cannot delete the photo backups.
 
-The first upload, on 2026-10-11, failed on the account's storage cap before it could save a
-snapshot ([still missing](#still-missing)). Once it completes, each night uploads only the
-changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
+The first upload of ~80 GB takes about 4.5 hours at the rate limit. After that each night uploads
+only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
+
+The B2 account must allow more than the free 10 GB: Backblaze → Caps & Alerts → a daily storage
+cap above $0, which needs a payment method on the account. The cap is per account, so it covers
+the Obsidian bucket too. On 2026-10-11 the first run stopped at about 10 GB with
+`storage cap exceeded`, and every upload to the account, Obsidian's included, fails the same way
+until the cap is raised.
 
 ### Day-to-day
 
@@ -130,21 +136,18 @@ back: Administration → Jobs → Generate Thumbnails / Transcode Videos, "All".
 
 ## Still missing
 
-- **The offsite copy has no snapshot yet.** On 2026-10-11 the runs failed with
-  `storage cap exceeded`, and `restic snapshots` on the B2 repository listed nothing. Raise the
-  storage cap (Caps & Alerts), run `sudo systemctl start --no-block restic-b2-backup` (the full
-  upload takes hours at the rate limit), and check with the B2 `snapshots` command under
+- **The offsite copy has no snapshot yet**, and the Obsidian vault's B2 backup fails too, until
+  the storage cap above is raised. Then run `sudo systemctl start --no-block restic-b2-backup`
+  (the first upload takes hours) and check with the B2 `snapshots` command under
   [Day-to-day](#day-to-day). Then delete this item.
 - **The first weekly check's result is not recorded.** It started at 07:00 UTC on 2026-10-11,
   and k3s-worker1, which it reads from, rebooted about 19 minutes later for a reason nobody has
   written down. Check `journalctl -u restic-check` on k3s-master and `journalctl -b -1` on
   k3s-worker1.
-- **`/srv/data/db-dumps`** (about 120 MB) is backed up with the rest of `/srv/data`, but what
-  writes it is not recorded. No timer or crontab on any node, and no CronJob in git, runs
-  `pg_dump`.
 - **Alerting on a failed backup.** Alertmanager is disabled, so a failed run only shows up in
   `journalctl`.
-- **n8n's database** (Postgres on k3s-worker3) has no dump.
+- **n8n's database** (Postgres on k3s-worker3) has no scheduled dump, only the manual ones
+  taken before an upgrade.
 - **ActualBudget is copied live.** Its SQLite files are read while the server runs, so a write
   during the backup could leave that night's copy inconsistent. Older snapshots and the clients'
   local copies cover this. A `sqlite3 .backup` pre-step would close the gap.

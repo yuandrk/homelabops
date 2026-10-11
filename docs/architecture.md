@@ -116,9 +116,9 @@ flowchart LR
     restic -->|"06:15, S3 API"| b2[("Backblaze B2")]
 ```
 
-Not covered: n8n's database in PostgreSQL, the local-path volumes on k3s-worker3 (Fleet's
-MySQL, Prometheus, Loki), and Hermes' home directory on k3s-master, see [backup.md](backup.md)
-and [off-git.md](off-git.md).
+Not covered: n8n's database in PostgreSQL (apart from dumps taken by hand before an upgrade),
+the local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus, Loki), and Hermes' home
+directory on k3s-master, see [backup.md](backup.md) and [off-git.md](off-git.md).
 
 ## Outside the cluster on purpose
 

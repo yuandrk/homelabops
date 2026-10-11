@@ -40,6 +40,15 @@ days. The Immich library existed in one copy, on that disk.
   are still bound as a rollback path.
 - `c36a446`, `7520ed4`, `6f3f9c7`, `d1b40a8`, [backup.md](backup.md)
 
+### 2026-09-26 · The cloudflare provider is pinned by a committed lock file
+
+The lock file was gitignored, so every CI run resolved `~> 5.0` to the newest provider. On
+2026-09-26 that was 5.26.0, whose new `include_shadow_metadata` attribute failed the apply on
+`main`. The stack's `.terraform.lock.hcl` is now committed, and Renovate bumps it in a
+`terraform-cloudflare` PR, where `terraform-plan.yml` shows the effect before `main` sees it.
+It is the only stack under Renovate because it is the only one CI applies. `9f8076c`,
+[renovate-config.md](renovate-config.md#what-it-covers)
+
 ### 2026-09-26 · Kite's auth config lives in git
 
 Kite reads OAuth, RBAC and its super-user from a ConfigMap through `KITE_CONFIG_FILE`. The UI
