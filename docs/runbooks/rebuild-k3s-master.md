@@ -19,8 +19,24 @@ Hermes. This is the order to bring it back on a new disk or new hardware.
 
 - Ubuntu 24.04, user `yuandrk`, SSH on port 2222 with keys only.
 - The hostname must be `k3s-master`. Manifests pin pods with `kubernetes.io/hostname`.
-- Wired LAN address `10.10.0.1/24`, `/etc/hosts` entries and the systemd-resolved override from
-  [network-architecture.md](../network-architecture.md#dns-configuration).
+- Wired LAN address `10.10.0.1/24`. The node names go in `/etc/hosts`, and systemd-resolved
+  gets an override (the file name under `resolved.conf.d/` is not recorded):
+
+  ```
+  # /etc/hosts
+  10.10.0.1 k3s-master
+  10.10.0.2 k3s-worker1
+  10.10.0.5 k3s-worker3
+  ```
+
+  ```ini
+  # /etc/systemd/resolved.conf.d/
+  [Resolve]
+  DNS=1.1.1.1 1.0.0.1
+  FallbackDNS=
+  Domains=~.
+  ```
+
 - Wi-Fi `192.168.1.223`, which comes from the router's DHCP. The k3s config below, the Hermes
   dashboard's EndpointSlice and Traefik's LAN address all assume it, so make sure the new
   machine gets the same address.
@@ -78,12 +94,12 @@ resolv-conf: /etc/k3s-resolv.conf
 - The username claim is not `email`, so the API server prefixes it with the issuer and `#`. That
   gives the RBAC subject `https://okta.yuandrk.net#me@yuandrk.net` in git. The client ID has to
   be the one in Headlamp's `headlamp-oidc-okta` item, see
-  [access.md](../access.md#headlamps-okta-app-is-missing).
+  [access.md](../access.md#recreating-headlamps-okta-app).
 - **verify** `/etc/k3s-resolv.conf`: its contents are not recorded. Pods resolve external names
   through it, so it must list real upstream servers, not systemd-resolved's `127.0.0.53` stub.
-- Install the k3s version the workers run (`k3s --version` on a worker), without flags:
-  `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<version> sh -s - server`. The old unit's
-  flags were k3s's default CIDRs (`10.42.0.0/16`, `10.43.0.0/16`) and a SAN the file repeats.
+- Install the k3s version the workers run (`k3s --version` on a worker), without flags, since
+  the old unit's flags were only k3s's defaults:
+  `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<version> sh -s - server`.
 - `/etc/rancher/k3s/k3s.yaml` is root-only. Copy it to `~/.kube/config` for `yuandrk` and set
   `KUBECONFIG` in the shell profile ([access.md](../access.md#login-surfaces)).
 - A new server has a new join token (`/var/lib/rancher/k3s/server/token`). On each worker, put it

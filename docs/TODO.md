@@ -8,23 +8,23 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## First
 
-- [ ] Raise the Backblaze B2 storage cap ([how](backup.md#offsite-copy-backblaze-b2)) and finish
-      the first offsite upload. On 2026-10-11 the first run stopped at about 10 GB with
-      `storage cap exceeded`, and every upload to the account, the Obsidian vault's included,
-      fails the same way until the cap is raised. Then run
+- [ ] Raise the Backblaze B2 storage cap ([how](backup.md#offsite-copy-backblaze-b2)). The first
+      offsite run stopped at about 10 GB with `storage cap exceeded` on 2026-10-11, and every
+      upload to the account, the Obsidian vault's too, fails until it is raised. Then run
       `sudo systemctl start --no-block restic-b2-backup` on k3s-master (the first upload takes
-      hours) and check it with the B2 `snapshots` command in [backup.md](backup.md#day-to-day).
-- [ ] Check that Headlamp can still log in through Okta, and renew its expired break-glass
-      token ([access.md](access.md#headlamps-okta-app-is-missing))
+      hours) and check the B2 `snapshots` ([backup.md](backup.md#day-to-day)).
+- [ ] Check that Headlamp can still log in through Okta, or
+      [recreate its app](access.md#recreating-headlamps-okta-app), and renew its expired
+      [break-glass token](access.md#break-glass)
 
 ## Backups
 
 - [ ] Give n8n's database a scheduled dump. It lives in the native PostgreSQL on k3s-worker3,
       which nothing backs up; only the dumps taken by hand before an upgrade exist, in
       `/srv/data/db-dumps/n8n/`
-- [ ] Copy ActualBudget consistently. Its SQLite files are read while the server runs, so a
-      write during the backup could leave that night's copy inconsistent. A `sqlite3 .backup`
-      pre-step closes the gap; until then older snapshots and the clients' local copies cover it
+- [ ] Copy ActualBudget consistently: its SQLite files are read while the server runs, so a
+      write during the backup can leave that night's copy inconsistent. Add a `sqlite3 .backup`
+      pre-step. Until then, older snapshots and the clients' local copies cover it
 - [ ] Back up the k3s server state: `server/db/` (SQLite, copied with `sqlite3 .backup` so the
       copy is consistent) and `server/token`. A rebuilt master could then restore the cluster
       instead of every worker re-joining a new one ([off-git.md](off-git.md#k3s-master))

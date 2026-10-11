@@ -5,7 +5,7 @@ cluster, so the two can be compared. It fills the **Not recorded** cells in
 [off-git.md](../off-git.md) and the **verify** steps in
 [rebuild-k3s-master.md](rebuild-k3s-master.md), and it catches drift: things changed by hand that
 no doc mentions. Run it after a rebuild, after a batch of host changes, or whenever the docs feel
-stale. The last run was on 2026-10-11.
+stale.
 
 The collection is the read-only script [`inventory.sh`](inventory.sh) next to this page. Everything
 under [The prompt](#the-prompt) is written for an agent that can reach the machines: Hermes on
@@ -22,8 +22,7 @@ k3s-master, or Claude Code on a laptop with SSH and `kubectl`. A person can foll
 - **Yourself**: the same commands. If sudo ever asks for a password again, run `sudo -v` on each
   node first, so that `sudo -n` can use the cached credentials.
 
-In October 2026 the two agents complemented each other: Hermes had the cluster and Claude Code
-had every host. Running both is fine.
+Running both is fine: Hermes sees the cluster best, Claude Code every host.
 
 Bring the report back to the session that reconciles the docs. Do not commit it: the repository
 is public, and the raw output is more detailed than the docs need to be.
@@ -36,13 +35,9 @@ the docs and fix them. You do not edit docs, manifests or the machines.
 
 ### What you are looking at
 
-| Node | Address | SSH port | Role |
-|------|---------|----------|------|
-| `k3s-master` | `10.10.0.1`, Wi-Fi `192.168.1.223`, Tailscale `100.96.117.64` | 2222 | Control plane, important data under `/srv/data`, NFS server, restic backups, Tailscale subnet router, the Hermes agent |
-| `k3s-worker3` | `10.10.0.5`, Wi-Fi `192.168.1.246` | **22** | Immich, Fleet, Prometheus, Loki, native PostgreSQL |
-| `k3s-worker1` | `10.10.0.2`, Wi-Fi `192.168.1.137` | 2222 | Raspberry Pi, disposable, holds the local restic repository |
-
-The node names resolve through `/etc/hosts` on k3s-master and k3s-worker3. From a laptop, use
+Three nodes: `k3s-master` (`10.10.0.1`), `k3s-worker3` (`10.10.0.5`) and `k3s-worker1`
+(`10.10.0.2`, a Raspberry Pi). Their roles are in [architecture.md](../architecture.md#nodes).
+SSH listens on port 2222, **except on k3s-worker3, which uses 22**. The node names resolve through `/etc/hosts` on k3s-master and k3s-worker3. From a laptop, use
 its own SSH config or the `10.10.0.x` addresses, which the tailnet reaches through k3s-master. The
 cluster is k3s, managed by Flux from GitHub (`yuandrk/homelabops`, branch `main`).
 

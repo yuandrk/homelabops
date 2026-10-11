@@ -2,10 +2,8 @@
 
 Flux rebuilds everything in the cluster from this repository. This page lists what it cannot:
 state on the hosts and in external accounts. If a disk or an account is lost, this is the list
-of things to redo by hand. Ansible used to cover part of the host layer. It was removed in
-`5cc1b2a` (bootstrap-only, and its `k3s_install` role would have wiped the cluster on any
-config change), so since 2026-08-01 node changes are made directly on the hosts and recorded
-here.
+of things to redo by hand. Hosts are changed by hand and the changes are recorded here
+([why](decisions.md#2026-08-01--hosts-are-changed-by-hand-and-the-changes-are-written-down)).
 
 The **Copy** column says where that state survives a dead disk: `restic` means the nightly
 backups ([backup.md](backup.md)), `1Password` means vault `homelab`, and `doc` means only the
@@ -18,9 +16,9 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 
 | What | Where | Copy |
 |------|-------|------|
-| k3s server config: node addresses, the flannel interface, TLS SANs, the Okta OIDC flags of the API server, the pods' DNS file | `/etc/rancher/k3s/config.yaml`. The unit's own flags add nothing: `--cluster-cidr` and `--service-cidr` at k3s's defaults, and a `--tls-san` that the file repeats | doc: the file is written out in [the rebuild runbook](runbooks/rebuild-k3s-master.md#4-k3s-server) |
+| k3s server config: node addresses, the flannel interface, TLS SANs, the Okta OIDC flags of the API server, the pods' DNS file | `/etc/rancher/k3s/config.yaml`. The unit's own flags are only k3s's default CIDRs and a SAN the file repeats | doc: written out in [the rebuild runbook](runbooks/rebuild-k3s-master.md#4-k3s-server) |
 | Upstream DNS for pods | `/etc/k3s-resolv.conf`, named by `resolv-conf` in the k3s config. Every node has one | **Not recorded**: its contents |
-| Cluster datastore and join token | `/var/lib/rancher/k3s/server/`: SQLite in `db/state.db`, the token in `token`. An `etcd/` directory from 2025-07-30 sits next to the database | none. Git recreates the objects. A new server means a new token, and every worker has to re-join. Backing up `db/` and `token` would avoid that ([TODO](TODO.md#backups)) |
+| Cluster datastore and join token | `/var/lib/rancher/k3s/server/`: SQLite in `db/state.db` (a stale `etcd/` directory sits next to it), the token in `token` | none. Git recreates the objects, but a new server means a new token, and every worker has to re-join ([TODO](TODO.md#backups)) |
 | Important data: Immich library, ActualBudget | `/srv/data/{immich,actualbudget}` | restic, local and B2 |
 | local-path volumes: n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | restic. A new cluster gives them new names, see [the rebuild runbook](runbooks/rebuild-k3s-master.md#2-data-before-anything-writes-to-it) |
 | NFS export of the Immich library to k3s-worker3 | `/etc/exports.d/immich.exports` | doc: [backup.md](backup.md#where-the-data-lives) |
@@ -37,9 +35,9 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 
 | What | Where | Copy |
 |------|-------|------|
-| SSH, keys only. Port 2222 on k3s-master and k3s-worker1, **port 22 on k3s-worker3**. Root may log in with a key on the first two (`PermitRootLogin without-password`), not on k3s-worker3 | sshd config | doc |
+| SSH, keys only, on the [ports listed here](network-architecture.md#listening-ports). Root may log in with a key on k3s-master and k3s-worker1 (`PermitRootLogin without-password`), not on k3s-worker3 | sshd config | doc |
 | `yuandrk` can sudo without a password | sudoers | doc |
-| DNS: systemd-resolved with the global servers 1.1.1.1 and 1.0.0.1 and `Domains=~.`. Node names in `/etc/hosts` on k3s-master and k3s-worker3, not on k3s-worker1 | `/etc/systemd/resolved.conf.d/`, `/etc/hosts`, netplan | doc: [network-architecture.md](network-architecture.md#dns-configuration) |
+| DNS: systemd-resolved with the global servers 1.1.1.1 and 1.0.0.1 and `Domains=~.`. Node names in `/etc/hosts` on k3s-master and k3s-worker3, not on k3s-worker1 | `/etc/systemd/resolved.conf.d/`, `/etc/hosts`, netplan | doc: written out in [the rebuild runbook](runbooks/rebuild-k3s-master.md#1-host) |
 | Firewall: UFW is inactive on k3s-master and k3s-worker1. On k3s-worker3 it is active with one listed rule, `22/tcp`, and fail2ban runs there | `ufw` | doc. **Not recorded**: k3s-worker3's default UFW policy |
 | Internet access: each node's own Wi-Fi, with an address from the BT router's DHCP. The wired LAN carries only cluster traffic, and nothing is NATed through k3s-master | netplan | doc: [network-architecture.md](network-architecture.md#segments) |
 | k3s binary, with the previous one kept in `/root` after the last upgrade | `/usr/local/bin/k3s`. The workers keep the server URL and the join token in `/etc/systemd/system/k3s-agent.service.env` | doc: [runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md) |
@@ -58,7 +56,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | What | Where | Copy |
 |------|-------|------|
 | k3s agent settings: `--node-ip`, `--flannel-iface=enp3s0`, `--node-name` and the `nvidia.com/gpu=true` label are flags in the unit. Only `resolv-conf` is in `config.yaml` | `/etc/systemd/system/k3s-agent.service` | doc. The k3s install script would drop these flags, see [runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md) |
-| PostgreSQL 16 (PGDG packages), cluster `16/main`, `listen_addresses = '*'`. Databases for Immich and n8n, read by Grafana's datasource. Login roles `postgres`, `immich` (a superuser) and `n8n`. `pg_hba.conf` adds scram-sha-256 from `10.10.0.0/24` and `10.42.0.0/16` to Ubuntu's defaults | `:5432`, `/etc/postgresql/16/main/` | Immich's database goes into Immich's own dumps in the library (restic). **n8n's database has no scheduled backup**, only the dumps taken by hand before an upgrade ([backup.md](backup.md#where-the-data-lives)). Nothing on this node dumps PostgreSQL |
+| PostgreSQL 16 (PGDG packages), cluster `16/main`, `listen_addresses = '*'`. Databases for Immich and n8n, read by Grafana's datasource. Login roles `postgres`, `immich` (a superuser) and `n8n`. `pg_hba.conf` adds scram-sha-256 from `10.10.0.0/24` and `10.42.0.0/16` to Ubuntu's defaults | `:5432`, `/etc/postgresql/16/main/` | Immich's database: Immich's own dumps in the library (restic). n8n's: only the dumps taken by hand before an upgrade ([backup.md](backup.md#not-in-the-backup)) |
 | local-path volumes: Fleet's MySQL, Prometheus, Loki, the Immich ML cache | `/var/lib/rancher/k3s/storage/` | **none**: restic runs on k3s-master only. Fleet's device inventory and its first-run settings (server URL, admin) live in that MySQL |
 | Intel iGPU for Immich's hardware transcoding | `/dev/dri`. The render group GID `993` is hardcoded in the Immich HelmRelease | doc. Update `apps/immich` if a reinstall changes the GID |
 | NVIDIA driver 535 / CUDA 12.2 for the MX130, with nvidia-container-toolkit | host packages | unused since the device plugin was removed in `db40da1`. Revert that commit to bring GPU scheduling back |
@@ -69,7 +67,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | Account | What lives there | Recreated from |
 |---------|------------------|----------------|
 | Cloudflare | zone `yuandrk.net`, tunnel `homeserver`, the proxied catch-all `*.yuandrk.net`, the API token CI uses | Terraform recreates the tunnel's ingress rules, the per-app CNAMEs and `*.home`. The tunnel itself and the catch-all record were made by hand |
-| Okta (`okta.yuandrk.net`) | the apps for Kite and the Hermes dashboard (plus a bookmark tile, and `okta-mcp-browser` for an Okta MCP client), the groups `IT` and `Andriuk corp`, the app assignments, the sign-on policies. **No app for Headlamp and the k3s API was found** ([access.md](access.md#headlamps-okta-app-is-missing)) | [access.md](access.md) describes each app. Nothing is exported |
+| Okta (`okta.yuandrk.net`) | the apps for Kite and the Hermes dashboard (plus a bookmark tile, and `okta-mcp-browser` for an Okta MCP client), the groups `IT` and `Andriuk corp`, the app assignments, the sign-on policies. Headlamp's app [may be missing](access.md#recreating-headlamps-okta-app) | [access.md](access.md) describes each app. Nothing is exported |
 | 1Password | vault `homelab`, the operator's service account | [secrets.md](secrets.md) |
 | GitHub | Actions secrets, environment `homelab` (without protection rules), Flux's deploy key (read/write), the Renovate app, one webhook to n8n | [terraform-guide.md](terraform-guide.md#ci) |
 | AWS | S3 state bucket, GitHub OIDC provider and role | Terraform stacks `aws-bootstrap` and `aws-oidc`, applied once from a laptop, not by CI. `aws-oidc` has no backend, so its state and its `terraform.tfvars` (the live trust patterns) exist only where it was applied. **Not recorded**: where that is |

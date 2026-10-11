@@ -76,7 +76,7 @@ Requests, changes and data each take one path, and the rule for each is written 
 - **Secrets never touch git.** A 1Password vault feeds the 1Password operator, which creates the
   Kubernetes Secrets, with polling tuned to the API's rate limit. [→ secrets](docs/secrets.md)
 - **Apps have to earn their place.** Traefik request metrics decide removals: Jellyfin and
-  Whisper went after 14 days of zero traffic. [→ usage metrics](docs/usage-metrics.md)
+  Whisper went after 14 days of zero traffic. [→ usage metrics](docs/monitoring.md#is-an-app-still-used)
 - **Terraform from CI, with no stored cloud keys.** GitHub Actions assumes an AWS role through
   OIDC, plans are commented on PRs, and the merge applies them.
   [→ terraform](docs/terraform-guide.md)

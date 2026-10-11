@@ -21,18 +21,16 @@ flowchart LR
 - `secrets` waits for `infrastructure` because the operator and its CRD come from there.
 - `apps` waits only for `storage`, not for `secrets`. A first deploy can show a short
   `CreateContainerConfigError` until the app's Secret has been synced.
-- Intervals are 10 minutes for most, and 1 hour for the two monitoring Kustomizations. A hand
-  edit lasts until the next run. To keep one while debugging, use
+- A hand edit lasts until the Kustomization's next run. To keep one while debugging, use
   `flux suspend kustomization <name> -n flux-system`.
 
 ## Adding an app
 
 1. Scaffold it with `/new-app <name> [port] [storageGi]` (Claude Code), which copies the n8n
    pattern into `apps/<name>/base/` and registers it in `apps/kustomization.yaml`.
-2. Choose who can reach it by its hostname. For a public app, use `<name>.yuandrk.net` and add
-   an entry to `local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf`. For a
-   tailnet-only app, use `<name>.home.yuandrk.net`, with no Terraform change. Do not use a
-   NodePort.
+2. Choose who can reach it by its hostname: `<name>.yuandrk.net` plus an entry in
+   `local.tunnel_services` for a public app, `<name>.home.yuandrk.net` alone for a tailnet-only
+   one ([network](network-architecture.md#split-horizon-without-a-dns-server)).
 3. Put secrets in 1Password and add an `OnePasswordItem` ([secrets.md](secrets.md#adding-a-secret)).
 4. Decide where its data lives. If losing it would hurt, pin the app to k3s-master and keep the
    data under `/srv/data`. Only k3s-master is backed up, and a `local-path` volume stays on
@@ -48,8 +46,8 @@ components, set the image tag per component, not at the top level.
 
 ## Removing an app
 
-Check its traffic first ([usage-metrics.md](usage-metrics.md)). Then, in one commit where
-possible:
+Check its traffic first ([monitoring](monitoring.md#is-an-app-still-used)). Then, in one commit
+where possible:
 
 - [ ] `apps/<app>/` and its line in `apps/kustomization.yaml`
 - [ ] its `OnePasswordItem` and its line in `clusters/prod/secrets/kustomization.yaml`, in the
@@ -73,21 +71,8 @@ After the merge, Flux prunes the Deployment, Service, Ingress and PVCs. These yo
   `infrastructure/monitoring/base`, which pulls in the kube-prometheus-stack HelmRelease and
   everything under `configs/`. `monitoring-controllers` and `monitoring-configs` apply the same
   objects. The `dependsOn` of `monitoring-configs` therefore does not gate them, and the Flux
-  ownership label goes to whichever ran last: on 2026-10-11 the kube-prometheus-stack
-  HelmRelease, which sits under `monitoring-controllers`' path, carried
-  `kustomize.toolkit.fluxcd.io/name: infrastructure`. Untangle it carefully: dropping the path
-  from one side makes that side prune what it believes it owns.
+  ownership label goes to whichever ran last. Untangle it carefully: dropping the path from one
+  side makes that side prune what it believes it owns.
 - **The NFS provisioner is scaled to zero but still wired in.** `apps` depends on `storage`,
   whose health check is that provisioner's Deployment. Removing it means editing
   `clusters/prod/storage.yaml` and `apps.yaml` together.
-
-## Everyday commands
-
-```bash
-flux get kustomizations -A
-flux get helmreleases -A
-flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization apps -n flux-system
-flux events --for Kustomization/apps -n flux-system
-kubectl get pods -A --field-selector=status.phase!=Running
-```

@@ -5,16 +5,13 @@ and one offsite in Backblaze B2.
 
 ## Why it is arranged this way
 
-On 2026-10-05 the USB-SSD of `k3s-worker1` (Raspberry Pi 4, budget FIKWOT SSD behind an
-ASMedia UAS bridge, root filesystem on the same disk) stopped completing I/O. The kernel stayed
-up, nothing reached the journal, and photos and budget were down for five days. At that point
-the Immich library existed in exactly one copy, on that disk.
-
+In October 2026 the USB-SSD of k3s-worker1 hung and took the only copy of the photo library
+offline for five days ([decisions.md](decisions.md#2026-10-10--important-data-on-k3s-master-in-three-copies)).
 Two rules came out of it:
 
-1. **Important data lives on `k3s-master`** (Crucial P3 1 TB NVMe). `k3s-worker1` is a
-   *disposable* node: tainted `homelab.yuandrk.net/disposable=true:NoSchedule`, it runs only
-   DaemonSets and holds the backup repository, which is a second copy and never the only one.
+1. **Important data lives on `k3s-master`'s NVMe.** `k3s-worker1` is a *disposable* node:
+   tainted `homelab.yuandrk.net/disposable=true:NoSchedule`, it runs only DaemonSets and holds
+   the backup repository, which is a second copy and never the only one.
 2. **Nothing exists in one copy.** Every night restic backs `k3s-master` up twice: to
    `k3s-worker1` and to Backblaze B2.
 
@@ -31,7 +28,7 @@ Two rules came out of it:
 | Immich library: originals, uploads, Immich's own nightly DB dumps (`backups/`), thumbs, encoded video | `/srv/data/immich` | NFS. `immich-server` stays on k3s-worker3 for the Intel iGPU. Static PV `immich-library-master` in [apps/immich/base/pv.yaml](../apps/immich/base/pv.yaml) |
 | ActualBudget (SQLite) | `/srv/data/actualbudget` | hostPath, Deployment pinned to k3s-master |
 | n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | local-path PVCs |
-| Database dumps taken by hand before an upgrade that migrates a DB (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted. First ones: Immich, n8n and Fleet on 2026-10-11 |
+| Database dumps taken by hand before an upgrade that migrates a DB (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted |
 
 The NFS export is host config outside git:
 
@@ -43,17 +40,22 @@ The NFS export is host config outside git:
 `sync` is deliberate, since originals land here and an acknowledged write must be on disk.
 `no_root_squash` is needed because Immich writes as root. Only k3s-worker3 is allowed.
 
-**Not in the backup:** `/srv/media` (re-downloadable media), the Postgres instance on k3s-worker3
-(Immich's database is covered by Immich's own dumps in `library/backups`, n8n's only by the
-manual pre-upgrade dumps in `/srv/data/db-dumps`), local-path volumes on k3s-worker3 (Fleet's
-MySQL, Prometheus, Loki), Hermes' home `~/.hermes` on k3s-master (its config, API keys and
-memory), and cluster state (git is the source of truth, apart from what
-[off-git.md](off-git.md) lists). What to add is in [TODO](TODO.md#backups).
+## Not in the backup
+
+- `/srv/media`: re-downloadable media.
+- The PostgreSQL on k3s-worker3. Immich's database is covered by Immich's own dumps in
+  `library/backups`; n8n's only by the dumps taken by hand before an upgrade, in
+  `/srv/data/db-dumps`.
+- The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus, Loki.
+- Hermes' home `~/.hermes` on k3s-master: its config, API keys and memory.
+- Cluster state: git is the source of truth, apart from what [off-git.md](off-git.md) lists.
+
+What to add is in [TODO](TODO.md#backups).
 
 ## The backup
 
-restic runs on the k3s-master **host** (systemd), not in k3s. A restore must not depend on the
-cluster being healthy. Both repositories use the same password and the same chunker parameters,
+restic runs on the k3s-master **host** (systemd), not in k3s, because a restore must not depend
+on the cluster being healthy. Both repositories use the same password and the same chunker parameters,
 so `restic copy` between them deduplicates if it is ever needed.
 
 ### Local copy (k3s-worker1)
@@ -80,16 +82,13 @@ shell.
 | Bucket | `homelab-backup-yuandrk`: private, lifecycle "keep only the last version" (with the S3 API a delete only hides a file, and this purges it after a day), no Object Lock |
 | Credentials | `/etc/restic/b2.env` (root, 0600). The application key is limited to this one bucket. 1Password: vault `homelab`, item `Backblaze B2 — restic homelab` (fields `keyID (B2_ACCOUNT_ID)` and `applicationKey`) |
 | Password | the same `/etc/restic/password` (1Password item `restic homelab`) |
-| Nightly | `restic-b2-backup.timer`, 06:15 UTC, after the local run. Same paths, minus Immich `thumbs/` and `encoded-video/` (~19 GB that Immich regenerates), so ~80 GB. `--limit-upload 5120` (5 MiB/s, ~60% of the 73 Mbit/s uplink that k3s-master reaches over Wi-Fi, which keeps the Cloudflare tunnel usable). Retention: `--keep-daily 7 --keep-weekly 4 --keep-monthly 12` |
-| Monthly check | `restic-b2-check.timer`, first Sunday 08:00 UTC: `check --read-data-subset=2%` (~1.6 GB of downloads) |
+| Nightly | `restic-b2-backup.timer`, 06:15 UTC, after the local run. Same paths, minus Immich `thumbs/` and `encoded-video/`, which Immich regenerates. `--limit-upload 5120` (5 MiB/s, well under k3s-master's Wi-Fi uplink, so the Cloudflare tunnel stays usable). Retention: `--keep-daily 7 --keep-weekly 4 --keep-monthly 12` |
+| Monthly check | `restic-b2-check.timer`, first Sunday 08:00 UTC: `check --read-data-subset=2%` |
 
 The key sits in a root-only file on purpose. The Obsidian vault's own B2 backup
 (`~/.config/systemd/user/vault-backup.*`, bucket `obsidian-backup-yuandrk`) keeps its key in
 `~/.restic-env`, which anything running as `yuandrk` can read, Hermes included. A separate key
 for this bucket means that cannot delete the photo backups.
-
-The first upload of ~80 GB takes about 4.5 hours at the rate limit. After that each night uploads
-only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
 
 The B2 account must allow more than the free 10 GB: Backblaze → Caps & Alerts → a daily storage
 cap above $0, which needs a payment method on the account. The cap is per account, so it covers

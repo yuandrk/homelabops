@@ -5,16 +5,13 @@ against Okta.
 
 ## What is unusual about it
 
-Every other service in this repo is a pod. This one is not: the dashboard is a **host process on
-k3s-master**, the user systemd unit `hermes-dashboard.service`, running
-`hermes dashboard --no-open --host 0.0.0.0 --port 9119` out of `/home/yuandrk/.hermes`. It lives
-outside k3s on purpose — it is the agent's control channel, so it must keep working when the
-cluster does not (see [hermes-sandbox.md](hermes-sandbox.md) and
-[decisions.md](decisions.md#standing-decisions)).
-
-Publishing it through Traefik therefore trades that independence away for the public hostname:
-**if the cluster is down, `hermes.yuandrk.net` is down.** The out-of-band path is still
-`http://192.168.1.223:9119` on the LAN, or `http://100.96.117.64:9119` from the tailnet.
+Every other service in this repo is a pod. This one is a **host process on k3s-master**: the user
+unit `hermes-dashboard.service`, running `hermes dashboard --no-open --host 0.0.0.0 --port 9119`
+out of `~/.hermes`. It stays outside k3s on purpose, as the agent's control channel
+([decisions.md](decisions.md#standing-decisions)). Publishing it through Traefik trades that
+independence for the public hostname: **if the cluster is down, `hermes.yuandrk.net` is down**.
+The way in is then `http://192.168.1.223:9119` on the LAN, or `http://100.96.117.64:9119` from
+the tailnet.
 
 ## The routing chain
 
@@ -28,38 +25,28 @@ browser → Cloudflare edge (TLS)
         → uvicorn on k3s-master
 ```
 
-The Service has **no selector** and its EndpointSlice is written by hand — there is no pod to
-select. This is the only Ingress→off-cluster backend in the repo. Two things about it bite:
+The Service has no selector and its EndpointSlice is written by hand: there is no pod to select.
+It is the only Ingress in the repo with a backend outside the cluster, and two things about it
+bite:
 
 - The Service port name (`http`) and the EndpointSlice port name must be identical. They are
-  matched by name, not position; a mismatch yields an endpoint-less Service and a bare 502.
+  matched by name, and a mismatch gives an endpoint-less Service and a bare 502.
 - Nothing health-checks a hand-written slice. `conditions.ready: true` is an assertion, so
   Traefik keeps routing there even when Hermes is stopped.
 
-The node address `192.168.1.223` is hardcoded because nothing in the cluster knows about a
-process that is not in the cluster.
-
 ## Why `X-Forwarded-Proto` needs two separate fixes
 
-TLS terminates at Cloudflare and the tunnel speaks plain HTTP to Traefik, so without help the
-backend believes it is serving `http://`. That breaks two things at once in Hermes:
+TLS ends at Cloudflare and the tunnel speaks plain HTTP to Traefik, so Hermes believes it serves
+`http://`. That breaks the session cookie's `Secure` flag and the OAuth `redirect_uri`, which
+Okta rejects. The fix has two halves, and each is useless alone:
 
-- `dashboard_auth/cookies.py` (`detect_https`) sets the session cookie's `Secure` flag from
-  `request.url.scheme`.
-- The OIDC provider reconstructs the OAuth `redirect_uri` from the request, and Okta rejects a
-  non-HTTPS `redirect_uri`.
-
-Fixing it takes **both** halves, and each is useless alone:
-
-1. **Traefik must send the header.** `infrastructure/hermes-dashboard/base/middleware.yaml` sets
+1. **Traefik sends the header.** `infrastructure/hermes-dashboard/base/middleware.yaml` sets
    `X-Forwarded-Proto: https`, referenced from the Ingress as
-   `hermes-dashboard-hermes-https-headers@kubernetescrd`. Same trick as
-   `infrastructure/headlamp/base/middleware.yaml`.
-2. **uvicorn must believe it.** uvicorn only honours `X-Forwarded-*` from peers in
-   `FORWARDED_ALLOW_IPS`, which defaults to `127.0.0.1` — a Traefik pod is not that, so the
-   header is silently dropped. `hermes_cli/web_server.py` builds its `uvicorn.Config` without
-   `forwarded_allow_ips`, so the env var is the only lever. It is set in a drop-in **on the
-   host**:
+   `hermes-dashboard-hermes-https-headers@kubernetescrd`, the same trick as Headlamp's.
+2. **uvicorn believes it.** It honours `X-Forwarded-*` only from peers in `FORWARDED_ALLOW_IPS`,
+   which defaults to `127.0.0.1`, and Hermes offers no other setting for it. A drop-in on the
+   host sets it, scoped to the pod CIDR so that a LAN client hitting `:9119` directly cannot
+   forge the scheme:
 
    ```ini
    # ~/.config/systemd/user/hermes-dashboard.service.d/proxy.conf
@@ -67,92 +54,43 @@ Fixing it takes **both** halves, and each is useless alone:
    Environment=FORWARDED_ALLOW_IPS=10.42.0.0/16
    ```
 
-   Scoped to the k3s pod CIDR rather than `*`, so a LAN client hitting `:9119` directly cannot
-   forge the scheme.
-
-As a belt-and-braces third measure, `dashboard.public_url` is pinned to
-`https://hermes.yuandrk.net` in `config.yaml`. It takes priority over header reconstruction for
-the callback URL — but it does **not** affect the cookie `Secure` flag, which is why it does not
-replace step 2.
+`dashboard.public_url: https://hermes.yuandrk.net` in `config.yaml` pins the callback URL as
+well, but it does not set the cookie's `Secure` flag, so it cannot replace step 2.
 
 ## Okta
 
 | | |
 |---|---|
-| Issuer | `https://okta.yuandrk.net` (same as Headlamp and the k3s apiserver) |
+| Issuer | `https://okta.yuandrk.net`, the same as Headlamp and the k3s API server |
 | App | `Hermes Dashboard`, OIDC **Native** app, **public client** (`token_endpoint_auth_method: none`) |
-| Redirect URI | `https://hermes.yuandrk.net/auth/callback` — **must** end in `/auth/callback`, the provider validates this and fails fast otherwise |
-| Authorization | Okta **app assignment** only — the app is assigned to `Andriuk corp` |
+| Redirect URI | `https://hermes.yuandrk.net/auth/callback`. It **must** end in `/auth/callback`: Hermes validates it and fails fast otherwise |
+| Authorization | Okta **app assignment** to `Andriuk corp`, and nothing else |
 
-Hermes uses its own bundled `self_hosted` provider
-(`plugins/dashboard_auth/self_hosted/`), doing authorization-code + PKCE and verifying the ID
-token against the discovered `jwks_uri`. No oauth2-proxy is involved and none would help: Hermes
-has no trusted-header auth mode, so a forward-auth proxy could only stack in front of its own
-`/login`.
+Hermes uses its bundled `self_hosted` provider: authorization code with PKCE, and the ID token
+verified against the discovered `jwks_uri`. A forward-auth proxy would not help, because Hermes
+has no trusted-header mode.
 
-### It must be a public client — a confidential one cannot work against Okta
+It has to be a **public client**, and `config.yaml` deliberately carries no `client_secret`.
+Given a secret, Hermes authenticates with HTTP Basic while still sending `client_id` in the
+body, and Okta rejects the pair with `401 invalid_request` ("Cannot supply multiple client
+credentials"). Okta allows `token_endpoint_auth_method: none` only on Native apps and cannot
+change an app's type, hence the Native app. Security rests on PKCE `S256`, exact redirect-URI
+matching and the assignment
+([decision](decisions.md#2026-08-22--hermes-dashboard-on-okta-as-a-public-client-without-a-fallback)).
 
-This is not a preference. `config.yaml` carries **no** `client_secret`, deliberately.
-
-With a secret set, `_token_endpoint_auth` picks its method from the IdP's advertised
-`token_endpoint_auth_methods_supported`, and its post-body branch fires only when
-`client_secret_post` is advertised **and `client_secret_basic` is not**. Okta advertises both, so
-the HTTP Basic branch always wins — while `complete_login` still puts `client_id` in the request
-body. Okta rejects that pairing:
-
-```
-401 invalid_request — "Cannot supply multiple client credentials. Use one of the following:
-credentials in the Authorization header, credentials in the post body, or a client_assertion."
-```
-
-RFC 6749 §2.3.1 agrees with Okta: a client must not use more than one authentication method per
-request. There is no config knob to force the post-body branch, so the only ways out are a public
-client or patching upstream. We took the public client — which is what
-`plugins/dashboard_auth/self_hosted/plugin.yaml` describes as the provider's primary design
-anyway ("authorization-code + PKCE, public client").
-
-Because Okta forbids `token_endpoint_auth_method: none` on **Web** apps and refuses to change
-`application_type` after creation (`400 'application_type' cannot be modified`), the app had to be
-recreated as a **Native** app. Security rests on PKCE `S256`, exact redirect-URI matching, and app
-assignment — not on a client secret.
-
-A quick way to confirm client auth is accepted without a browser: POST a deliberately invalid
-code to the token endpoint with just `client_id` + `code_verifier`. `invalid_grant` means the
-client-auth shape passed; `invalid_request` or `invalid_client` means it did not.
-
-It reads `groups` from the ID token but only for display — **it does not authorize on them.**
-Access control is entirely "is this user assigned to the app in Okta". Removing someone from
-`Andriuk corp` is what revokes access.
-
-That group is the org's general "Main users" group, not `IT`, the admin group that Kite uses. It
-was chosen deliberately, but it means **anyone later added as a main user silently gains the
-agent's control channel** — there is no second gate behind it. Re-point the assignment at `IT`
-if that stops being what you want.
-
-## What is not in git
-
-This is the real gap. Two files live only on k3s-master:
-
-- `/home/yuandrk/.hermes/config.yaml` (mode 0600) — holds `dashboard.oauth.self_hosted.*`
-- `/home/yuandrk/.config/systemd/user/hermes-dashboard.service.d/proxy.conf`
-
-Timestamped backups of the config sit next to it as `config.yaml.bak-*`. There is no client
-secret to store anywhere — this is a public client.
+Hermes reads `groups` for display only. Removing someone from `Andriuk corp`, the general users
+group rather than `IT`, is what revokes access, and anyone added to it gains the agent's control
+channel.
 
 ## `basic_auth` is gone
 
-The shared username/password provider was removed from `config.yaml` once SSO was verified —
-upstream is explicit that it is for a trusted network only, and this dashboard is now reachable
-from the internet. `/api/auth/providers` should list `self-hosted` and nothing else, and
-`POST /auth/password-login` answers `404 Unknown provider` for any provider name.
+The shared username and password login was removed once SSO worked, because the dashboard is
+reachable from the internet. `/api/auth/providers` lists `self-hosted` and nothing else.
 
-Its `secret` was the HMAC key the `basic` provider signed its own session tokens with; the OIDC
-provider does not use it (it carries Okta's tokens and PKCE), so removing the block did not
-affect SSO sessions.
-
-**This removed the fallback.** If Okta is unreachable there is no second way into the web UI —
-recovery means restoring `dashboard.basic_auth` from a `config.yaml.bak-preremove-*` backup over
-SSH and restarting the unit.
+**That removed the fallback.** If Okta is unreachable there is no other way into the web UI:
+restore `dashboard.basic_auth` from a `config.yaml.bak-preremove-*` backup over SSH and restart
+the unit. `config.yaml` and the drop-in exist only on k3s-master
+([off-git.md](off-git.md#k3s-master)).
 
 ## Operations
 
@@ -174,7 +112,6 @@ kubectl -n kube-system exec deploy/traefik -- wget -qS -O /dev/null http://192.1
 ```
 
 **Rollback:** restore a `config.yaml.bak-*` over `config.yaml` and
-`systemctl --user restart hermes-dashboard`. Since `basic_auth` is gone, disabling OIDC alone
-leaves no way in — restore a backup that still contains it. Removing the `hermes` entry from
-`local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf` withdraws the public name
-entirely, leaving `192.168.1.223:9119` on the LAN.
+`systemctl --user restart hermes-dashboard`, choosing a backup that still contains `basic_auth`.
+Removing the `hermes` entry from `local.tunnel_services` withdraws the public name, leaving
+`192.168.1.223:9119` on the LAN.
