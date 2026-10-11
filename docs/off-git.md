@@ -49,6 +49,8 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | k3s agent settings: node addresses, the flannel interface, the pods' DNS file | `/etc/rancher/k3s/config.yaml`. The unit has no flags of its own | doc |
 | The disposable taint `homelab.yuandrk.net/disposable=true:NoSchedule` | `node-taint` in `/etc/rancher/k3s/config.yaml`, which applies when the node registers, plus `kubectl taint` on the live Node. Git only has the tolerations for it | doc. A re-registered node gets it back from the file |
 | restic repository: user `restic`, SFTP-only key | `/srv/backup/restic`, `/srv/backup/.ssh/authorized_keys` | doc: [backup.md](backup.md#local-copy-k3s-worker1) |
+| USB link power management off for the SSD's ASMedia bridge: `usbcore.quirks=174c:1156:k`. LPM is one unproven suspect in the [2026-10-05 hang](decisions.md#2026-10-10--important-data-on-k3s-master-in-three-copies) | `/boot/firmware/cmdline.txt`, the original kept as `cmdline.txt.bak-20261011` | doc |
+| A hung disk reboots the node instead of leaving it up but unable to do I/O: `kernel.hung_task_panic = 1` panics after a task is blocked for 120 s, and the existing `kernel.panic = 10` reboots 10 s later | `/etc/sysctl.d/90-hung-task-panic.conf` | doc |
 | Timezone Europe/London. The other nodes use UTC, so this node's timers and logs print BST | `timedatectl` | doc |
 
 ## k3s-worker3

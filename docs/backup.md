@@ -92,8 +92,8 @@ for this bucket means that cannot delete the photo backups.
 
 The B2 account must allow more than the free 10 GB: Backblaze → Caps & Alerts → a daily storage
 cap above $0, which needs a payment method on the account. The cap is per account, so it covers
-the Obsidian bucket too. It has not been raised yet, so the offsite copy has no snapshot
-([TODO](TODO.md#first)).
+the Obsidian bucket too. If it ever falls back to the free tier, every upload to the account fails
+with `storage cap exceeded`. A raised cap takes up to 10 minutes to apply.
 
 ### Day-to-day
 

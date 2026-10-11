@@ -8,11 +8,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## First
 
-- [ ] Raise the Backblaze B2 storage cap ([how](backup.md#offsite-copy-backblaze-b2)). The first
-      offsite run stopped at about 10 GB with `storage cap exceeded` on 2026-10-11, and every
-      upload to the account, the Obsidian vault's too, fails until it is raised. Then run
-      `sudo systemctl start --no-block restic-b2-backup` on k3s-master (the first upload takes
-      hours) and check the B2 `snapshots` ([backup.md](backup.md#day-to-day)).
 - [ ] Check that Headlamp can still log in through Okta, or
       [recreate its app](access.md#recreating-headlamps-okta-app), and renew its expired
       [break-glass token](access.md#break-glass)
@@ -30,10 +25,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       instead of every worker re-joining a new one ([off-git.md](off-git.md#k3s-master))
 - [ ] Back up Hermes' home `~/.hermes` (config, API keys, memory), which no copy covers
       ([off-git.md](off-git.md#k3s-master))
-- [ ] Record how the first weekly `restic check` ended. It started at 07:00 UTC on 2026-10-11,
-      and k3s-worker1, which it reads from, rebooted about 19 minutes later for a reason nobody
-      has written down. Look at `journalctl -u restic-check` on k3s-master and
-      `journalctl -b -1` on k3s-worker1
 
 ## Monitoring
 
