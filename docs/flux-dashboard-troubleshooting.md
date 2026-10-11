@@ -28,7 +28,7 @@ The second type of metrics requires kube-state-metrics to be configured with cus
 **Components**:
 - ServiceAccount with proper RBAC permissions
 - ConfigMap with custom resource state definitions
-- Deployment using `registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0`
+- Deployment using `registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0`
 - Service and ServiceMonitor for Prometheus scraping
 
 ## Diagnostic Steps Required

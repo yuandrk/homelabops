@@ -26,7 +26,7 @@ spec:
           # Do not "upgrade" past 5.x: linuxserver still publishes legacy 14.x/20.x tags named
           # after the Ubuntu base of the day (20.04.1 was last pushed 2021-11-29). Renovate reads
           # those as major bumps. renovate.json pins this package to <14 to block them.
-          image: lscr.io/linuxserver/qbittorrent:5.2.3
+          image: lscr.io/linuxserver/qbittorrent:5.2.4
           env:
             - name: PUID
               value: "1000"
