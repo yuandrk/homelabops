@@ -28,7 +28,8 @@ the cluster directly.
    ```
 3. Correlate with the Git manifests (read files under `apps/`, `infrastructure/`, `clusters/prod/`)
    to see whether the desired state itself is wrong (bad image tag, missing secret/PVC, wrong port).
-4. Common causes to check: wrong/nonexistent image tag, missing SOPS secret, PVC unbound /
+4. Common causes to check: wrong/nonexistent image tag, a Secret not yet synced from 1Password
+   (`OnePasswordItem` status, operator logs in `onepassword`, 6h polling), PVC unbound /
    storageClass issue, resource limits, dependsOn ordering, ndots/DNS, Helm values typo.
 
 ## Output

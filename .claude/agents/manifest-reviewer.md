@@ -23,8 +23,9 @@ they reach `main`. You do not edit files and you do not touch the cluster.
      host `<name>.yuandrk.net`.
    - PVC: `storageClassName: local-path`, ReadWriteOnce, a sane size.
 4. **Image**: tag is pinned and not a leftover `REPLACE_ME` / `:latest` placeholder.
-5. **Secrets hygiene**: no plaintext secrets inline; secrets live under `clusters/prod/secrets/` as
-   SOPS-encrypted files (must contain `ENC[`). Flag any decrypted `*.enc.yaml` or committed key material.
+5. **Secrets hygiene**: no plaintext secrets inline. Secrets live in 1Password and reach the cluster
+   through `OnePasswordItem` resources under `clusters/prod/secrets/` (see `docs/secrets.md`). Flag
+   any committed `kind: Secret` with `data`/`stringData` values, and any key material.
 
 ## Output
 Group findings as **Blocking** / **Warning** / **Nit**, each with the file:line and the concrete fix.

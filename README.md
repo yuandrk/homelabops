@@ -142,7 +142,7 @@ homelabops/
 | [FluxCD Troubleshooting](docs/fluxcd-troubleshooting.md) | Common issues and solutions |
 | [Monitoring Setup](docs/monitoring-setup.md) | Prometheus/Grafana stack |
 | [Terraform](docs/terraform-guide.md) | Cloud infrastructure management |
-| [SOPS Secrets](docs/sops-secrets.md) | Secrets management with age encryption |
+| [Secrets](docs/secrets.md) | 1Password operator: how secrets reach the cluster |
 | [GPU Setup](docs/gpu-setup.md) | NVIDIA GPU configuration for K3s |
 
 ## 📝 License

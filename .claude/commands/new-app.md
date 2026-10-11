@@ -31,5 +31,6 @@ Steps:
    kubectl kustomize apps | kubectl apply --dry-run=client -f - >/dev/null && echo "apps kustomization OK"
    ```
 5. Summarize what was created and remind me of the next steps: set the real image, then
-   commit → push → `/reconcile apps`. If the app needs secrets, note that they go under
-   `clusters/prod/secrets/` as SOPS-encrypted `*.enc`/`.yaml` (see `.sops.yaml`), not inline.
+   commit → push → `/reconcile apps`. If the app needs secrets, note that they live in 1Password
+   (vault `homelab`) and reach the cluster through a `OnePasswordItem` under
+   `clusters/prod/secrets/`, never inline (see `docs/secrets.md#adding-a-secret`).
