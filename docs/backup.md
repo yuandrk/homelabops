@@ -85,8 +85,14 @@ The key sits in a root-only file on purpose. The Obsidian vault's own B2 backup
 `~/.restic-env`, which anything running as `yuandrk` can read, Hermes included. A separate key
 for this bucket means that cannot delete the photo backups.
 
-The first upload ran on 2026-10-11 and took about 4.5 hours at the rate limit. After that each
-night uploads only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
+The first upload of ~80 GB takes about 4.5 hours at the rate limit. After that each night uploads
+only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
+
+The B2 account must allow more than the free 10 GB: Backblaze → Caps & Alerts → a daily storage
+cap above $0, which needs a payment method on the account. The cap is per account, so it covers
+the Obsidian bucket too. On 2026-10-11 the first run stopped at about 10 GB with
+`storage cap exceeded`, and every upload to the account, Obsidian's included, fails the same way
+until the cap is raised.
 
 ### Day-to-day
 
