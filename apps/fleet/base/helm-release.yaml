@@ -25,7 +25,9 @@ spec:
       retries: 3
   values:
     replicas: 1
-    imageTag: v4.90.0
+    # Renovate cannot see this bare tag. Chart versions map 1:1 to Fleet releases
+    # (chart v7.0.28 = v4.93.0), so bump it together with the chart.
+    imageTag: v4.93.0
 
     # fleetdm/fleet ships a single amd64 manifest, so it cannot run on k3s-worker1.
     nodeSelector:
