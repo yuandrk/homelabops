@@ -36,11 +36,12 @@ flux resume  kustomization <name> -n flux-system
 
 Prefer the `/reconcile [target]` slash command, which wraps the source + kustomization + verify flow.
 
-## Current Flux Resources
+## Flux Resources
 
-- **Kustomizations**: `flux-system`, `apps`, `infrastructure`, `infrastructure-networking`, `monitoring-controllers`, `monitoring-configs`, `secrets`, `storage`
-- **HelmReleases**: `immich` (apps), `1password-operator` (flux-system), `headlamp` (kube-system), `kube-prometheus-stack` (monitoring), `alloy` (monitoring), `loki` (monitoring), `cloudflared` (networking), `nfs-subdir-external-provisioner` (storage)
-- **GitRepository**: `flux-system` (watches `main` branch, 1m interval)
+Do not trust a list here: ask the cluster (`flux get kustomizations -A`, `flux get helmreleases -A`).
+The Kustomization dependency graph and the repo's traps (including the monitoring stack being
+applied by two Kustomizations) are in [gitops.md](../../docs/gitops.md). The GitRepository
+`flux-system` polls `main` every minute.
 
 ## Important
 

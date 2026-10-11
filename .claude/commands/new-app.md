@@ -30,6 +30,14 @@ Steps:
    kubectl kustomize apps/$1/base
    kubectl kustomize apps | kubectl apply --dry-run=client -f - >/dev/null && echo "apps kustomization OK"
    ```
-5. Summarize what was created and remind me of the next steps: set the real image, then
-   commit → push → `/reconcile apps`. If the app needs secrets, note that they go under
-   `clusters/prod/secrets/` as SOPS-encrypted `*.enc`/`.yaml` (see `.sops.yaml`), not inline.
+5. Summarize what was created and remind me of the next steps:
+   - set the real image;
+   - decide exposure by hostname: `$1.yuandrk.net` is public and also needs an entry in
+     `local.tunnel_services` (`terraform/live/homelab/cloudflare/main.tf`); `$1.home.yuandrk.net`
+     is tailnet-only and needs nothing else (see `services.md`);
+   - if its data matters, pin it to k3s-master with the data under `/srv/data` (only k3s-master
+     is backed up);
+   - if it needs secrets, they live in 1Password (vault `homelab`) and reach the cluster through a
+     `OnePasswordItem` under `clusters/prod/secrets/`, never inline (see `docs/secrets.md#adding-a-secret`);
+   - add it to the Services table in `README.md` and in `.claude/rules/services.md` (see `docs.md`);
+   - then commit → push → `/reconcile apps`.

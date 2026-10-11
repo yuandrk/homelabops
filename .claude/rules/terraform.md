@@ -20,6 +20,7 @@ terraform/live/homelab/
 - **Backend**: S3 with native locking (Terraform 1.13+), no DynamoDB needed
 - **Auth**: GitHub Actions uses AWS OIDC via `GitHubActionsTerraformRole`
 - **Trust**: Scoped to `yuandrk/homelabops` repository
-- **Environments**: Requires GitHub environment `homelab` for approval gates
+- **Environments**: the apply job runs in GitHub environment `homelab`, which has no required
+  reviewers, so a merge to `main` applies without an approval
 - **Rule**: Always use CI/CD for production changes, never apply locally to main
 - **Full docs**: `docs/terraform-guide.md`

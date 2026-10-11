@@ -44,8 +44,11 @@ The NFS export is host config outside git:
 `no_root_squash` is needed because Immich writes as root. Only k3s-worker3 is allowed.
 
 **Not in the backup:** `/srv/media` (re-downloadable media), the Postgres instance on k3s-worker3
-(Immich's database is covered by Immich's own dumps in `library/backups`, but n8n's is not), and
-cluster state (git is the source of truth).
+(Immich's database is covered by Immich's own dumps in `library/backups`, n8n's only by the
+manual pre-upgrade dumps in `/srv/data/db-dumps`), local-path volumes on k3s-worker3 (Fleet's
+MySQL, Prometheus, Loki), Hermes' home `~/.hermes` on k3s-master (its config, API keys and
+memory), and cluster state (git is the source of truth, apart from what
+[off-git.md](off-git.md) lists).
 
 ## The backup
 
@@ -133,9 +136,18 @@ back: Administration → Jobs → Generate Thumbnails / Transcode Videos, "All".
 
 ## Still missing
 
+- **The offsite copy has no snapshot yet**, and the Obsidian vault's B2 backup fails too, until
+  the storage cap above is raised. Then run `sudo systemctl start --no-block restic-b2-backup`
+  (the first upload takes hours) and check with the B2 `snapshots` command under
+  [Day-to-day](#day-to-day). Then delete this item.
+- **The first weekly check's result is not recorded.** It started at 07:00 UTC on 2026-10-11,
+  and k3s-worker1, which it reads from, rebooted about 19 minutes later for a reason nobody has
+  written down. Check `journalctl -u restic-check` on k3s-master and `journalctl -b -1` on
+  k3s-worker1.
 - **Alerting on a failed backup.** Alertmanager is disabled, so a failed run only shows up in
   `journalctl`.
-- **n8n's database** (Postgres on k3s-worker3) has no dump.
+- **n8n's database** (Postgres on k3s-worker3) has no scheduled dump, only the manual ones
+  taken before an upgrade.
 - **ActualBudget is copied live.** Its SQLite files are read while the server runs, so a write
   during the backup could leave that night's copy inconsistent. Older snapshots and the clients'
   local copies cover this. A `sqlite3 .backup` pre-step would close the gap.

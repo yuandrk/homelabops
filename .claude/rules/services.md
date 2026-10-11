@@ -23,13 +23,8 @@
 > [hermes-sandbox.md](../../docs/hermes-sandbox.md).
 
 > Deployed versions drift — check live with `kubectl get deploy -n apps -o wide` rather than trusting docs.
-> Removed 2026-05-25: Uptime Kuma, pgAdmin, Ollama/open-webui (commit `f9a0fb9`).
-> Removed 2026-08-01: Stirling-PDF (broken rollout, unused), MCP Slack Bot (unused).
-> Removed 2026-08-01: Jellyfin (0 ingress requests in 14d), Whisper (0 `/v1/audio` requests ever
-> in retained logs). Media files survive at hostPath `/srv/media` on k3s-master — only the
-> `jellyfin-config` and `whisper-model-cache` PVCs were pruned.
-> Removed 2026-08-08: Glance (dashboard on NodePort 30081, not wanted after a week). The
-> `glance-credentials` vault item in 1Password outlives the manifest and is deleted by hand.
+> Removed apps, with dates, reasons and what each left behind: [decisions.md](../../docs/decisions.md#removed-apps).
+> Add a line there when you remove one.
 
 To decide whether an app is still used, query Traefik metrics rather than guessing — see
 [usage-metrics.md](../../docs/usage-metrics.md).
@@ -39,8 +34,9 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 - **PostgreSQL**: Native on k3s-worker3
 - **FluxCD**: GitOps continuous deployment
 - **Traefik**: K3s ingress controller
-- **Monitoring Stack**: Prometheus (10Gi PVC, 15d retention), Grafana, Node Exporter, Kube State Metrics
-- **Loki**: Log aggregation (10Gi PVC), with chunks-cache and results-cache
+- **Monitoring Stack**: Prometheus (10Gi PVC, 15d retention), Grafana, Node Exporter, Kube State Metrics. Alertmanager is disabled. See [monitoring.md](../../docs/monitoring.md)
+- **Loki**: Log aggregation, SingleBinary on a 10Gi local-path PVC on k3s-worker3, caches off, no
+  retention set. local-path does not enforce the size, so it grows on that node's disk
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
 - **NFS Provisioner**: scaled to 0 and pending removal. Immich now uses a static NFS PV on k3s-master
 - **Backups**: restic on the k3s-master host, nightly to k3s-worker1 and offsite to Backblaze B2 (bucket `homelab-backup-yuandrk`). See [backup.md](../../docs/backup.md)
@@ -49,8 +45,8 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 > runs only DaemonSets plus the restic repository. Never put anything important there (its USB-SSD
 > hung on 2026-10-05 and took photos and budget down for five days). Important data goes to
 > `/srv/data` on k3s-master, which the nightly backup covers.
-- **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130) — currently no GPU consumers
-- **1Password Operator**: Secrets sync (`onepassword` namespace, HelmRelease in `flux-system`)
+- **GPU**: the NVIDIA device plugin was removed with Ollama (`db40da1`). The MX130 and its driver remain on k3s-worker3; revert that commit to schedule GPU work again
+- **1Password Operator**: Secrets sync (`onepassword` namespace, HelmRelease in `flux-system`), polls every 6h. See [secrets.md](../../docs/secrets.md)
 
 ## Public vs internal: the hostname decides
 
@@ -69,12 +65,12 @@ when internal names did not resolve. Use a `.home.yuandrk.net` Ingress instead.
 
 This gates names and routing, not access: Traefik listens on `0.0.0.0:80` on every node, so a
 LAN device can still reach an internal app via `192.168.1.223` + `Host` header. Source-IP
-allowlists do not work here (klipper masquerades the client IP — see memory
-`klipper-masquerades-client-ip`). Full details: [network-architecture.md](../../docs/network-architecture.md).
+allowlists do not work here (klipper masquerades the client IP — see
+[decisions.md](../../docs/decisions.md#2026-07-05--no-source-ip-allowlists)). Full details:
+[network-architecture.md](../../docs/network-architecture.md).
 
 ## Cloudflare Tunnel Routing
 
-cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see memory `cloudflared-in-cluster`). All tunnel ingresses target in-cluster Service DNS:
-
-- `flux-webhook.yuandrk.net` → `http://webhook-receiver.flux-system.svc.cluster.local:80`
-- Everything else → `http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000)
+cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see [decisions.md](../../docs/decisions.md#2026-05-24--cloudflared-moved-into-the-cluster)). Every tunnel ingress targets
+`http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000).
+There is no Flux webhook route: Flux polls `main` every minute.

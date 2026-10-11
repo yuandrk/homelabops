@@ -1,46 +1,60 @@
-# Documentation TODO
+# Backlog
 
-**Last Updated**: 2026-06-11
+Open work that does not belong to a single doc. Gaps that do belong to one live in that doc,
+next to their context:
 
-## Performance & Operations
+- [backup.md](backup.md#still-missing): the offsite copy that has not completed, n8n's database
+  dump, backup alerting, the live SQLite copy
+- [monitoring.md](monitoring.md#still-missing): alerting, Loki retention
+- [off-git.md](off-git.md): every **Not recorded** value, and the open questions
 
-### Critical - Memory Overcommit on k3s-worker3
+Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the same day.
 
-- [ ] Reduce memory limits on k3s-worker3
-  - [ ] Review Immich server limit (8Gi) - consider reducing to 6Gi
+## First
 
-### High - Workload Rebalancing
+- [ ] Raise the Backblaze B2 storage cap and finish the first offsite upload
+      ([backup.md](backup.md#still-missing))
+- [ ] Check that Headlamp can still log in through Okta, and renew its expired break-glass
+      token ([access.md](access.md#headlamps-okta-app-is-missing))
 
-- [ ] Move Prometheus off Raspberry Pi nodes (1.5GB on k3s-worker1 with 4GB total)
-- [ ] Rebalance pods between workers
+## Reliability
 
-### Medium - Resource Limits
+- [ ] Pin the seven infrastructure charts to exact versions, so major upgrades arrive as
+      Renovate PRs instead of installing themselves, and pin cloudflared's image tag
+      ([renovate-config.md](renovate-config.md#traps))
+- [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
+      ([gitops.md](gitops.md#traps-in-this-repo))
+- [ ] Back up the k3s server state: `server/db/` (SQLite, copied with `sqlite3 .backup` so the
+      copy is consistent) and `server/token`. A rebuilt master could then restore the cluster
+      instead of every worker re-joining a new one ([off-git.md](off-git.md#k3s-master))
+- [ ] Back up Hermes' home `~/.hermes` (config, API keys, memory), which no copy covers
+      ([off-git.md](off-git.md#k3s-master))
+- [ ] Find out why k3s-worker1 rebooted at about 07:19 UTC on 2026-10-11, during the first
+      weekly `restic check` ([backup.md](backup.md#still-missing))
+- [ ] Decide whether Terraform applies need an approval: add a required reviewer to the
+      `homelab` environment, or accept the merge as the only gate ([terraform-guide.md](terraform-guide.md#ci))
 
-- [ ] Add limits to unbound pods: traefik, immich-valkey, alloy
-- [ ] Optimize Loki chunks-cache (using 2.1GB memory)
+## Resources
 
-### Node Version Alignment
+- [ ] k3s-worker3 memory overcommit: the Immich server limit is 8Gi, consider 6Gi
+- [ ] Add limits to the pods that have none: traefik, immich-valkey, alloy
 
-- [x] Align node versions — all three nodes upgraded to k3s v1.34.9+k3s1 on 2026-08-01
-  (k3s-worker2 was decommissioned May 2026). Upgrade by binary swap, not the install
-  script: `--cluster-cidr`, `--service-cidr` and one `--tls-san` live only in the systemd
-  unit and would be lost. Pre-upgrade backups are in `/root/k3s-backup-pre-1.34` on the
-  master and `/root/k3s-v1.33.*.bin` on the workers.
-- [ ] Consider Flux v2.9.x now that the K8s >= v1.34.1 floor is met (PR #30 was closed
-  while the cluster was still on v1.33, so Renovate will not re-raise it)
+## Cleanup
 
-## Identity & Access
-
-- [x] Integrate Headlamp with Okta via K3s OIDC
-  - [x] Create Okta OIDC app for K3s API server
-  - [x] Configure K3s `--kube-apiserver-arg` flags (`oidc-issuer-url`, `oidc-client-id`, `oidc-username-claim`, `oidc-groups-claim`)
-  - [x] Map Okta user to K8s RBAC via ClusterRoleBinding (subject format: `https://okta.yuandrk.net#me@yuandrk.net`)
-  - [x] Update Headlamp to use OIDC flow (PKCE enabled)
-  - [ ] If 403 errors return: check `Authorization` header in DevTools Network tab on a failing request — verify Headlamp is sending the OIDC JWT (starts with `eyJ`), not the service account token
-
-## Documentation Gaps
-
-- [ ] Document Immich setup and configuration (photos.yuandrk.net)
-- [ ] Document Loki + Alloy log aggregation stack
-- [ ] Document NFS storage provisioner setup
-- [ ] Document backup and restore procedures
+- [ ] Remove the NFS provisioner (scaled to zero) together with the `storage` dependency of
+      `apps`, and the old worker1 claims kept as a rollback path in `c36a446`. Then, on
+      k3s-worker1, stop `nfs-server`, drop its export and delete `/srv/nfs/immich`
+      ([off-git.md](off-git.md#k3s-worker1))
+- [ ] Host leftovers: the inactive `k3s-agent` unit and its token file on k3s-master;
+      `tailscaled`, `sops` and a dead kubeconfig on k3s-worker3 ([off-git.md](off-git.md))
+- [ ] SOPS leftovers: `.sops.yaml`, the `sops -d` permission and age-key read denies in
+      `.claude/settings.json`, and `.claude/hooks/guard-secrets.sh`, which should flag committed
+      plaintext `kind: Secret` instead
+- [ ] The `headlamp-oidc` OnePasswordItem in `flux-system` (item `headlamp-oidc-authentik`) has
+      no consumer
+- [ ] Delete the 1Password items whose consumer is gone ([secrets.md](secrets.md#what-is-in-the-vault))
+- [ ] The `flux-system` PodMonitor still selects the removed image-automation controllers
+- [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
+- [ ] GitHub: delete the unused `CLAUDE_CODE_OAUTH_TOKEN` secret. The webhook to n8n points at
+      `/webhook-test/…`, which answers only while the n8n editor is listening, and returned 404:
+      move it to the production `/webhook/…` URL or delete it

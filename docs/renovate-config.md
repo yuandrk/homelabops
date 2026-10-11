@@ -1,238 +1,74 @@
-# Renovate Configuration Guide
-
-## Overview
-
-Renovate is a dependency update automation tool that monitors your repository for outdated dependencies and creates pull requests to update them. This guide explains the simplified configuration focused exclusively on Docker images and Helm charts.
-
-## Philosophy: Focused Monitoring
-
-This configuration **only monitors**:
-- ✅ **Docker images** in applications and infrastructure
-- ✅ **Helm chart versions**
-
-Everything else is **explicitly disabled**:
-- ❌ GitHub Actions (separate manual updates)
-- ⚠️ Terraform: only the cloudflare stack (`terraform/live/homelab/cloudflare`), via its committed lock file
-- ❌ npm/pip/other package managers
-
-Flux itself is monitored too: the `flux` manager matches `gotk-components.yaml` by default, so
-Flux releases arrive as `fluxcd/flux2` PRs.
-
-This keeps Renovate focused on what matters most in a Kubernetes homelab: container images and Helm charts.
-
-## Current Configuration
-
-The source of truth is [`renovate.json`](../renovate.json) in the repository root. Key settings (don't trust this table blindly — the JSON wins if they disagree):
-
-| Setting | Value |
-|---------|-------|
-| Schedule | `* 0-5 * * 1` — Mondays 00:00–05:00 (Europe/London) |
-| Managers | `kubernetes`, `flux`, `helm-values`, `helmv3`, `terraform` (cloudflare stack only) |
-| File scope | `apps/**/*.yaml` (kubernetes + flux managers via `managerFilePatterns`) |
-| PR limit | 3 concurrent, `rebaseWhen: behind-base-branch` |
-| Dashboard | Dependency Dashboard issue enabled |
-| Security | `vulnerabilityAlerts` + `osvVulnerabilityAlerts` enabled |
-| Grouping | `app-images`, `app-helm-charts`, `infra-images`, `infra-helm-charts`, `immich`, `terraform-cloudflare` |
-| Automerge | Patch updates of `actualbudget/actual-server` only |
-
-## Configuration Explained
-
-### Base Settings
-
-- **`extends: ["config:recommended"]`** - Uses Renovate's recommended default settings
-- **`timezone: "Europe/London"`** + **`schedule: ["* 0-5 * * 1"]`** - Renovate only runs early Monday morning to batch updates into one weekly window
-- **`enabledManagers`** - **CRITICAL**: Only enables `kubernetes`, `flux`, `helm-values`, `helmv3` and `terraform` (the last for the cloudflare stack only); everything else is off
-
-### Pull Request Management
-
-- **`prConcurrentLimit: 3`** - Maximum 3 open PRs at once
-- **`labels: ["dependencies", "renovate"]`** - Automatically adds these labels to all Renovate PRs
-- **`assignees: ["yuandrk"]`** - Assigns all PRs to yuandrk for review
-
-### File Matching
-
-- **`managerFilePatterns`** points the `kubernetes` and `flux` managers at `apps/` and `infrastructure/`
-- **Note**: these patterns add to the managers' defaults rather than replace them, which is why the
-  `flux` manager still picks up `clusters/prod/flux-system/gotk-components.yaml`
-
-### Explicit Exclusions
-
-- **GitHub Actions disabled** - `enabled: false` for `github-actions` manager
-- **Terraform disabled** - `enabled: false` for `terraform` and `terraform-version` managers, **except** `terraform/live/homelab/cloudflare/**`, which is re-enabled with `rangeStrategy: update-lockfile` (group `terraform-cloudflare`). The constraint stays `~> 5.0`; Renovate bumps the committed `.terraform.lock.hcl`, and the PR runs `terraform-plan.yml` before the bump reaches main. Before 2026-09-26 the lock file was gitignored, so CI silently floated to the newest provider and an apply broke on cloudflare 5.26.0
-
-### Update Policy & Grouping
-
-- **App Docker images grouped** - All Docker image updates in `apps/` bundled into "app-images" PRs
-- **Helm charts grouped** - All Helm chart updates bundled into "helm-charts" PRs
-- **Patch automerge** - Patch updates for ActualBudget auto-merge after CI passes
-- **Immich in its own group** - server, machine-learning and chart land together in an `immich`
-  PR, apart from `app-images`, because an Immich upgrade migrates its database
-
-### Version traps
-
-Renovate cannot tell some pre-releases and incompatible lines from normal releases. Known cases:
-
-| Package | Trap | Guard |
-|---------|------|-------|
-| `lscr.io/linuxserver/qbittorrent` | Legacy Ubuntu-named tags (14.x, 20.x) rank above 5.x | `allowedVersions: "<14"` |
-| `mysql` (Fleet) | 26.x is Oracle's innovation track; Fleet supports 8.x only and MySQL cannot be downgraded in place | `allowedVersions: "<8.5"` |
-| `valkey/valkey` | A short tag such as `9.2-alpine` can point at a release candidate (`9.2.0-rc1`) | Pin full versions (`9.1.2-alpine`); Renovate then skips the `-rcN` tags |
-| `n8nio/n8n` | Betas use plain semver tags (on 2026-10-11 `2.43.3` was `beta`, `stable` was `2.42.6`) | None in config. Before merging, check that the tag's digest matches `n8nio/n8n:stable` |
-
-## Monitored Dependencies
-
-Renovate monitors Docker images and Helm charts under `apps/` and `infrastructure/`, currently:
-
-- **ActualBudget** - `actualbudget/actual-server`
-- **n8n** - `n8nio/n8n`
-- **Immich** - chart + component images (`ghcr.io/immich-app/*`, valkey). The server and ML
-  images need `repository:` next to `tag:` in the HelmRelease values, or Renovate cannot see them
-- **qBittorrent** - `linuxserver/qbittorrent`
-- **Flux** - `clusters/prod/flux-system/gotk-components.yaml`
-- **Infrastructure charts** - kube-prometheus-stack, loki, alloy, headlamp, cloudflared, nfs-subdir-external-provisioner
-
-**Not visible to Renovate:** Fleet's `imageTag` in `apps/fleet/base/helm-release.yaml` (a bare tag
-with no repository). Fleet chart versions map 1:1 to Fleet releases, so bump `imageTag` together
-with the chart.
-
-App and infrastructure updates land in separate grouped PRs (`app-images`, `app-helm-charts`,
-`infra-images`, `infra-helm-charts`) so one failing chart cannot block the others.
-
-### Explicitly NOT Monitored
-
-These are intentionally disabled and require manual updates:
-- ❌ **GitHub Actions** - `.github/workflows/*.yml`
-- ❌ **Terraform providers/modules** outside the cloudflare stack - `terraform/**/*.tf`
-- ❌ **npm/pip/go.mod** - Not applicable to this Kubernetes-focused homelab
-
-## How It Works
-
-1. **Weekly Scan**: Early Monday morning, Renovate scans `apps/` for Docker images and Helm charts
-2. **PR Creation**: Creates up to 3 PRs for available updates (grouped by category)
-3. **Manual Review**: You review, test, and merge the PRs when ready
-4. **Auto-merge**: Patch updates for ActualBudget merge automatically
-5. **Dependency Dashboard**: Check the "Dependency Dashboard" issue for all pending updates
-
-**What Renovate Scans**:
-- Docker image tags in Kubernetes Deployments, StatefulSets, DaemonSets
-- Helm chart versions in FluxCD HelmRelease manifests
-- Container images referenced in HelmRelease `values` sections
-
-**What Renovate Ignores**:
-- `clusters/prod/` apart from `flux-system/gotk-components.yaml`
-- GitHub Actions workflow files
-- Terraform configuration files (except the cloudflare stack's provider lock)
-- Any other package managers or dependency types
-
-## Common Customizations
-
-### Change Schedule
-
-Run only on Sundays:
-```json
-"schedule": ["on sunday"]
-```
-
-Run daily at night:
-```json
-"schedule": ["after 10pm every weekday", "every weekend"]
-```
-
-### Re-enable Terraform Updates (if needed)
-
-If you want to re-enable Terraform monitoring, remove the disable rule and optionally group updates:
-```json
-"packageRules": [
-  {
-    "description": "Group Terraform updates",
-    "matchDatasources": ["terraform-provider", "terraform-module"],
-    "groupName": "terraform"
-  }
-]
-```
-
-**Note**: Only the cloudflare stack is monitored (see Explicit Exclusions). A lock-file bump regenerated on Linux carries only that platform's `h1:` hash; if `terraform init` on a Mac then complains, run `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64` and commit.
-
-### Enable Automerge for Patch Updates
-
-Automatically merge small patch updates:
-```json
-"packageRules": [
-  {
-    "matchUpdateTypes": ["patch"],
-    "automerge": true,
-    "automergeType": "pr"
-  }
-]
-```
-
-### Ignore Specific Dependencies
-
-Skip updates for a specific package:
-```json
-"packageRules": [
-  {
-    "matchPackageNames": ["n8nio/n8n"],
-    "enabled": false
-  }
-]
-```
-
-## Useful Commands
-
-### Check Renovate PRs
-```bash
-gh pr list --label renovate
-```
-
-### View Dependency Dashboard
-```bash
-gh issue list --label renovate
-```
-
-### Test Configuration Locally
-```bash
-# Install Renovate CLI (optional)
-npm install -g renovate
-
-# Dry run (requires GitHub token)
-renovate --dry-run --token=$GITHUB_TOKEN yuandrk/homelabops
-```
-
-## Best Practices
-
-1. **Focused Monitoring**: Only monitor what matters (Docker images + Helm charts)
-2. **Separate Concerns**: Terraform and GitHub Actions have their own update mechanisms
-3. **Flux Upgrades via PR**: review the `fluxcd/flux2` PR diff; it should only change versions and controller images
-4. **Test Updates**: Use a dev branch to test major updates before merging to main
-5. **Monitor Dashboard**: Check the Dependency Dashboard issue regularly
-6. **Group Updates**: Related dependencies grouped together (app-images, infra-images, helm-charts)
-7. **Schedule Wisely**: A single weekly window (Monday 00:00–05:00) avoids disrupting daily operations
-
-## Troubleshooting
-
-### Renovate Not Creating PRs
-
-1. Check the Dependency Dashboard issue for rate limits or errors
-2. Verify GitHub App permissions (Settings → Integrations → Renovate)
-3. Check logs at https://developer.mend.io/github/yuandrk/homelabops
-
-### Too Many PRs
-
-Reduce `prConcurrentLimit` or adjust schedule to less frequent runs.
-
-### PRs Not Automerging
-
-Ensure branch protection rules allow Renovate to merge (if automerge is enabled).
-
-## Resources
-
-- [Renovate Documentation](https://docs.renovatebot.com/)
-- [Configuration Options](https://docs.renovatebot.com/configuration-options/)
-- [Package Rules](https://docs.renovatebot.com/configuration-options/#packagerules)
-- [Presets](https://docs.renovatebot.com/presets-default/)
-
-## Related Documentation
-
-- `docs/terraform-guide.md` - Terraform dependency management
-- `CLAUDE.md` - Development workflow and GitOps practices
+# Renovate
+
+Renovate proposes version bumps as PRs. The Flux image-automation controllers were removed
+([decisions.md](decisions.md#2026-08-01--renovate-owns-version-bumps)), so Renovate is the only
+route by which a pinned version changes. Unpinned versions are a different story (see Traps).
+The source of truth is [`renovate.json`](../renovate.json). Where this page and the JSON
+disagree, the JSON wins.
+
+## What it covers
+
+| Covered | How |
+|---------|-----|
+| Container images in `apps/` and `infrastructure/` manifests and HelmRelease values | managers `kubernetes`, `helm-values` |
+| Helm chart versions in HelmReleases | managers `flux`, `helmv3` |
+| Flux itself: `clusters/prod/flux-system/gotk-components.yaml` | the `flux` manager's default file pattern, which `managerFilePatterns` extends rather than replaces. Releases arrive as `fluxcd/flux2` PRs |
+| The Cloudflare Terraform provider, in `terraform/live/homelab/cloudflare/` only | manager `terraform` with `rangeStrategy: update-lockfile`. The constraint stays `~> 5.0`, Renovate bumps the committed `.terraform.lock.hcl`, and `terraform-plan.yml` runs on the PR before the bump reaches `main` ([why](decisions.md#2026-09-26--the-cloudflare-provider-is-pinned-by-a-committed-lock-file)) |
+
+Not covered: GitHub Actions, the other Terraform stacks, and anything else. Those are bumped by
+hand. Two images inside the covered paths need care:
+
+- **Fleet's `imageTag`** in `apps/fleet/base/helm-release.yaml` is a bare tag with no repository,
+  so Renovate cannot see it. Fleet chart versions map 1:1 to Fleet releases: bump `imageTag`
+  together with the chart.
+- **Immich's server and machine-learning images** are visible only because their HelmRelease
+  values carry `repository:` next to `tag:`. Keep it that way.
+
+## How PRs arrive
+
+- **Mondays, 00:00–05:00** Europe/London, at most 3 PRs open at a time, rebased when behind
+  `main`, with a Dependency Dashboard issue. PRs are labelled `dependencies` and `renovate`.
+- **Grouped** so that one failing chart cannot block the rest: `app-images`, `app-helm-charts`,
+  `infra-images`, `infra-helm-charts`, `terraform-cloudflare`, and `immich`. Immich's server,
+  machine learning and chart arrive together in their own PR, because an Immich upgrade
+  migrates its database.
+- **Automerge**: only patch updates of `actualbudget/actual-server`.
+- **Vulnerability alerts** (GitHub and OSV) raise PRs outside the schedule.
+
+## Traps
+
+- **Versions that Renovate ranks wrongly.** It cannot tell some pre-releases and incompatible
+  lines from normal releases:
+
+  | Package | Trap | Guard |
+  |---------|------|-------|
+  | `lscr.io/linuxserver/qbittorrent` | Legacy tags named after its Ubuntu base (14.x, 20.x) rank above the real 5.x releases. It once proposed going from 5.2.3 to an image from 2021 | `allowedVersions: "<14"` |
+  | `mysql` (Fleet) | 26.x is Oracle's innovation track. Fleet supports 8.x only, and MySQL cannot downgrade an upgraded data dictionary in place | `allowedVersions: "<8.5"` |
+  | `valkey/valkey` | A short tag such as `9.2-alpine` can point at a release candidate (`9.2.0-rc1`) | Pin full versions (`9.1.2-alpine`), and Renovate skips the `-rcN` tags |
+  | `n8nio/n8n` | Betas use plain semver tags (on 2026-10-11 `2.43.3` was `beta`, `stable` was `2.42.6`) | None in config. Before merging, check that the tag's digest matches `n8nio/n8n:stable` |
+  | SearXNG | `YYYY.M.D-<sha>` tags | None. Read the first `infra-images` PR that touches it carefully |
+
+- **A closed PR blocks that exact version.** Renovate does not raise it again. Only a newer
+  release gets a new PR, which is what happened to Flux v2.9 after PR #30 was closed while the
+  cluster was too old for it. To get a closed one back, reopen it from the Dependency Dashboard.
+- **Every infrastructure chart is an open-ended range.** All seven infrastructure HelmReleases
+  (kube-prometheus-stack, Loki, Alloy, Headlamp, cloudflared, the 1Password operator, the NFS
+  provisioner) use `version: ">=x"`. helm-controller installs the newest matching chart on its
+  next run, **major versions included**, with no PR and no review. Since every new release
+  satisfies the range, the `infra-helm-charts` group never fires. Only the app charts (Immich,
+  Fleet) are pinned and reviewed. This has already happened: on 2026-10-11 the `>=6.0.0` Loki
+  range was running chart 7.x, and kube-prometheus-stack, asked for `>=45.5.5`, was on 92.x.
+- **cloudflared's image floats too.** Its chart declares the app version `latest`, and the
+  HelmRelease sets no image tag, so the pods presumably run whatever `cloudflare/cloudflared:latest`
+  was when their node pulled it. Renovate cannot see that.
+- **Flux bumps need a matching cluster.** Check `flux check --pre` against the k3s version
+  before merging ([runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md#before)). The `fluxcd/flux2`
+  PR's diff should change only versions and controller images.
+- **Provider lock hashes are per platform.** A lock-file bump made on Linux carries only that
+  platform's `h1:` hash. If `terraform init` on a Mac then complains, run
+  `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64` and commit.
+
+## Checking on it
+
+- The Dependency Dashboard issue in the repository lists what is pending and why.
+- Logs: <https://developer.mend.io/github/yuandrk/homelabops>

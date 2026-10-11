@@ -19,7 +19,9 @@ targeted exploit or malware. That still needs a separate VM.
 
 Also worth stating plainly: Hermes runs as `yuandrk`, and `~/.kube/config` on that host is a copy
 of `k3s.yaml` (`system:masters`). The scoped kubeconfig below is the *preferred* path, not a
-technical barrier — Hermes could still pick up the admin config. Making it a real barrier needs a
+technical barrier — Hermes could still pick up the admin config, and its default `kubectl`
+context did read the whole cluster during the 2026-10-11 inventory. `yuandrk` can also sudo
+without a password, so the same goes for root on k3s-master. Making it a real barrier needs a
 separate uid/unit and is deliberately out of scope for now.
 
 ## Access
@@ -28,7 +30,7 @@ separate uid/unit and is deliberately out of scope for now.
 |---|---|
 | Namespace | `hermes-sandbox` |
 | ServiceAccount | `hermes-runner` |
-| Kubeconfig | `~/.hermes/kube-sandbox.conf` on `k3s-master` (mode 0600, backed up in 1Password) |
+| Kubeconfig | `~/.hermes/kube-sandbox.conf` on `k3s-master` (mode 0600). No copy is kept: regenerate it as below |
 
 The account can create/delete pods, Jobs, ConfigMaps and Services in this namespace, read logs and
 events, and `exec` into pods. It **cannot** read Secrets, create PVCs, or see anything outside the

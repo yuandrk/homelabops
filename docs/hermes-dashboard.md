@@ -9,8 +9,8 @@ Every other service in this repo is a pod. This one is not: the dashboard is a *
 k3s-master**, the user systemd unit `hermes-dashboard.service`, running
 `hermes dashboard --no-open --host 0.0.0.0 --port 9119` out of `/home/yuandrk/.hermes`. It lives
 outside k3s on purpose — it is the agent's control channel, so it must keep working when the
-cluster does not (see [hermes-sandbox.md](hermes-sandbox.md) and the `hermes-stays-outside-k3s`
-note).
+cluster does not (see [hermes-sandbox.md](hermes-sandbox.md) and
+[decisions.md](decisions.md#standing-decisions)).
 
 Publishing it through Traefik therefore trades that independence away for the public hostname:
 **if the cluster is down, `hermes.yuandrk.net` is down.** The out-of-band path is still
@@ -124,10 +124,10 @@ It reads `groups` from the ID token but only for display — **it does not autho
 Access control is entirely "is this user assigned to the app in Okta". Removing someone from
 `Andriuk corp` is what revokes access.
 
-That group is the org's general "Main users" group, not the `homelab-admins` admin boundary that
-Headlamp and the apiserver use. It was chosen deliberately, but it means **anyone later added as
-a main user silently gains the agent's control channel** — there is no second gate behind it.
-Re-point the assignment at `homelab-admins` if that stops being what you want.
+That group is the org's general "Main users" group, not `IT`, the admin group that Kite uses. It
+was chosen deliberately, but it means **anyone later added as a main user silently gains the
+agent's control channel** — there is no second gate behind it. Re-point the assignment at `IT`
+if that stops being what you want.
 
 ## What is not in git
 
