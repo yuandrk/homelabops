@@ -44,8 +44,9 @@ The NFS export is host config outside git:
 
 **Not in the backup:** `/srv/media` (re-downloadable media), the Postgres instance on k3s-worker3
 (Immich's database is covered by Immich's own dumps in `library/backups`, but n8n's is not),
-local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus), and cluster state (git is the
-source of truth, apart from what [off-git.md](off-git.md) lists).
+local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus, Loki), Hermes' home `~/.hermes`
+on k3s-master (its config, API keys and memory), and cluster state (git is the source of truth,
+apart from what [off-git.md](off-git.md) lists).
 
 ## The backup
 
@@ -79,14 +80,16 @@ shell.
 | Password | the same `/etc/restic/password` (1Password item `restic homelab`) |
 | Nightly | `restic-b2-backup.timer`, 06:15 UTC, after the local run. Same paths, minus Immich `thumbs/` and `encoded-video/` (~19 GB that Immich regenerates), so ~80 GB. `--limit-upload 5120` (5 MiB/s, ~60% of the 73 Mbit/s uplink that k3s-master reaches over Wi-Fi, which keeps the Cloudflare tunnel usable). Retention: `--keep-daily 7 --keep-weekly 4 --keep-monthly 12` |
 | Monthly check | `restic-b2-check.timer`, first Sunday 08:00 UTC: `check --read-data-subset=2%` (~1.6 GB of downloads) |
+| Account caps | B2 → Caps & Alerts. The storage cap must stay above the repository's size, or every upload fails with `Cannot upload files, storage cap exceeded`, lock files included |
 
 The key sits in a root-only file on purpose. The Obsidian vault's own B2 backup
 (`~/.config/systemd/user/vault-backup.*`, bucket `obsidian-backup-yuandrk`) keeps its key in
 `~/.restic-env`, which anything running as `yuandrk` can read, Hermes included. A separate key
 for this bucket means that cannot delete the photo backups.
 
-The first upload ran on 2026-10-11 and took about 4.5 hours at the rate limit. After that each
-night uploads only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
+The first upload, on 2026-10-11, failed on the account's storage cap before it could save a
+snapshot ([still missing](#still-missing)). Once it completes, each night uploads only the
+changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
 
 ### Day-to-day
 
@@ -127,6 +130,18 @@ back: Administration → Jobs → Generate Thumbnails / Transcode Videos, "All".
 
 ## Still missing
 
+- **The offsite copy has no snapshot yet.** On 2026-10-11 the runs failed with
+  `storage cap exceeded`, and `restic snapshots` on the B2 repository listed nothing. Raise the
+  storage cap (Caps & Alerts), run `sudo systemctl start --no-block restic-b2-backup` (the full
+  upload takes hours at the rate limit), and check with the B2 `snapshots` command under
+  [Day-to-day](#day-to-day). Then delete this item.
+- **The first weekly check's result is not recorded.** It started at 07:00 UTC on 2026-10-11,
+  and k3s-worker1, which it reads from, rebooted about 19 minutes later for a reason nobody has
+  written down. Check `journalctl -u restic-check` on k3s-master and `journalctl -b -1` on
+  k3s-worker1.
+- **`/srv/data/db-dumps`** (about 120 MB) is backed up with the rest of `/srv/data`, but what
+  writes it is not recorded. No timer or crontab on any node, and no CronJob in git, runs
+  `pg_dump`.
 - **Alerting on a failed backup.** Alertmanager is disabled, so a failed run only shows up in
   `journalctl`.
 - **n8n's database** (Postgres on k3s-worker3) has no dump.

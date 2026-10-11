@@ -34,7 +34,7 @@ DynamoDB table. The settings sit in a separate `backend.hcl` per stack, because 
 | Workflow | Runs on | Does |
 |----------|---------|------|
 | `terraform-plan.yml` | a PR that changes `terraform/live/homelab/cloudflare/**` | init, validate, plan, then comments the plan on the PR. Outdated runs for the same PR are cancelled |
-| `terraform-apply.yml` | a push to `main` with the same paths | a fresh plan, then apply after the **`homelab` environment approval** |
+| `terraform-apply.yml` | a push to `main` with the same paths | a fresh plan, then apply. The job runs in the `homelab` environment, which has **no protection rules**, so nothing waits for an approval |
 
 Both run Terraform 1.13.3 and authenticate to AWS through OIDC:
 
@@ -52,12 +52,17 @@ GitHub Actions job ──(OIDC JWT)──▶ AWS STS ──▶ GitHubActionsTerr
 - Jobs need `permissions: id-token: write`.
 
 Repository secrets: `AWS_ROLE_ARN`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`,
-`CLOUDFLARE_ACCOUNT_ID`.
+`CLOUDFLARE_ACCOUNT_ID`. A fifth, `CLAUDE_CODE_OAUTH_TOKEN`, has had no user since the Claude
+workflows were removed in `9aa8bbb`.
+
+`main` has no branch protection, so the PR, with its plan comment, is a habit rather than a
+gate.
 
 ## Rules
 
-- Apply the Cloudflare stack only through CI. A local `terraform apply` skips the approval
-  gate, and a Claude Code hook warns about it.
+- Apply the Cloudflare stack only through CI, so that every change has its plan shown on a PR
+  first.
+  A Claude Code hook warns about a local `terraform apply`.
 - Never commit `terraform.tfvars` or state. `.gitignore` covers both.
 - Renovate does not touch Terraform. Provider versions are bumped by hand.
 

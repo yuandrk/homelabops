@@ -25,8 +25,9 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:909
 
 - URL: `headlamp.yuandrk.net`, login with Okta (OIDC through the k3s API server)
 - Break-glass: a `headlamp-admin` ServiceAccount token, stored in 1Password (vault `homelab`, item
-  `headlamp-token`) and synced to the `headlamp-token` Secret in `kube-system`. The token the old
-  docs recorded was minted 2025-08-09 for one year, so unless it was rotated it expired 2026-08-09.
+  `headlamp-token`) and synced to the `headlamp-token` Secret in `kube-system`. It **expired on
+  2026-08-09**. The Okta app behind Headlamp's login could not be found either, see
+  [access.md](../../docs/access.md#headlamps-okta-app-is-missing).
 - Renew: `kubectl create token headlamp-admin -n kube-system --duration=8760h`, then paste it into
   the 1Password item (the cluster picks it up within 6h, see `docs/secrets.md`). Logins,
   break-glass and Okta details for every surface: [access.md](../../docs/access.md)

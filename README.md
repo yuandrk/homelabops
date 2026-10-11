@@ -78,7 +78,7 @@ Requests, changes and data each take one path, and the rule for each is written 
 - **Apps have to earn their place.** Traefik request metrics decide removals: Jellyfin and
   Whisper went after 14 days of zero traffic. [→ usage metrics](docs/usage-metrics.md)
 - **Terraform from CI, with no stored cloud keys.** GitHub Actions assumes an AWS role through
-  OIDC, plans are commented on PRs, and applies wait behind an environment approval.
+  OIDC, plans are commented on PRs, and the merge applies them.
   [→ terraform](docs/terraform-guide.md)
 - **Operated with Claude Code, under guardrails.** Rules load into every session. There is a
   read-only Flux diagnostician and a manifest reviewer, hooks warn before direct `kubectl`
@@ -89,8 +89,8 @@ Requests, changes and data each take one path, and the rule for each is written 
 
 | | `k3s-master` | `k3s-worker3` | `k3s-worker1` |
 |---|---|---|---|
-| **Hardware** | i3-7100U, 16 GB, 1 TB NVMe | 8 cores, 16 GB, Intel iGPU + NVIDIA MX130 | Raspberry Pi 4, 4 GB, 1 TB USB SSD |
-| **Runs** | Control plane, all important data, NFS server, Tailscale router, backups, the Hermes agent | Immich with hardware transcoding, Fleet, PostgreSQL, Prometheus | DaemonSets and the local backup repository: a *disposable* node |
+| **Hardware** | i3-7100U, 16 GB, 1 TB NVMe | i5-8265U, 16 GB, 512 GB NVMe, Intel iGPU + NVIDIA MX130 | Raspberry Pi 4, 4 GB, 1 TB USB SSD |
+| **Runs** | Control plane, all important data, NFS server, Tailscale router, backups, the Hermes agent | Immich with hardware transcoding, Fleet, PostgreSQL, Prometheus, Loki | DaemonSets and the local backup repository: a *disposable* node |
 
 A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu 24.04 throughout.
 
@@ -127,7 +127,7 @@ Alloy in the cluster, with restic and Tailscale on the host.
 
 Nothing here pretends to be finished:
 
-- **Alerts reach no one yet.** Alertmanager is off, and the custom rules are probably not loaded
+- **Alerts reach no one yet.** Alertmanager is off, and the custom rules are not loaded
   ([monitoring](docs/monitoring.md#alerting-reaches-no-one)).
 - **k3s-master is a single point of failure** for both the control plane and the data. There is
   a [rebuild runbook](docs/runbooks/rebuild-k3s-master.md), but it has not been rehearsed.

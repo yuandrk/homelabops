@@ -124,10 +124,10 @@ It reads `groups` from the ID token but only for display — **it does not autho
 Access control is entirely "is this user assigned to the app in Okta". Removing someone from
 `Andriuk corp` is what revokes access.
 
-That group is the org's general "Main users" group, not the `homelab-admins` admin boundary that
-Headlamp and the apiserver use. It was chosen deliberately, but it means **anyone later added as
-a main user silently gains the agent's control channel** — there is no second gate behind it.
-Re-point the assignment at `homelab-admins` if that stops being what you want.
+That group is the org's general "Main users" group, not `IT`, the admin group that Kite uses. It
+was chosen deliberately, but it means **anyone later added as a main user silently gains the
+agent's control channel** — there is no second gate behind it. Re-point the assignment at `IT`
+if that stops being what you want.
 
 ## What is not in git
 

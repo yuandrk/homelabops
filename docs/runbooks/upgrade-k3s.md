@@ -4,8 +4,11 @@ Last done on 2026-08-01: all three nodes went from v1.33.x to v1.34.9+k3s1 (`10a
 
 ## Swap the binary, never re-run the install script
 
-`--cluster-cidr`, `--service-cidr` and one `--tls-san` exist only in the k3s systemd unit. The
-install script rewrites the unit and drops them. Replace `/usr/local/bin/k3s` and restart the
+The install script rewrites the systemd unit from whatever flags it is given. k3s-worker3 keeps
+`--node-ip`, `--flannel-iface`, `--node-name` and its GPU label only as unit flags, so a re-run
+without them would register the node with its Wi-Fi address. On the other two nodes nothing
+would be lost: k3s-master's unit flags are k3s's defaults plus a SAN its `config.yaml` repeats,
+and k3s-worker1 keeps everything in `config.yaml`. Replace `/usr/local/bin/k3s` and restart the
 service instead. `/etc/rancher/k3s/config.yaml`, which carries the Okta OIDC flags of the API
 server, is not touched either way.
 

@@ -8,7 +8,7 @@ What is collected, where to look, and what does not work yet.
 |-------|---------|
 | Prometheus (kube-prometheus-stack) | 15 days on a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
 | Grafana | `grafana.yuandrk.net`, local admin from `grafana-admin-credentials`. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab` (the PostgreSQL on k3s-worker3) |
-| Loki | SingleBinary, filesystem storage on a 10Gi volume. Chunks and results caches are off |
+| Loki | SingleBinary, filesystem storage on a 10Gi `local-path` volume on k3s-worker3. local-path does not enforce the size: in October 2026 Loki held 15 GB. Chunks and results caches are off |
 | Alloy | A DaemonSet on every node (it tolerates the disposable taint) that ships **pod** logs to Loki. Host journals are not collected |
 | Alertmanager | Disabled |
 
@@ -21,15 +21,17 @@ Cluster Stats, Flux Control Plane, Nodes, Node Exporter and Node Exporter Full.
 - **Nothing sends notifications.** Alertmanager is `enabled: false`. When the USB-SSD of
   k3s-worker1 hung on 2026-10-05, nothing paged anyone, and a failed backup only shows up in
   `journalctl`.
-- **The custom rules are probably not even loaded.** `homelab-monitoring-rules` (18 alerts in
-  `node.rules`, `kubernetes.rules` and `flux.rules`) is labelled `app`, `prometheus` and `role`,
-  but not `release: kube-prometheus-stack`. That label is what the chart's default
-  `ruleSelector` matches on. Check:
+- **The custom rules are not loaded.** `homelab-monitoring-rules` (18 alerts in `node.rules`,
+  `kubernetes.rules` and `flux.rules`) is labelled `app`, `prometheus` and `role`, but not
+  `release: kube-prometheus-stack`, and the live Prometheus selects rules by exactly that label
+  (`ruleSelector`, checked 2026-10-11). After adding the label, confirm the groups appear:
 
   ```bash
-  kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
-  curl -s localhost:9090/api/v1/rules | jq -r '.data.groups[].name' | grep -E 'node|kubernetes|flux'
+  kubectl get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules \
+    | jq -r '.data.groups[].name' | grep -E 'node|kubernetes|flux'
   ```
+
+  The Prometheus image has no `wget` or `curl`, so `kubectl exec` into it does not help.
 
 ## Labels decide what gets picked up
 
@@ -76,6 +78,8 @@ kubectl get secret -n monitoring grafana-admin-credentials \
 ## Still missing
 
 - Alert delivery: Alertmanager, or a Grafana contact point, plus the `release` label on the rules.
-- Loki retention. Nothing in the HelmRelease sets it, so logs pile up until the 10Gi volume is full.
+- Loki retention. Nothing in the HelmRelease sets it, and local-path does not cap the volume at
+  10Gi, so logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts
+  evicting pods there, and the native PostgreSQL on that disk runs out of space as well.
 - An alert on a failed backup ([backup.md](backup.md#still-missing)).
 - Dropping one of the two Flux state collectors.

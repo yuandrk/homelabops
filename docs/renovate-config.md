@@ -40,7 +40,11 @@ Not covered: GitHub Actions, Terraform providers, and anything else. Those are b
   provisioner) use `version: ">=x"`. helm-controller installs the newest matching chart on its
   next run, **major versions included**, with no PR and no review. Since every new release
   satisfies the range, the `infra-helm-charts` group never fires. Only the app charts (Immich,
-  Fleet) are pinned and reviewed.
+  Fleet) are pinned and reviewed. This has already happened: on 2026-10-11 the `>=6.0.0` Loki
+  range was running chart 7.x, and kube-prometheus-stack, asked for `>=45.5.5`, was on 92.x.
+- **cloudflared's image floats too.** Its chart declares the app version `latest`, and the
+  HelmRelease sets no image tag, so the pods presumably run whatever `cloudflare/cloudflared:latest`
+  was when their node pulled it. Renovate cannot see that.
 - **Flux bumps need a matching cluster.** Check `flux check --pre` against the k3s version
   before merging ([runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md#before)).
 

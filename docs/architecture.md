@@ -22,18 +22,18 @@ the way they are, see [decisions.md](decisions.md).
    Hermes agent.
 7. **An app stays only while it is used.** It is removed on Traefik request data, not on memory
    ([usage-metrics.md](usage-metrics.md)).
-8. **Terraform runs from CI**: plan on the PR, apply on `main` behind an approval.
+8. **Terraform runs from CI**: plan on the PR, apply on merge to `main`.
 
 ## Nodes
 
 | Node | Hardware | Network | Role |
 |------|----------|---------|------|
 | `k3s-master` | Intel i3-7100U, 16 GB, 1 TB NVMe | `10.10.0.1` wired, `192.168.1.223` Wi-Fi, `100.96.117.64` Tailscale | Control plane, important data under `/srv/data`, NFS server, Tailscale subnet router, restic, Hermes |
-| `k3s-worker3` | x86-64, 8 cores, 16 GB, Intel iGPU + NVIDIA MX130 | `10.10.0.5` wired only | The heavy worker: Immich compute, Fleet, Prometheus, the Hermes sandbox. Native PostgreSQL |
+| `k3s-worker3` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel iGPU + NVIDIA MX130 | `10.10.0.5` wired, `192.168.1.246` Wi-Fi | The heavy worker: Immich compute, Fleet, Prometheus, Loki, the Hermes sandbox. Native PostgreSQL |
 | `k3s-worker1` | Raspberry Pi 4, 4 GB, 1 TB USB SSD | `10.10.0.2` wired, `192.168.1.137` Wi-Fi | Disposable: DaemonSets only, plus the local restic repository |
 
-The wired LAN is an unmanaged gigabit switch. Internet access goes over the home Wi-Fi
-([network-architecture.md](network-architecture.md)).
+The wired LAN is an unmanaged gigabit switch. Each node reaches the internet over its own
+home Wi-Fi link ([network-architecture.md](network-architecture.md)).
 
 ## What is pinned, and why
 
@@ -57,7 +57,6 @@ flowchart LR
     cloudflared["cloudflared x2<br/>networking namespace"] -->|"outbound tunnel"| edge
     edge -.->|"requests ride the tunnel"| cloudflared
     cloudflared --> traefik["Traefik"]
-    cloudflared --> webhook["Flux webhook-receiver"]
     tailnet(["Tailnet device"]) -->|"*.home.yuandrk.net<br/>resolves to 100.96.117.64"| master["k3s-master<br/>Tailscale"]
     master --> traefik
     lan(["Home LAN"]) -->|"192.168.1.223<br/>+ Host header"| traefik
@@ -86,7 +85,7 @@ flowchart LR
     pr -->|"merge"| main["main"]
     main --> flux["Flux<br/>polls every minute"]
     flux --> cluster[("k3s cluster")]
-    main -->|"terraform/ changed"| apply["terraform-apply<br/>after environment approval"]
+    main -->|"terraform/ changed"| apply["terraform-apply<br/>runs on merge"]
     apply --> cf["Cloudflare<br/>DNS, tunnel routes"]
     vault["1Password<br/>vault homelab"] --> operator["1Password operator<br/>syncs every 6 h"]
     operator --> cluster
@@ -117,8 +116,9 @@ flowchart LR
     restic -->|"06:15, S3 API"| b2[("Backblaze B2")]
 ```
 
-Not covered: n8n's database in PostgreSQL and the local-path volumes on k3s-worker3 (Fleet's
-MySQL, Prometheus), see [backup.md](backup.md) and [off-git.md](off-git.md).
+Not covered: n8n's database in PostgreSQL, the local-path volumes on k3s-worker3 (Fleet's
+MySQL, Prometheus, Loki), and Hermes' home directory on k3s-master, see [backup.md](backup.md)
+and [off-git.md](off-git.md).
 
 ## Outside the cluster on purpose
 

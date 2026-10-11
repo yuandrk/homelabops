@@ -35,7 +35,8 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 - **FluxCD**: GitOps continuous deployment
 - **Traefik**: K3s ingress controller
 - **Monitoring Stack**: Prometheus (10Gi PVC, 15d retention), Grafana, Node Exporter, Kube State Metrics. Alertmanager is disabled. See [monitoring.md](../../docs/monitoring.md)
-- **Loki**: Log aggregation, SingleBinary on a 10Gi PVC, caches off, no retention set
+- **Loki**: Log aggregation, SingleBinary on a 10Gi local-path PVC on k3s-worker3, caches off, no
+  retention set. local-path does not enforce the size, so it grows on that node's disk
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
 - **NFS Provisioner**: scaled to 0 and pending removal. Immich now uses a static NFS PV on k3s-master
 - **Backups**: restic on the k3s-master host, nightly to k3s-worker1 and offsite to Backblaze B2 (bucket `homelab-backup-yuandrk`). See [backup.md](../../docs/backup.md)
@@ -72,5 +73,6 @@ allowlists do not work here (klipper masquerades the client IP — see
 
 cloudflared runs as a 2-replica HelmRelease in the `networking` namespace (see [decisions.md](../../docs/decisions.md#2026-05-24--cloudflared-moved-into-the-cluster)). All tunnel ingresses target in-cluster Service DNS:
 
-- `flux-webhook.yuandrk.net` → `http://webhook-receiver.flux-system.svc.cluster.local:80`
+- `flux-webhook.yuandrk.net` → `http://webhook-receiver.flux-system.svc.cluster.local:80`. Dead: no
+  `Receiver` exists and GitHub sends no webhook, so Flux relies on its 1-minute poll
 - Everything else → `http://traefik.kube-system.svc.cluster.local:80` (Traefik Service, port 80 → targetPort `web`/8000)

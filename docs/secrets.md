@@ -66,11 +66,23 @@ In-cluster, one `OnePasswordItem` per Secret:
 The cloudflared item sits next to cloudflared in `infrastructure/networking/cloudflared/`. All
 the others are in `clusters/prod/secrets/`.
 
-Outside the cluster, the same vault holds:
+Outside the cluster, the same vault holds, next to a few items unrelated to the homelab:
 
 - `restic homelab`: the restic repository password. Without it neither backup can be read.
-- `Backblaze B2 — restic homelab`: the bucket-scoped B2 key for the offsite backup.
-- A copy of Hermes' sandbox kubeconfig, `~/.hermes/kube-sandbox.conf`.
+- `Backblaze B2 — restic homelab`: the bucket-scoped B2 key for the offsite backup
+  ([backup.md](backup.md#offsite-copy-backblaze-b2)). A second item, `Backblaze B2 — restic repo`,
+  also exists, and what it is for is not recorded.
+- `Restic — Obsidian vault backup`: for the vault backup on k3s-master.
+- `hermes-dashboard-oidc`: presumably the Hermes dashboard's Okta client.
+- `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)`: what they hold is not recorded.
+
+No item holds Hermes' sandbox kubeconfig (`~/.hermes/kube-sandbox.conf`), whatever older notes
+said. Regenerate it with `infrastructure/hermes-sandbox/make-kubeconfig.sh` instead.
+
+These items have lost their consumer and can be deleted: `pgadmin-credentials`,
+`stirling-pdf-credentials` and `mcp-slack-bot-credentials` (their apps were removed), and
+`headlamp-oidc-authentik` once the unused `headlamp-oidc` item in `flux-system`, which reads it,
+is gone from git.
 
 ## Adding a secret
 

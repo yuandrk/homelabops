@@ -19,8 +19,11 @@ Hermes. This is the order to bring it back on a new disk or new hardware.
 
 - Ubuntu 24.04, user `yuandrk`, SSH on port 2222 with keys only.
 - The hostname must be `k3s-master`. Manifests pin pods with `kubernetes.io/hostname`.
-- Wired LAN address `10.10.0.1/24`, Wi-Fi `192.168.1.223`, `/etc/hosts` entries and the
-  systemd-resolved override from [network-architecture.md](../network-architecture.md#dns-configuration).
+- Wired LAN address `10.10.0.1/24`, `/etc/hosts` entries and the systemd-resolved override from
+  [network-architecture.md](../network-architecture.md#dns-configuration).
+- Wi-Fi `192.168.1.223`, which comes from the router's DHCP. The k3s config below, the Hermes
+  dashboard's EndpointSlice and Traefik's LAN address all assume it, so make sure the new
+  machine gets the same address.
 
 ## 2. Data, before anything writes to it
 
@@ -53,17 +56,41 @@ sudo exportfs -ra
 
 ## 4. k3s server
 
-- Install the same k3s minor version the workers run (`k3s --version` on a worker).
-- **verify** Server flags: `--cluster-cidr 10.42.0.0/16`, `--service-cidr 10.43.0.0/16` and a
-  `--tls-san` whose value is not recorded.
-- **verify** `/etc/rancher/k3s/config.yaml` with the Okta OIDC flags for the API server. The
-  issuer is `https://okta.yuandrk.net`. The RBAC subject
-  `https://okta.yuandrk.net#me@yuandrk.net` implies the default issuer prefix and the email
-  claim as the username. The client ID comes from the Okta app.
-- A new server has a new join token. On each worker, **verify** where the token lives, replace
-  it, and restart `k3s-agent`.
-- Re-taint the disposable node:
-  `kubectl taint node k3s-worker1 homelab.yuandrk.net/disposable=true:NoSchedule`
+Write the config before k3s first starts:
+
+```yaml
+# /etc/rancher/k3s/config.yaml
+node-ip: 10.10.0.1
+node-external-ip: 192.168.1.223
+flannel-iface: enp0s31f6        # the wired interface; new hardware may name it differently
+tls-san:
+  - 10.10.0.1
+  - 192.168.1.223
+  - 100.96.117.64
+kube-apiserver-arg:
+  - "oidc-issuer-url=https://okta.yuandrk.net"
+  - "oidc-client-id=<the client ID Headlamp uses>"
+  - "oidc-username-claim=preferred_username"
+  - "oidc-groups-claim=groups"
+resolv-conf: /etc/k3s-resolv.conf
+```
+
+- The username claim is not `email`, so the API server prefixes it with the issuer and `#`. That
+  gives the RBAC subject `https://okta.yuandrk.net#me@yuandrk.net` in git. The client ID has to
+  be the one in Headlamp's `headlamp-oidc-okta` item, see
+  [access.md](../access.md#headlamps-okta-app-is-missing).
+- **verify** `/etc/k3s-resolv.conf`: its contents are not recorded. Pods resolve external names
+  through it, so it must list real upstream servers, not systemd-resolved's `127.0.0.53` stub.
+- Install the k3s version the workers run (`k3s --version` on a worker), without flags:
+  `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<version> sh -s - server`. The old unit's
+  flags were k3s's default CIDRs (`10.42.0.0/16`, `10.43.0.0/16`) and a SAN the file repeats.
+- `/etc/rancher/k3s/k3s.yaml` is root-only. Copy it to `~/.kube/config` for `yuandrk` and set
+  `KUBECONFIG` in the shell profile ([access.md](../access.md#login-surfaces)).
+- A new server has a new join token (`/var/lib/rancher/k3s/server/token`). On each worker, put it
+  into `K3S_TOKEN` in `/etc/systemd/system/k3s-agent.service.env`, keep
+  `K3S_URL='https://10.10.0.1:6443'`, and restart `k3s-agent`.
+- k3s-worker1 taints itself when it registers (`node-taint` in its own config file). Check with
+  `kubectl get node k3s-worker1 -o jsonpath='{.spec.taints}'`.
 
 ## 5. Secrets and Flux
 
@@ -109,10 +136,13 @@ flux resume kustomization apps          # scales the app back up
   forwarding and approve the route in the admin console. If the address is no longer
   `100.96.117.64`, change `internal_ingress_ip` in `terraform/live/homelab/cloudflare/main.tf`.
 - **restic.** Recreate the four timers from [backup.md](../backup.md) and run one backup by hand.
-- **Hermes.** Reinstall it and restore `~/.hermes/config.yaml`, which has no copy outside the
-  old disk. Restore `kube-sandbox.conf` from 1Password and the `proxy.conf` drop-in from
-  [hermes-dashboard.md](../hermes-dashboard.md). **verify** that user units need
-  `loginctl enable-linger yuandrk` to start without a login.
+- **Hermes.** Reinstall it. Its `config.yaml`, `.env` (API keys, bot tokens) and `auth.json`
+  had no copy outside the old disk, so it is configured again from scratch. Regenerate
+  `kube-sandbox.conf` with `infrastructure/hermes-sandbox/make-kubeconfig.sh`, recreate the
+  `proxy.conf` drop-in from [hermes-dashboard.md](../hermes-dashboard.md), and run
+  `loginctl enable-linger yuandrk` so that its user units start without a login.
+- **Samba and Syncthing** ran here too. Their configuration is not recorded
+  ([off-git.md](../off-git.md#k3s-master)).
 
 ## 8. Check
 

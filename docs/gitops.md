@@ -84,10 +84,15 @@ After the merge, Flux prunes the Deployment, Service, Ingress and PVCs. These yo
   `infrastructure/monitoring/base`, which pulls in the kube-prometheus-stack HelmRelease and
   everything under `configs/`. `monitoring-controllers` and `monitoring-configs` apply the same
   objects. The `dependsOn` of `monitoring-configs` therefore does not gate them, and the Flux
-  ownership labels flip between the two. Untangle it carefully: dropping the path from one side
-  makes that side prune what it believes it owns.
-- **The Flux webhook may be a dead end.** No `Receiver` exists in git ([off-git.md](off-git.md#open-questions)).
-  The 1-minute poll is what actually picks up merges.
+  ownership label goes to whichever ran last: on 2026-10-11 the kube-prometheus-stack
+  HelmRelease, which sits under `monitoring-controllers`' path, carried
+  `kustomize.toolkit.fluxcd.io/name: infrastructure`. Untangle it carefully: dropping the path
+  from one side makes that side prune what it believes it owns.
+- **The Flux webhook is a dead end.** There is no `Receiver`, in git or in the cluster, and
+  GitHub has no webhook for it, yet `flux-webhook.yuandrk.net` is still published through the
+  tunnel to the `webhook-receiver` Service. The 1-minute poll is what picks up merges. Either
+  remove the route from `local.tunnel_services` or add a Receiver and a GitHub webhook
+  ([TODO](TODO.md#cleanup)).
 - **The NFS provisioner is scaled to zero but still wired in.** `apps` depends on `storage`,
   whose health check is that provisioner's Deployment. Removing it means editing
   `clusters/prod/storage.yaml` and `apps.yaml` together.

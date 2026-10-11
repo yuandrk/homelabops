@@ -11,10 +11,12 @@ Newest first. Add an entry when a change would make a future reader ask "why on 
 - **Trunk-based on `main`, no staging.** Feature branches and Renovate PRs merge into `main`.
   Flux deploys `main`, and CI applies Terraform from it. There is one environment, so a merge
   is a deploy. The cost is that a bad merge lands in production, and review is the only gate.
+  Nothing enforces that review: `main` has no branch protection.
 - **Terraform runs from CI only, and AWS trusts GitHub through OIDC.** CI holds no AWS keys.
-  Plans are commented on PRs, and applies wait for the `homelab` environment
-  approval. The exceptions are the one-time stacks (`aws-bootstrap`, `aws-oidc`, `fluxcd`),
-  applied from a laptop ([terraform-guide.md](terraform-guide.md)).
+  Plans are commented on PRs, and applies run on merge. The apply job uses the `homelab`
+  environment, but that environment has no required reviewers, so it is not a gate. The
+  exceptions are the one-time stacks (`aws-bootstrap`, `aws-oidc`, `fluxcd`), applied from a
+  laptop ([terraform-guide.md](terraform-guide.md)).
 - **Hermes runs outside k3s.** It is the agent's control channel, so it has to work when the
   cluster does not. It runs as user systemd units on k3s-master. Its dashboard is published
   through the cluster anyway, and that public path dies with the cluster

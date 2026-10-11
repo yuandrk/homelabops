@@ -8,14 +8,13 @@ of the exposure rule is in [architecture.md](architecture.md#how-requests-get-in
 | Network | Range | Notes |
 |---------|-------|-------|
 | Wired LAN | `10.10.0.0/24` | Unmanaged gigabit switch. Cluster traffic, NFS, PostgreSQL |
-| Home Wi-Fi | `192.168.1.0/24` | BT router. Internet access for k3s-master and k3s-worker1 (k3s-master's uplink is about 73 Mbit/s) |
+| Home Wi-Fi | `192.168.1.0/24` | BT router, DHCP. Every node's internet access (k3s-master's uplink is about 73 Mbit/s) |
 | Tailnet | `100.64.0.0/10` | Only k3s-master is a member. It routes the tailnet into the wired LAN |
 | Pods | `10.42.0.0/16` | Flannel VXLAN, one `/24` per node |
 | Services | `10.43.0.0/16` | ClusterIP. CoreDNS is `10.43.0.10` |
 
-The wired LAN carries cluster traffic and the Wi-Fi carries internet traffic. There is no NAT
-between the two. k3s-worker3 is wired only, and the route it takes to the internet is
-[not recorded](off-git.md#k3s-worker3).
+The wired LAN carries cluster traffic and the Wi-Fi carries internet traffic. Every node has
+both, and its default route is its own Wi-Fi. Nothing is NATed between the two.
 
 ## Nodes
 
@@ -23,16 +22,16 @@ between the two. k3s-worker3 is wired only, and the route it takes to the intern
 |------|-------|-------|----------|
 | `k3s-master` | `10.10.0.1` | `192.168.1.223` | Intel i3-7100U, 16 GB, 1 TB NVMe |
 | `k3s-worker1` | `10.10.0.2` | `192.168.1.137` | Raspberry Pi 4, 4 GB, 1 TB USB-SSD |
-| `k3s-worker3` | `10.10.0.5` | none | x86-64, 16 GB, Intel iGPU + NVIDIA MX130 |
+| `k3s-worker3` | `10.10.0.5` | `192.168.1.246` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel UHD 620 + NVIDIA MX130 |
 
 `k3s-worker2` (RPi 4, `10.10.0.4`) was decommissioned in May 2026.
 
 ```txt
              BT router, 192.168.1.0/24 ── internet
-                  │ Wi-Fi          │ Wi-Fi
-            [k3s-master]      [k3s-worker1]
-             .223               .137
-                  │                │
+                  │ Wi-Fi          │ Wi-Fi          │ Wi-Fi
+            [k3s-master]      [k3s-worker1]    [k3s-worker3]
+                .223             .137             .246
+                  │                │                │
  ═════════ wired LAN 10.10.0.0/24, unmanaged gigabit switch ═════════
                   │                │                │
             [k3s-master]      [k3s-worker1]    [k3s-worker3]
@@ -44,19 +43,25 @@ between the two. k3s-worker3 is wired only, and the route it takes to the intern
 | Node | Port | Service | Reachable from |
 |------|------|---------|----------------|
 | every node | 80, 443 | Traefik through k3s ServiceLB (svclb) | LAN, and tailnet through k3s-master |
-| every node | 2222 | SSH, keys only | LAN |
+| k3s-master, k3s-worker1 | 2222 | SSH, keys only | LAN |
+| k3s-worker3 | 22 | SSH, keys only | LAN |
+| every node | 9100 | node-exporter (host network) | LAN |
 | k3s-master | 6443 | Kubernetes API | LAN, tailnet |
 | k3s-master | 2049 | NFS, Immich library export to `10.10.0.5` only | wired LAN |
+| k3s-master | 139, 445 | Samba, bound to `10.10.0.1` | wired LAN, tailnet |
+| k3s-master | 22000 | Syncthing | LAN, tailnet |
 | k3s-master | 9119 | Hermes dashboard, a host process | LAN, tailnet, and Traefik as `hermes.yuandrk.net` |
-| k3s-worker3 | 5432 | PostgreSQL, native | LAN and pods |
+| k3s-worker1 | 2049 | NFS, a leftover export of the old Immich library ([off-git.md](off-git.md#k3s-worker1)) | wired LAN |
+| k3s-worker3 | 5432 | PostgreSQL, native. `pg_hba.conf` admits only the wired LAN and the pod network | LAN and pods |
 | any node | 30283 | Immich NodePort, for the mobile app on the LAN | LAN |
 
-UFW is disabled on every node.
+UFW is inactive on k3s-master and k3s-worker1. On k3s-worker3 it is active, lists one rule
+(`22/tcp`), and fail2ban runs. Its default policy is not recorded.
 
 ## Tailscale
 
-k3s-master is a Tailscale node **and** a subnet router. Nothing else in the cluster runs
-Tailscale — workers are not on the tailnet.
+k3s-master is a Tailscale node **and** a subnet router. The workers are not on the tailnet.
+k3s-worker3 still has `tailscaled` installed and running, logged out.
 
 | Property | Value |
 |----------|-------|
@@ -64,9 +69,10 @@ Tailscale — workers are not on the tailnet.
 | k3s-master tailnet address | `100.96.117.64` |
 | Advertised subnet route | `10.10.0.0/24` (the wired switch LAN) |
 | MagicDNS | Enabled (resolver `100.100.100.100`) |
+| Key expiry | Disabled for k3s-master |
 
-The subnet route is what makes the wired-only nodes reachable from outside that switch:
-`k3s-worker3` (10.10.0.5) has no Wi-Fi interface, yet a tailnet device can reach it directly.
+The subnet route is what makes the wired addresses reachable from outside the house: from a
+laptop on the tailnet, `ssh -p 22 10.10.0.5` reaches k3s-worker3 through k3s-master.
 
 `tailscaled` on k3s-master is a host-level systemd service, not managed by Flux.
 
@@ -121,15 +127,19 @@ Adding a service:
 Host nodes (k3s-master, workers)
         ↓
    systemd-resolved
-   └─ Upstream: 1.1.1.1, 8.8.8.8 (fallback: 9.9.9.9)
+   └─ Global servers 1.1.1.1, 1.0.0.1, with Domains=~.
 
 K3s Pods
         ↓
    CoreDNS (cluster service 10.43.0.10:53)
    ├─ Service discovery (.cluster.local)
    ├─ Node hostnames via NodeHosts plugin (k3s-master → 10.10.0.1, etc.)
-   └─ forward . /etc/resolv.conf  (i.e. via the node's systemd-resolved)
+   └─ forward . /etc/resolv.conf
+        = /etc/k3s-resolv.conf on the node, set by resolv-conf in the k3s config
 ```
+
+The pods' upstream is the file `/etc/k3s-resolv.conf`, not systemd-resolved, whose `127.0.0.53`
+stub a pod cannot reach. That file's contents are [not recorded](off-git.md#k3s-master).
 
 Pods have no tailnet membership, so a pod resolving `<app>.home.yuandrk.net` gets
 `100.96.117.64` and cannot connect. If a pod ever needs to call an internal service by name,
@@ -139,16 +149,21 @@ That ConfigMap does not exist today; nothing currently needs it.
 
 ### DNS Configuration
 
-#### systemd-resolved Override (All Nodes)
+#### systemd-resolved override (all nodes)
 ```ini
-# /etc/systemd/resolved.conf.d/homelab.conf
+# /etc/systemd/resolved.conf.d/
 [Resolve]
-DNS=1.1.1.1 8.8.8.8
-FallbackDNS=9.9.9.9
+DNS=1.1.1.1 1.0.0.1
+FallbackDNS=
 Domains=~.
 ```
 
-Cluster node hostnames are mirrored in `/etc/hosts` on every node so `ssh k3s-worker1` etc. resolve without DNS:
+The wired links also carry per-link servers from netplan: `10.10.0.1` with `1.1.1.1`, or with
+`8.8.8.8` and `8.8.4.4` on k3s-worker3. k3s-master has run no DNS server since Pi-hole was
+removed (nothing listens on TCP port 53 there), so the `10.10.0.1` entry looks like a leftover.
+
+Cluster node hostnames are in `/etc/hosts` on k3s-master and k3s-worker3, so `ssh k3s-worker1`
+etc. resolve without DNS. k3s-worker1 has no such entries:
 ```
 10.10.0.1 k3s-master
 10.10.0.2 k3s-worker1
@@ -161,7 +176,7 @@ Cluster node hostnames are mirrored in `/etc/hosts` on every node so `ssh k3s-wo
 |---|---|
 | Tunnel | `homeserver`, ID `4a6abf9a-d178-4a56-9586-a3d77907c5f1`. The tunnel itself was created outside Terraform |
 | Routes | `local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf`, ending in `http_status:404` |
-| Backends | `traefik.kube-system.svc.cluster.local:80` for every app. `flux-webhook.yuandrk.net` goes to `webhook-receiver.flux-system.svc.cluster.local:80` |
+| Backends | `traefik.kube-system.svc.cluster.local:80` for every app. `flux-webhook.yuandrk.net` goes to `webhook-receiver.flux-system.svc.cluster.local:80`, where no Receiver listens ([gitops.md](gitops.md#traps-in-this-repo)) |
 | Connector | `cloudflared` HelmRelease, 2 replicas, namespace `networking`, token from 1Password |
 
 ## Commands
