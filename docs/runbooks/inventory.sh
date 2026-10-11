@@ -2,8 +2,9 @@
 # Read-only inventory of one homelab node, used to check docs/ against reality.
 # Procedure, rules and report format: docs/runbooks/inventory.md
 #
-#   bash inventory.sh             facts about this host
-#   bash inventory.sh --cluster   the same, plus the cluster (needs kubectl with cluster-wide read)
+#   bash inventory.sh                  facts about this host
+#   bash inventory.sh --cluster        the same, plus the cluster (needs kubectl with cluster-wide read)
+#   bash inventory.sh --cluster-only   only the cluster, e.g. from a laptop with a kubeconfig
 #
 # Run it as your normal user, not as root. Root-only reads go through `sudo -n`:
 # where sudo would ask for a password they print sudo's error instead, and the
@@ -15,9 +16,31 @@ set -uo pipefail
 export LC_ALL=C
 ME=${USER:-$(id -un)}
 
-CLUSTER=0
-[ "${1:-}" = "--cluster" ] && CLUSTER=1
-MAXLINES=${MAXLINES:-150}
+HOST=1 CLUSTER=0
+case ${1:-} in
+  --cluster) CLUSTER=1 ;;
+  --cluster-only) HOST=0 CLUSTER=1 ;;
+  "") ;;
+  *) echo "usage: $0 [--cluster | --cluster-only]" >&2; exit 2 ;;
+esac
+MAXLINES=${MAXLINES:-400}
+
+# redact() needs GNU sed. macOS ships BSD sed: use gsed (brew install gnu-sed) or stop here,
+# before anything unredacted can be printed.
+if ! sed --version >/dev/null 2>&1; then
+  if command -v gsed >/dev/null 2>&1; then
+    sed() { gsed "$@"; }
+  else
+    echo "inventory.sh needs GNU sed for its redaction (on macOS: brew install gnu-sed)" >&2
+    exit 1
+  fi
+fi
+
+# k3s's bundled kubectl prefers the root-only /etc/rancher/k3s/k3s.yaml whenever KUBECONFIG is
+# unset, even if ~/.kube/config exists. Non-interactive SSH sessions do not read ~/.bashrc.
+if [ "$CLUSTER" = 1 ] && [ -z "${KUBECONFIG:-}" ] && [ -r "$HOME/.kube/config" ]; then
+  export KUBECONFIG="$HOME/.kube/config"
+fi
 
 section() { printf '\n===== %s =====\n' "$*"; }
 run() {
@@ -59,6 +82,8 @@ h_identity() {
   date -u +%FT%TZ
   hostname
   uptime -p
+  printf 'booted %s\n' "$(date -u -d "$(uptime -s)" +%FT%TZ)"
+  timedatectl show -p Timezone 2>/dev/null
   grep PRETTY_NAME /etc/os-release
   uname -rm
   [ -r /proc/device-tree/model ] && { tr -d '\0' </proc/device-tree/model; echo; }
@@ -96,8 +121,13 @@ h_net() {
 }
 
 h_dns() {
-  cat /etc/systemd/resolved.conf.d/*.conf 2>/dev/null
+  local f
+  for f in /etc/systemd/resolved.conf.d/*.conf; do
+    [ -e "$f" ] && { echo "## $f"; grep -vE '^[[:space:]]*(#|$)' "$f"; }
+  done
   resolvectl dns 2>/dev/null
+  echo "## /etc/k3s-resolv.conf (the pods' upstream, named by resolv-conf in the k3s config)"
+  grep -vE '^[[:space:]]*(#|$)' /etc/k3s-resolv.conf 2>&1
   echo "## /etc/hosts"
   grep -E 'k3s-|10\.10\.0\.' /etc/hosts
   echo "## public names, as this host resolves them"
@@ -136,7 +166,7 @@ h_access() {
   out=$(S sshd -T)
   echo "$out" | grep -E '^(port|listenaddress|passwordauthentication|permitrootlogin|pubkeyauthentication|kbdinteractiveauthentication|allowusers) ' ||
     echo "$out" | head -n 2
-  S ufw status | head -n 5
+  S ufw status verbose | head -n 15
   printf 'ufw unit: %s\n' "$(systemctl is-active ufw 2>&1)"
 }
 
@@ -185,6 +215,10 @@ h_services() {
   ls -1 /etc/cron.d 2>/dev/null
   echo "## /usr/local/bin"
   ls -1 /usr/local/bin 2>/dev/null
+  if have testparm; then
+    echo "## Samba shares: name and path"
+    testparm -s 2>/dev/null | grep -E '^\[|^[[:space:]]*(path|valid users|read only|guest ok) ='
+  fi
 }
 
 h_storage() {
@@ -192,8 +226,12 @@ h_storage() {
   for d in /srv/data /srv/media /srv/backup /srv/nfs; do
     [ -d "$d" ] || continue
     echo "## $d"
-    S timeout 300 du -sh "$d"/* 2>&1 | head -n 20
+    S sh -c "timeout 300 du -sh $d/* 2>&1" | head -n 20
   done
+  if [ -d /srv/data/db-dumps ]; then
+    echo "## /srv/data/db-dumps, newest files"
+    S sh -c 'find /srv/data/db-dumps -type f -printf "%TY-%Tm-%Td %TH:%TM %10s %p\n" | sort | tail -n 8'
+  fi
   echo "## local-path volumes"
   S sh -c 'cd /var/lib/rancher/k3s/storage 2>/dev/null && timeout 300 du -sh -- * 2>/dev/null'
 }
@@ -217,14 +255,16 @@ h_restic() {
   systemctl cat 'restic-*.service' 'restic-*.timer' 2>/dev/null | grep -vE '^[[:space:]]*(#|$)'
   echo "## timers"
   systemctl list-timers 'restic-*' --all --no-legend
-  echo "## last runs"
-  S journalctl -u 'restic-*' --since -4d --no-pager -o short-iso |
-    grep -iE 'snapshot .* saved|fatal|error|no errors were found|succeeded|failed|processed' | tail -n 40
+  echo "## outcome of each run, last 8 days"
+  S journalctl -u 'restic-*' --since -8d --no-pager -o short-iso |
+    grep -E 'snapshot [0-9a-f]+ saved|Fatal|no errors were found|Finished|Failed with result|Deactivated successfully' |
+    tail -n 30
   echo "## newest snapshot in each repository (--no-lock --no-cache: nothing is written)"
-  local f
+  local f out
   for f in /etc/restic/restic.env /etc/restic/b2.env; do
     echo "# $f"
-    S sh -c "set -a; . /etc/restic/restic.env; . $f; restic snapshots --no-lock --no-cache --latest 1 --compact" | tail -n 6
+    out=$(S sh -c "set -a; . /etc/restic/restic.env; . $f; restic snapshots --no-lock --no-cache --latest 1 --compact")
+    echo "${out:-(no snapshots)}" | tail -n 6
   done
 }
 
@@ -258,8 +298,18 @@ h_user() {
   echo "## Obsidian vault backup"
   systemctl --user cat vault-backup.service vault-backup.timer 2>&1 | grep -vE '^[[:space:]]*(#|$)'
   [ -f "$HOME/.restic-env" ] && sed -E '/^[[:space:]]*(#|$)/d; /RESTIC_REPOSITORY=/!s/=.*/=<redacted>/' "$HOME/.restic-env"
-  echo "## kube contexts for $ME"
-  kubectl config get-contexts 2>&1 | head -n 5
+  echo "## kubeconfigs for $ME (paths only)"
+  find "$HOME/.kube" -maxdepth 1 -type f -printf '%M %u %p\n' 2>&1
+  grep -sHE '^(export )?KUBECONFIG=' "$HOME/.bashrc" "$HOME/.profile" "$HOME/.hermes/.env"
+  [ -r "$HOME/.kube/config" ] && KUBECONFIG="$HOME/.kube/config" kubectl config get-contexts 2>&1 | head -n 5
+  local st
+  for st in "$HOME/.local/state/syncthing/config.xml" "$HOME/.config/syncthing/config.xml"; do
+    [ -r "$st" ] || continue
+    echo "## Syncthing folders (label and path)"
+    grep -oE '<folder [^>]*>' "$st" | grep -oE ' (label|path)="[^"]*"' | paste - -
+    echo "## Syncthing devices (names only)"
+    grep -oE '<device [^>]*name="[^"]*"' "$st" | grep -oE 'name="[^"]*"' | sort -u
+  done
 }
 
 h_backup_target() {
@@ -278,13 +328,16 @@ h_disk_health() {
       S smartctl -H "/dev/$d" | tail -n 3
     done
   fi
-  echo "## kernel errors, last 14 days"
-  S journalctl -k -p err --since -14d --no-pager | tail -n 20
+  echo "## boots, last 5"
+  S journalctl --list-boots --no-pager | tail -n 5
+  echo "## kernel errors, last 14 days, every boot (journalctl -k would show only this boot)"
+  S journalctl _TRANSPORT=kernel -p err --since -14d --no-pager | tail -n 20
 }
 
 # ------------------------------------------------------------- cluster facts
 
 c_versions() {
+  echo "kubeconfig: ${KUBECONFIG:-default}, context: $(kubectl config current-context 2>&1)"
   k version 2>&1 | grep -i server
   have flux && flux version 2>&1 | head -n 12
   k -n flux-system get deploy --no-headers \
@@ -331,9 +384,8 @@ c_monitoring() {
   done
   echo "## Prometheus rule selector"
   k -n monitoring get prometheus -o jsonpath='{range .items[*]}{.metadata.name}{" ruleSelector="}{.spec.ruleSelector}{"\n"}{end}'
-  echo "## rule groups Prometheus has loaded"
-  k -n monitoring exec sts/prometheus-kube-prometheus-stack-prometheus -c prometheus -- \
-    wget -qO- http://localhost:9090/api/v1/rules 2>&1 | py '
+  echo "## rule groups Prometheus has loaded (GET through the API server proxy)"
+  k get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules 2>&1 | py '
 import json, sys
 raw = sys.stdin.read()
 try:
@@ -386,11 +438,19 @@ except Exception:
   k get onepassworditems.onepassword.com -A --no-headers \
     -o custom-columns=NS:.metadata.namespace,N:.metadata.name 2>/dev/null |
     while read -r ns n; do
-      printf '%s/%s: %s\n' "$ns" "$n" "$(k -n "$ns" get secret "$n" -o jsonpath='{.data}' 2>&1 | py '
+      printf '%s/%s has keys %s\n' "$ns" "$n" "$(k -n "$ns" get secret "$n" -o jsonpath='{.data}' 2>&1 | py '
 import json, sys
 raw = sys.stdin.read()
-print(sorted(json.loads(raw)) if raw.startswith("{") else raw[:120])')"
+print(" ".join(sorted(json.loads(raw))) if raw.startswith("{") else raw[:120])')"
     done
+  echo "## Headlamp's OIDC client ID (an identifier, not a secret). The API server's oidc-client-id must match it"
+  k -n kube-system get secret headlamp-oidc -o jsonpath='{.data.clientID}' 2>&1 | py '
+import base64, sys
+raw = sys.stdin.read().strip()
+try:
+    print("clientID", base64.b64decode(raw, validate=True).decode())
+except Exception:
+    print(raw[:200])'
   echo "## Headlamp break-glass token: expiry only, the token is not printed"
   k -n kube-system get secret headlamp-token -o jsonpath='{.data.token}' 2>&1 | py '
 import base64, datetime, json, sys
@@ -419,12 +479,17 @@ import json, sys
 for o in json.load(sys.stdin)["items"]:
     m = o["metadata"]; labels = m.get("labels") or {}; ann = m.get("annotations") or {}
     if ("kustomize.toolkit.fluxcd.io/name" in labels or "helm.toolkit.fluxcd.io/name" in labels
-            or labels.get("app.kubernetes.io/managed-by") == "Helm" or "objectset.rio.cattle.io/hash" in ann):
+            or labels.get("app.kubernetes.io/managed-by") == "Helm"
+            or any(k.startswith(("objectset.rio.cattle.io/", "svccontroller.k3s.cattle.io/"))
+                   for k in list(labels) + list(ann))):
         continue
     print(o["kind"], m["namespace"] + "/" + m["name"], "| managed-by:", labels.get("app.kubernetes.io/managed-by"))'
   echo "## k3s add-on overrides"
   k -n kube-system get cm coredns-custom 2>&1 | tail -n 1
   k -n kube-system get helmchartconfigs.helm.cattle.io 2>&1
+  echo "## images running with the tag latest, or with no tag"
+  k get pods -A -o jsonpath='{range .items[*]}{range .spec.containers[*]}{.image}{"\n"}{end}{end}' |
+    sort -u | grep -E ':latest$|^[^:]+$' || echo "none"
   echo "## pods not Running or Completed"
   k get pods -A --no-headers 2>/dev/null | awk '$4 != "Running" && $4 != "Completed"'
   echo "## most restarted pods"
@@ -434,6 +499,25 @@ for o in json.load(sys.stdin)["items"]:
 # ---------------------------------------------------------------------- main
 
 main() {
+  if [ "$HOST" = 1 ]; then
+    host_facts
+  else
+    section "cluster only, from $(hostname) as $ME, $(date -u +%FT%TZ)"
+  fi
+  if [ "$CLUSTER" = 1 ]; then
+    section "cluster"
+    run "versions" c_versions
+    run "nodes" c_nodes
+    run "Flux" c_flux
+    run "monitoring" c_monitoring
+    run "storage" c_storage
+    run "secrets plumbing" c_secrets
+    run "workloads and exposure" c_workloads
+  fi
+  section "end $(date -u +%FT%TZ)"
+}
+
+host_facts() {
   section "host $(hostname) as $ME, $(date -u +%FT%TZ)"
   run "tools on PATH" h_tools
   run "identity and hardware" h_identity
@@ -453,17 +537,6 @@ main() {
   run "PostgreSQL" h_postgres
   run "user-level state ($ME)" h_user
   run "disk health and kernel errors" h_disk_health
-  if [ "$CLUSTER" = 1 ]; then
-    section "cluster"
-    run "versions" c_versions
-    run "nodes" c_nodes
-    run "Flux" c_flux
-    run "monitoring" c_monitoring
-    run "storage" c_storage
-    run "secrets plumbing" c_secrets
-    run "workloads and exposure" c_workloads
-  fi
-  section "end $(date -u +%FT%TZ)"
 }
 
 main 2>&1 | redact
