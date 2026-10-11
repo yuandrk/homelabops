@@ -52,11 +52,13 @@ Next to a few items unrelated to the homelab, the vault holds:
 
 - `restic homelab`: the restic repository password. Without it neither backup can be read.
 - `Backblaze B2 — restic homelab`: the bucket-scoped B2 key for the offsite backup, fields
-  `keyID (B2_ACCOUNT_ID)` and `applicationKey` ([backup.md](backup.md#offsite-copy-backblaze-b2)).
-- `Restic — Obsidian vault backup`: for the vault backup on k3s-master.
-- `hermes-dashboard-oidc`, `Backblaze B2 — restic repo`, `k3s-sudo` and
-  `legacy-key-yuandrk (from k3s-worker3)`: what they hold is not recorded
-  ([TODO](TODO.md#unknowns)).
+  `keyID (B2_ACCOUNT_ID)`, `applicationKey` and `bucket`
+  ([backup.md](backup.md#offsite-copy-backblaze-b2)).
+- `Restic — Obsidian vault backup` and `Backblaze B2 — restic repo`: the Obsidian vault backup on
+  k3s-master. The first is its restic password (`~/.restic-password`), the second its B2 key
+  (`~/.restic-env`), limited to the bucket `obsidian-backup-yuandrk`.
+- `hermes-dashboard-oidc`, `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)`: what they
+  hold is not recorded ([TODO](TODO.md#unknowns)).
 
 Hermes' sandbox kubeconfig is in no item: regenerate it
 ([hermes-sandbox.md](hermes-sandbox.md#access)). Items whose consumer is gone are listed for
