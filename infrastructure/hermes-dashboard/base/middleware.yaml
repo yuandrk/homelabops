@@ -1,6 +1,5 @@
-# Same shape as infrastructure/headlamp/base/middleware.yaml, for the same reason: TLS
-# terminates at Cloudflare and the tunnel speaks plain HTTP to Traefik, so without this the
-# backend sees an http:// request and builds http:// URLs.
+# TLS terminates at Cloudflare and the tunnel speaks plain HTTP to Traefik, so without this
+# the backend sees an http:// request and builds http:// URLs.
 #
 # For Hermes this is load-bearing twice over. Its OIDC provider reconstructs the OAuth
 # redirect_uri from the request, and Okta rejects a non-https redirect_uri; and

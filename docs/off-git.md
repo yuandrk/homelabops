@@ -16,7 +16,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 
 | What | Where | Copy |
 |------|-------|------|
-| k3s server config: node addresses, the flannel interface, TLS SANs, the Okta OIDC flags of the API server, the pods' DNS file | `/etc/rancher/k3s/config.yaml`. The unit's own flags are only k3s's default CIDRs and a SAN the file repeats | doc: written out in [the rebuild runbook](runbooks/rebuild-k3s-master.md#4-k3s-server) |
+| k3s server config: node addresses, the flannel interface, TLS SANs, the Okta OIDC flags of the API server (unused since Headlamp's removal, [TODO](TODO.md#cleanup)), the pods' DNS file | `/etc/rancher/k3s/config.yaml`. The unit's own flags are only k3s's default CIDRs and a SAN the file repeats | doc: written out in [the rebuild runbook](runbooks/rebuild-k3s-master.md#4-k3s-server) |
 | Upstream DNS for pods | `/etc/k3s-resolv.conf`, named by `resolv-conf` in the k3s config. Every node has one | **Not recorded**: its contents |
 | Cluster datastore and join token | `/var/lib/rancher/k3s/server/`: SQLite in `db/state.db` (a stale `etcd/` directory sits next to it), the token in `token` | none. Git recreates the objects, but a new server means a new token, and every worker has to re-join ([TODO](TODO.md#backups)) |
 | Important data: Immich library, ActualBudget | `/srv/data/{immich,actualbudget}` | restic, local and B2 |
@@ -69,7 +69,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | Account | What lives there | Recreated from |
 |---------|------------------|----------------|
 | Cloudflare | zone `yuandrk.net`, tunnel `homeserver`, the proxied catch-all `*.yuandrk.net`, the API token CI uses | Terraform recreates the tunnel's ingress rules, the per-app CNAMEs and `*.home`. The tunnel itself and the catch-all record were made by hand |
-| Okta (`okta.yuandrk.net`) | the apps for Kite and the Hermes dashboard (plus a bookmark tile, and `okta-mcp-browser` for an Okta MCP client), the groups `IT` and `Andriuk corp`, the app assignments, the sign-on policies. Headlamp's app [may be missing](access.md#recreating-headlamps-okta-app) | [access.md](access.md) describes each app. Nothing is exported |
+| Okta (`okta.yuandrk.net`) | the apps for Kite and the Hermes dashboard (plus a bookmark tile, and `okta-mcp-browser` for an Okta MCP client), the groups `IT` and `Andriuk corp`, the app assignments, the sign-on policies | [access.md](access.md) describes each app. Nothing is exported |
 | 1Password | vault `homelab`, the operator's service account | [secrets.md](secrets.md) |
 | GitHub | Actions secrets, environment `homelab` (without protection rules), Flux's deploy key (read/write), the Renovate app, one webhook to n8n | [terraform-guide.md](terraform-guide.md#ci) |
 | AWS | S3 state bucket, GitHub OIDC provider and role | Terraform stacks `aws-bootstrap` and `aws-oidc`, applied once from a laptop, not by CI. `aws-oidc` has no backend, so its state and its `terraform.tfvars` (the live trust patterns) exist only where it was applied. **Not recorded**: where that is |
