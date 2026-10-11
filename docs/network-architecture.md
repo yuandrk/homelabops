@@ -25,8 +25,8 @@
 
 | Node | Hostname | Host LAN IP | Wi-Fi IP | Role | Key Services |
 |------|----------|-------------|----------|------|--------------|
-| **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | K3s Server, Traefik |
-| **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Worker Node | K3s Agent |
+| **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | K3s Server, Traefik, important app data in `/srv/data` (NFS server for Immich) |
+| **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Disposable Worker | K3s Agent, DaemonSets only, restic repository. Taint `homelab.yuandrk.net/disposable=true:NoSchedule`, see [backup.md](backup.md) |
 | **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), K3s Agent, GPU |
 
 ### Hardware Specs

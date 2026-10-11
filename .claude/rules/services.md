@@ -4,8 +4,8 @@
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| Immich | `photos.yuandrk.net` | Photo management, 500Gi NFS storage |
-| ActualBudget | `budget.yuandrk.net` | Financial management |
+| Immich | `photos.yuandrk.net` | Photo management. Library on k3s-master `/srv/data/immich`, NFS-exported to `immich-server` on k3s-worker3 (it needs that node's iGPU). Static PV `immich-library-master`. See [backup.md](../../docs/backup.md) |
+| ActualBudget | `budget.yuandrk.net` | Financial management. SQLite on hostPath `/srv/data/actualbudget`, pinned to k3s-master |
 | Headlamp | `headlamp.yuandrk.net` | K8s dashboard |
 | n8n | `n8n.yuandrk.net` | Workflow automation, 5Gi storage, PostgreSQL backend |
 | Grafana | `grafana.yuandrk.net` | Dashboards. Credentials live in the `grafana-admin-credentials` secret, not `admin/flux` |
@@ -42,7 +42,13 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 - **Monitoring Stack**: Prometheus (10Gi PVC, 15d retention), Grafana, Node Exporter, Kube State Metrics
 - **Loki**: Log aggregation (10Gi PVC), with chunks-cache and results-cache
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
-- **NFS Provisioner**: External storage provisioner in `storage` namespace (used by Immich)
+- **NFS Provisioner**: scaled to 0 and pending removal. Immich now uses a static NFS PV on k3s-master
+- **Backups**: restic on the k3s-master host, nightly to k3s-worker1. See [backup.md](../../docs/backup.md)
+
+> **k3s-worker1 is disposable.** It is tainted `homelab.yuandrk.net/disposable=true:NoSchedule` and
+> runs only DaemonSets plus the restic repository. Never put anything important there (its USB-SSD
+> hung on 2026-10-05 and took photos and budget down for five days). Important data goes to
+> `/srv/data` on k3s-master, which the nightly backup covers.
 - **NVIDIA Device Plugin**: GPU support on k3s-worker3 (GeForce MX130) — currently no GPU consumers
 - **1Password Operator**: Secrets sync (`onepassword` namespace, HelmRelease in `flux-system`)
 
