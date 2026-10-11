@@ -43,7 +43,7 @@ To decide whether an app is still used, query Traefik metrics rather than guessi
 - **Loki**: Log aggregation (10Gi PVC), with chunks-cache and results-cache
 - **Alloy**: Log collector DaemonSet (runs on all nodes)
 - **NFS Provisioner**: scaled to 0 and pending removal. Immich now uses a static NFS PV on k3s-master
-- **Backups**: restic on the k3s-master host, nightly to k3s-worker1. See [backup.md](../../docs/backup.md)
+- **Backups**: restic on the k3s-master host, nightly to k3s-worker1 and offsite to Backblaze B2 (bucket `homelab-backup-yuandrk`). See [backup.md](../../docs/backup.md)
 
 > **k3s-worker1 is disposable.** It is tainted `homelab.yuandrk.net/disposable=true:NoSchedule` and
 > runs only DaemonSets plus the restic repository. Never put anything important there (its USB-SSD
