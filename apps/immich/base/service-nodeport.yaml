@@ -1,3 +1,5 @@
+# Direct LAN access to Immich on port 30283 of any node, for the mobile app at home (8f4e17e).
+# The one deliberate NodePort: everything else is reached by hostname (see CLAUDE.md).
 apiVersion: v1
 kind: Service
 metadata:

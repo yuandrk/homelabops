@@ -65,7 +65,6 @@ k3s-worker3 still has `tailscaled` installed and running, logged out.
 
 | Property | Value |
 |----------|-------|
-| Tailnet | `tail1fbf9e.ts.net` |
 | k3s-master tailnet address | `100.96.117.64` |
 | Advertised subnet route | `10.10.0.0/24` (the wired switch LAN) |
 | MagicDNS | Enabled (resolver `100.100.100.100`) |
@@ -76,7 +75,7 @@ laptop on the tailnet, `ssh -p 22 10.10.0.5` reaches k3s-worker3 through k3s-mas
 
 `tailscaled` on k3s-master is a host-level systemd service, not managed by Flux.
 
-> MagicDNS names (`k3s-master.tail1fbf9e.ts.net`) resolve **only** through `100.100.100.100`.
+> MagicDNS names (`<host>.<tailnet>.ts.net`) resolve **only** through `100.100.100.100`.
 > They are not in public DNS, so they cannot be used as a CNAME target from Cloudflare.
 
 ## DNS
@@ -91,10 +90,11 @@ There are three ways to reach a service, and the hostname says which one applies
 
 ### Split-horizon without a DNS server
 
-The zone has a catch-all `*.yuandrk.net A → <Cloudflare proxy>` (proxied, created by hand, not in
-Terraform), so **every** name in the zone resolves to Cloudflare unless a more specific record
-overrides it. The tunnel has ingress rules for the public services and a terminal
-`http_status:404`, so any other name is publicly dead.
+The zone has a proxied catch-all `*.yuandrk.net`, created by hand and not in Terraform, so
+**every** name in the zone resolves to Cloudflare unless a more specific record overrides it. A
+name without a record of its own lands on that catch-all, whose origin does not answer:
+Cloudflare returns 522 after about 20 seconds. The tunnel's terminal `http_status:404` only
+answers a name that points at the tunnel without an ingress rule, which Terraform never creates.
 
 Internal services are carved out by one DNS-only wildcard, managed in
 `terraform/live/homelab/cloudflare/main.tf` as `cloudflare_dns_record.internal_wildcard`:

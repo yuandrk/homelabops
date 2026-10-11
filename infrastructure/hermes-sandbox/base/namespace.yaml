@@ -10,7 +10,7 @@ metadata:
     # The `restricted` delta (runAsNonRoot, drop-ALL, seccomp RuntimeDefault) is deliberately
     # NOT enforced namespace-wide: it breaks `pip install` into site-packages, every
     # root-by-default image (python:3.12-slim, node:22-slim) and chromium. Instead the Job
-    # template in docs/hermes-sandbox.md sets a restricted securityContext per workload, so
+    # template in run-job.sh sets a restricted securityContext per workload, so
     # restricted is the default a caller has to opt *out* of rather than a hard admission wall.
     # audit/warn stay at restricted so every deviation is still logged.
     pod-security.kubernetes.io/enforce: baseline

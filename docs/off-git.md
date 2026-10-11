@@ -76,7 +76,7 @@ checked against it on 2026-10-11.
 | GitHub | Actions secrets, environment `homelab` (without protection rules), Flux's deploy key (read/write), the Renovate app, one webhook to n8n | [terraform-guide.md](terraform-guide.md#ci) |
 | AWS | S3 state bucket, GitHub OIDC provider and role | Terraform stacks `aws-bootstrap` and `aws-oidc`, applied once from a laptop, not by CI. `aws-oidc` has no backend, so its state and its `terraform.tfvars` (the live trust patterns) exist only where it was applied. **Not recorded**: where that is |
 | Backblaze B2 | buckets `homelab-backup-yuandrk` and `obsidian-backup-yuandrk`, bucket-scoped keys, the lifecycle rule, the account's storage cap | [backup.md](backup.md#offsite-copy-backblaze-b2) |
-| Tailscale | tailnet `tail1fbf9e.ts.net`, approval of k3s-master's subnet route, the ACL | [network-architecture.md](network-architecture.md#tailscale). **Not recorded**: the ACL |
+| Tailscale | the tailnet, approval of k3s-master's subnet route, the ACL | [network-architecture.md](network-architecture.md#tailscale). **Not recorded**: the ACL |
 | BT router | DHCP for the Wi-Fi addresses `.223`, `.137` and `.246`. k3s-master's `node-external-ip`, the Hermes dashboard's EndpointSlice and Traefik's LAN address all assume `.223` | **Not recorded**: whether these are reservations, and whether a UPS protects any node |
 
 ## Open questions

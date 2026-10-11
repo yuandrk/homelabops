@@ -156,7 +156,7 @@ cluster is down, every public hostname is down with it. `05daf7e`, `f817e93`
 ### 2026-05-24 · No DNS server
 
 Pi-hole was uninstalled from k3s-master. The nodes use systemd-resolved straight to 1.1.1.1 and
-8.8.8.8, and internal names were later solved with DNS records instead of a resolver (see
+1.0.0.1, and internal names were later solved with DNS records instead of a resolver (see
 2026-08-17). `5d1882c`
 
 ### 2026-05-17 · Secrets in 1Password instead of SOPS
@@ -183,7 +183,7 @@ middleware and PKCE. The issuer moved to the custom domain on 2026-06-26 (`c21d1
 
 | Date | App | Why | Left behind |
 |------|-----|-----|-------------|
-| 2026-08-08 | Glance | Dashboard on NodePort 30081, not wanted after a week | 1Password item `glance-credentials`, to delete by hand |
+| 2026-08-08 | Glance | Dashboard on NodePort 30081, not wanted after a week | nothing (its vault item was gone by 2026-10-11) |
 | 2026-08-08 | Perlite | Read-only Obsidian vault viewer, not wanted after trying it | nothing (the vault was mounted read-only) |
 | 2026-08-01 | Jellyfin | 0 ingress requests in 14 days | 16 GB of media at `/srv/media` on k3s-master |
 | 2026-08-01 | Whisper | No `POST /v1/audio` in any retained log, only health probes | nothing |

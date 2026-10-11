@@ -80,7 +80,7 @@ replace step 2.
 | | |
 |---|---|
 | Issuer | `https://okta.yuandrk.net` (same as Headlamp and the k3s apiserver) |
-| App | `Hermes Dashboard`, OIDC **Native** app, **public client** (`token_endpoint_auth_method: none`), `client_id` `0oa16q11mp5oL7Brc698` |
+| App | `Hermes Dashboard`, OIDC **Native** app, **public client** (`token_endpoint_auth_method: none`) |
 | Redirect URI | `https://hermes.yuandrk.net/auth/callback` — **must** end in `/auth/callback`, the provider validates this and fails fast otherwise |
 | Authorization | Okta **app assignment** only — the app is assigned to `Andriuk corp` |
 

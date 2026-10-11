@@ -12,7 +12,7 @@ Every credential lives in one 1Password vault, `homelab`. The cluster reads it t
 Secret onepassword/onepassword-token      ← created by hand: the one secret Flux cannot create
    │
    ▼
-1Password Operator                        ← HelmRelease 1password-operator, namespace onepassword
+1Password Operator                        ← HelmRelease 1password-operator in flux-system, runs in onepassword
    │  watches OnePasswordItem resources
    ▼
 OnePasswordItem <name>                    ← namespace X, itemPath vaults/homelab/items/<item>

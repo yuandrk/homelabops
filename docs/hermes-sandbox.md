@@ -210,7 +210,8 @@ ssh k3s-worker3 'sudo iptables -L -n -v | grep -A15 KUBE-POD-FW'
 
 **Service unreachable from the host** — almost always the `allow-node-to-services` NetworkPolicy:
 host → ClusterIP traffic is DNAT'd, so the source the policy sees is a node address, and the rule
-lists `10.10.0.0/24` and `10.42.0.0/24`. Confirm what the pod actually sees before changing the
+lists `10.10.0.0/24` and `10.42.0.0/31` (k3s-master's own flannel addresses; the comments in
+`network-policy.yaml` explain why not a `/24`). Confirm what the pod actually sees before changing the
 manifest; the iptables drop counters above are the fastest signal. Related: k3s ServiceLB SNATs
 source IPs, so an address seen in a pod is rarely the original client.
 
