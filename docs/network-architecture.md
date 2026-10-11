@@ -51,7 +51,7 @@ both, and its default route is its own Wi-Fi. Nothing is NATed between the two.
 | k3s-master | 139, 445 | Samba, bound to `10.10.0.1` | wired LAN, tailnet |
 | k3s-master | 22000 | Syncthing | LAN, tailnet |
 | k3s-master | 9119 | Hermes dashboard, a host process | LAN, tailnet, and Traefik as `hermes.yuandrk.net` |
-| k3s-worker1 | 2049 | NFS, a leftover export of the old Immich library ([off-git.md](off-git.md#k3s-worker1)) | wired LAN |
+| k3s-worker1 | 2049 | NFS, a leftover export of the old Immich library ([TODO](TODO.md#cleanup)) | wired LAN |
 | k3s-worker3 | 5432 | PostgreSQL, native. `pg_hba.conf` admits only the wired LAN and the pod network | LAN and pods |
 | any node | 30283 | Immich NodePort, for the mobile app on the LAN | LAN |
 
@@ -61,7 +61,6 @@ UFW is inactive on k3s-master and k3s-worker1. On k3s-worker3 it is active, list
 ## Tailscale
 
 k3s-master is a Tailscale node **and** a subnet router. The workers are not on the tailnet.
-k3s-worker3 still has `tailscaled` installed and running, logged out.
 
 | Property | Value |
 |----------|-------|
@@ -160,7 +159,8 @@ Domains=~.
 
 The wired links also carry per-link servers from netplan: `10.10.0.1` with `1.1.1.1`, or with
 `8.8.8.8` and `8.8.4.4` on k3s-worker3. k3s-master has run no DNS server since Pi-hole was
-removed (nothing listens on TCP port 53 there), so the `10.10.0.1` entry looks like a leftover.
+removed (nothing listens on TCP port 53 there), so the `10.10.0.1` entry looks like a leftover
+([TODO](TODO.md#cleanup)).
 
 Cluster node hostnames are in `/etc/hosts` on k3s-master and k3s-worker3, so `ssh k3s-worker1`
 etc. resolve without DNS. k3s-worker1 has no such entries:

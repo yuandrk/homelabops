@@ -79,10 +79,7 @@ Outside the cluster, the same vault holds, next to a few items unrelated to the 
 No item holds Hermes' sandbox kubeconfig (`~/.hermes/kube-sandbox.conf`), whatever older notes
 said. Regenerate it with `infrastructure/hermes-sandbox/make-kubeconfig.sh` instead.
 
-These items have lost their consumer and can be deleted: `pgadmin-credentials`,
-`stirling-pdf-credentials` and `mcp-slack-bot-credentials` (their apps were removed), and
-`headlamp-oidc-authentik` once the unused `headlamp-oidc` item in `flux-system`, which reads it,
-is gone from git.
+Items whose consumer is gone are listed for deletion in [TODO](TODO.md#cleanup).
 
 ## Adding a secret
 

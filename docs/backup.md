@@ -48,7 +48,7 @@ The NFS export is host config outside git:
 manual pre-upgrade dumps in `/srv/data/db-dumps`), local-path volumes on k3s-worker3 (Fleet's
 MySQL, Prometheus, Loki), Hermes' home `~/.hermes` on k3s-master (its config, API keys and
 memory), and cluster state (git is the source of truth, apart from what
-[off-git.md](off-git.md) lists).
+[off-git.md](off-git.md) lists). What to add is in [TODO](TODO.md#backups).
 
 ## The backup
 
@@ -93,9 +93,8 @@ only the changes. Cost is roughly 80 GB × $6/TB-month, about $0.50 a month.
 
 The B2 account must allow more than the free 10 GB: Backblaze → Caps & Alerts → a daily storage
 cap above $0, which needs a payment method on the account. The cap is per account, so it covers
-the Obsidian bucket too. On 2026-10-11 the first run stopped at about 10 GB with
-`storage cap exceeded`, and every upload to the account, Obsidian's included, fails the same way
-until the cap is raised.
+the Obsidian bucket too. It has not been raised yet, so the offsite copy has no snapshot
+([TODO](TODO.md#first)).
 
 ### Day-to-day
 
@@ -133,21 +132,3 @@ restic restore latest --target ./restore
 
 A restore from B2 has no thumbnails or encoded videos. Immich rebuilds them once the library is
 back: Administration → Jobs → Generate Thumbnails / Transcode Videos, "All".
-
-## Still missing
-
-- **The offsite copy has no snapshot yet**, and the Obsidian vault's B2 backup fails too, until
-  the storage cap above is raised. Then run `sudo systemctl start --no-block restic-b2-backup`
-  (the first upload takes hours) and check with the B2 `snapshots` command under
-  [Day-to-day](#day-to-day). Then delete this item.
-- **The first weekly check's result is not recorded.** It started at 07:00 UTC on 2026-10-11,
-  and k3s-worker1, which it reads from, rebooted about 19 minutes later for a reason nobody has
-  written down. Check `journalctl -u restic-check` on k3s-master and `journalctl -b -1` on
-  k3s-worker1.
-- **Alerting on a failed backup.** Alertmanager is disabled, so a failed run only shows up in
-  `journalctl`.
-- **n8n's database** (Postgres on k3s-worker3) has no scheduled dump, only the manual ones
-  taken before an upgrade.
-- **ActualBudget is copied live.** Its SQLite files are read while the server runs, so a write
-  during the backup could leave that night's copy inconsistent. Older snapshots and the clients'
-  local copies cover this. A `sqlite3 .backup` pre-step would close the gap.

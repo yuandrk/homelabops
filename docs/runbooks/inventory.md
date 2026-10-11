@@ -46,17 +46,8 @@ The node names resolve through `/etc/hosts` on k3s-master and k3s-worker3. From 
 its own SSH config or the `10.10.0.x` addresses, which the tailnet reaches through k3s-master. The
 cluster is k3s, managed by Flux from GitHub (`yuandrk/homelabops`, branch `main`).
 
-The docs currently cannot answer these questions, so give them extra care:
-
-- what `/etc/k3s-resolv.conf` holds on each node (the pods' upstream DNS);
-- the Samba shares on k3s-master, and the folders and devices Syncthing syncs there;
-- whether the offsite (B2) backup has a snapshot by now, and how the weekly `restic check`
-  ended (the run outcomes and the boot list show it);
-- why k3s-worker1 rebooted at about 07:19 UTC on 2026-10-11 (its boot list and the end of the
-  previous boot's journal);
-- UFW's default policy on k3s-worker3;
-- in the cluster: whether Headlamp's OIDC client ID matches the API server's `oidc-client-id`,
-  and which images run with the tag `latest`.
+Give extra care to the [Unknowns](../TODO.md#unknowns) in the backlog, and to any item there
+that asks for a check on the machines.
 
 ### Rules
 
@@ -149,8 +140,9 @@ Collected by <agent> from <host>. Cluster part: <yes | no, because …>.
 - Surprises, at most 10: services, ports, files, cluster objects or results that look
   undocumented, broken or odd. Facts only, each with the section it comes from.
 
-## Answers to the questions above
-One line per question: the answer and the section it comes from, or "not collected" and why.
+## Answers
+One line per Unknown, and per check the backlog asks for: the answer and the section it comes
+from, or "not collected" and why.
 
 ## Outside the hosts
 O1 … O8: an answer, or "Needs Yurii".

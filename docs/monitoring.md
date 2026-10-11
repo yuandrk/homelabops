@@ -8,7 +8,7 @@ What is collected, where to look, and what does not work yet.
 |-------|---------|
 | Prometheus (kube-prometheus-stack) | 15 days on a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
 | Grafana | `grafana.yuandrk.net`, local admin from `grafana-admin-credentials`. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab` (the PostgreSQL on k3s-worker3) |
-| Loki | SingleBinary, filesystem storage on a 10Gi `local-path` volume on k3s-worker3. local-path does not enforce the size: in October 2026 Loki held 15 GB. Chunks and results caches are off |
+| Loki | SingleBinary, filesystem storage on a 10Gi `local-path` volume on k3s-worker3. local-path does not enforce the size: in October 2026 Loki held 15 GB. Chunks and results caches are off. No retention is set ([TODO](TODO.md#monitoring)) |
 | Alloy | A DaemonSet on every node (it tolerates the disposable taint) that ships **pod** logs to Loki. Host journals are not collected |
 | Alertmanager | Disabled |
 
@@ -20,7 +20,7 @@ Cluster Stats, Flux Control Plane, Nodes, Node Exporter and Node Exporter Full.
 
 - **Nothing sends notifications.** Alertmanager is `enabled: false`. When the USB-SSD of
   k3s-worker1 hung on 2026-10-05, nothing paged anyone, and a failed backup only shows up in
-  `journalctl`.
+  `journalctl` ([TODO](TODO.md#monitoring)).
 - **There are no custom rules.** The chart's default rules are loaded and evaluated, but they
   notify no one. The old `homelab-monitoring-rules` was never loaded and was removed on
   2026-10-11 ([decisions.md](decisions.md#2026-10-11--custom-alert-rules-removed-until-they-have-a-purpose)).
@@ -59,7 +59,7 @@ selector still lists the image-automation and image-reflector controllers, which
 The state of Flux objects (`gotk_resource_info`, behind the Flux Cluster Stats dashboard) comes
 from kube-state-metrics custom-resource state. It is configured **twice**: in the stack's own
 kube-state-metrics, and in a separate `flux-kube-state-metrics` Deployment left over from
-debugging that dashboard. One of them is redundant.
+debugging that dashboard. One of them is redundant ([TODO](TODO.md#monitoring)).
 
 ## Access
 
@@ -75,13 +75,3 @@ kubectl get secret -n monitoring grafana-admin-credentials \
 - **Host processes.** restic, Tailscale, the NFS server, PostgreSQL and Hermes are visible only
   as machines through node-exporter. Their own health is unobserved.
 - **Traffic that skips ingress.** See [usage-metrics.md](usage-metrics.md#blind-spots).
-
-## Still missing
-
-- Alerting: the rules worth waking up for, and a way to deliver them (Alertmanager, or a
-  Grafana contact point).
-- Loki retention. Nothing in the HelmRelease sets it, and local-path does not cap the volume at
-  10Gi, so logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts
-  evicting pods there, and the native PostgreSQL on that disk runs out of space as well.
-- An alert on a failed backup ([backup.md](backup.md#still-missing)).
-- Dropping one of the two Flux state collectors.
