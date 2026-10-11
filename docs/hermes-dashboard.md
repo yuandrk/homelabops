@@ -9,8 +9,8 @@ Every other service in this repo is a pod. This one is not: the dashboard is a *
 k3s-master**, the user systemd unit `hermes-dashboard.service`, running
 `hermes dashboard --no-open --host 0.0.0.0 --port 9119` out of `/home/yuandrk/.hermes`. It lives
 outside k3s on purpose — it is the agent's control channel, so it must keep working when the
-cluster does not (see [hermes-sandbox.md](hermes-sandbox.md) and the `hermes-stays-outside-k3s`
-note).
+cluster does not (see [hermes-sandbox.md](hermes-sandbox.md) and
+[decisions.md](decisions.md#standing-decisions)).
 
 Publishing it through Traefik therefore trades that independence away for the public hostname:
 **if the cluster is down, `hermes.yuandrk.net` is down.** The out-of-band path is still

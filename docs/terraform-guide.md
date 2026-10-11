@@ -1,301 +1,71 @@
-# Terraform Infrastructure Guide
+# Terraform
 
-## Overview
+Terraform manages what lives outside the cluster. It applies the Cloudflare edge continuously,
+from CI. Once, by hand, it set up the AWS pieces that let CI do that without stored keys.
 
-This repository uses Terraform to manage homelab infrastructure with a focus on Cloudflare DNS/Tunnels and AWS backend state management. The infrastructure follows GitOps principles with automated CI/CD via GitHub Actions.
+## Stacks
 
-## Repository Structure
+All under `terraform/live/homelab/`:
+
+| Stack | Manages | Applied by | State |
+|-------|---------|------------|-------|
+| `cloudflare/` | Per-app CNAMEs to the tunnel, the `*.home` wildcard, the tunnel's ingress rules | CI, on every merge that touches it | S3, `cloudflare/terraform.tfstate` |
+| `aws-bootstrap/` | The state bucket `terraform-state-homelab-yuandrk` (eu-west-2): versioning, AES256, old versions expire after 90 days, public access blocked | once, by hand | S3, `global/bootstrap.tfstate` |
+| `aws-oidc/` | GitHub's OIDC provider in AWS and the role `GitHubActionsTerraformRole` | once, by hand | **local**: there is no backend block, so the state file is wherever it was applied from |
+| `fluxcd/` | Flux bootstrap: a deploy key and `flux_bootstrap_git` | once, by hand. A rebuild would use `flux bootstrap` instead ([runbook](runbooks/rebuild-k3s-master.md#5-secrets-and-flux)) | S3, `fluxcd/terraform.tfstate` |
+
+Every S3 backend uses native locking (`use_lockfile = true`, Terraform 1.13+), so there is no
+DynamoDB table. The settings sit in a separate `backend.hcl` per stack, because an inline
+`backend "s3" {}` block rejects `use_lockfile`.
+
+## The Cloudflare stack
+
+- **Public apps** are the list `local.tunnel_services` in `cloudflare/main.tf`. Each entry
+  becomes a proxied CNAME to `<tunnel-id>.cfargotunnel.com` and an ingress rule. The rules end
+  in `http_status:404`. To publish an app, append an entry and merge.
+- **Internal apps** need nothing here. `cloudflare_dns_record.internal_wildcard` sends
+  `*.home.yuandrk.net` to k3s-master's Tailscale address, `internal_ingress_ip`. If that address
+  ever changes, this is the only line to edit.
+- **Not managed here**: the tunnel itself (its ID is a local) and the proxied catch-all
+  `*.yuandrk.net`. Both were created by hand.
+
+## CI
+
+| Workflow | Runs on | Does |
+|----------|---------|------|
+| `terraform-plan.yml` | a PR that changes `terraform/live/homelab/cloudflare/**` | init, validate, plan, then comments the plan on the PR. Outdated runs for the same PR are cancelled |
+| `terraform-apply.yml` | a push to `main` with the same paths | a fresh plan, then apply after the **`homelab` environment approval** |
+
+Both run Terraform 1.13.3 and authenticate to AWS through OIDC:
 
 ```
-terraform/
-├── live/homelab/              # Live environment (production)
-│   ├── aws-bootstrap/         # S3 backend infrastructure (one-time setup)
-│   ├── aws-oidc/              # GitHub OIDC provider & IAM role (one-time setup)
-│   ├── cloudflare/            # Cloudflare DNS & Tunnels (actively managed)
-│   └── fluxcd/                # FluxCD bootstrap (historical, not actively used)
-└── modules/
-    └── tunnel/                # Reusable Cloudflare Tunnel module
+GitHub Actions job ──(OIDC JWT)──▶ AWS STS ──▶ GitHubActionsTerraformRole ──▶ S3 state bucket
 ```
 
-## Architecture
+- The role can only read and write the state bucket. Cloudflare access comes from the
+  `CLOUDFLARE_API_TOKEN` secret.
+- The trust policy matches the token's `sub` against `github_repos_branches`, whose live value
+  is in an uncommitted `terraform.tfvars`. It must cover more than `ref:refs/heads/main`: a PR
+  job presents `repo:yuandrk/homelabops:pull_request`, and the apply job, because it uses an
+  environment, presents `repo:yuandrk/homelabops:environment:homelab`. That is why the live
+  list includes `yuandrk/homelabops:*`.
+- Jobs need `permissions: id-token: write`.
 
-### 1. AWS Bootstrap Stack (`live/homelab/aws-bootstrap/`)
+Repository secrets: `AWS_ROLE_ARN`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`,
+`CLOUDFLARE_ACCOUNT_ID`.
 
-**Purpose**: One-time setup for Terraform remote state storage
+## Rules
 
-**Resources**:
-- **S3 Bucket**: `terraform-state-homelab-yuandrk` (eu-west-2)
-  - Versioning enabled
-  - Server-side encryption (AES256)
-  - Lifecycle policy (90-day retention for old versions)
-  - Public access blocked
-- **No DynamoDB**: Uses S3 native locking (Terraform 1.13+)
-
-**Backend Configuration**:
-```hcl
-# backend.hcl
-bucket       = "terraform-state-homelab-yuandrk"
-key          = "global/bootstrap.tfstate"
-region       = "eu-west-2"
-encrypt      = true
-use_lockfile = true  # S3 native locking
-```
-
-### 2. AWS OIDC Stack (`live/homelab/aws-oidc/`)
-
-**Purpose**: GitHub Actions authentication without long-lived credentials
-
-**Resources**:
-- **OIDC Provider**: `token.actions.githubusercontent.com`
-  - Thumbprints: GitHub's official SSL certificates
-  - Client ID: `sts.amazonaws.com`
-- **IAM Role**: `GitHubActionsTerraformRole`
-  - Trust policy: Scoped to `yuandrk/homelabops` repository
-  - Permissions: S3 state bucket read/write/list access
-
-**Trust Policy**:
-```json
-{
-  "Condition": {
-    "StringEquals": {
-      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-    },
-    "StringLike": {
-      "token.actions.githubusercontent.com:sub": [
-        "repo:yuandrk/homelabops:ref:refs/heads/main",
-        "repo:yuandrk/homelabops:*"
-      ]
-    }
-  }
-}
-```
-
-### 3. Cloudflare Stack (`live/homelab/cloudflare/`)
-
-**Purpose**: Manage DNS records and Cloudflare Tunnel configuration
-
-**Resources**:
-- DNS CNAME records (via `modules/tunnel`)
-- Tunnel ingress configuration (`cloudflare_zero_trust_tunnel_cloudflared_config`)
-
-**Current Services**:
-
-| Service | Hostname | Backend | Notes |
-|---------|----------|---------|-------|
-| ActualBudget | `budget.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Financial management |
-| n8n | `n8n.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Workflow automation |
-| Flux Webhook | `flux-webhook.yuandrk.net` | `http://webhook-receiver.flux-system.svc.cluster.local:80` | GitOps webhooks |
-| Grafana | `grafana.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Monitoring dashboards |
-| Headlamp | `headlamp.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | K8s dashboard |
-| Immich | `photos.yuandrk.net` | `http://traefik.kube-system.svc.cluster.local:80` | Photo management |
-
-**Tunnel Configuration**:
-- **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
-- **Tunnel Name**: `homeserver`
-- **Deployment**: 2-replica `cloudflared` HelmRelease in the `networking` namespace
-
-## CI/CD Workflows
-
-### GitHub Actions Authentication
-
-All workflows use **AWS OIDC** (no static credentials):
-
-```yaml
-- uses: aws-actions/configure-aws-credentials@v5
-  with:
-    role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    aws-region: eu-west-2
-```
-
-### Workflow: `terraform-plan.yml`
-
-**Triggers**:
-- Pull requests to `main` branch
-- Changes to `terraform/live/homelab/cloudflare/**`
-- Manual trigger (`workflow_dispatch`)
-
-**Steps**:
-1. Checkout code
-2. AWS OIDC authentication
-3. Terraform init (with `backend.hcl`)
-4. Terraform validate
-5. Terraform plan
-6. Upload plan artifact
-7. Comment PR with plan output
-
-**Concurrency**: Cancels outdated runs for the same PR
-
-### Workflow: `terraform-apply.yml`
-
-**Triggers**:
-- Push to `main` branch
-- Changes to `terraform/live/homelab/cloudflare/**`
-- Manual trigger (`workflow_dispatch`)
-
-**Protection**: Uses `environment: homelab` for approval gates
-
-**Steps**:
-1. Checkout code
-2. AWS OIDC authentication
-3. Terraform init
-4. Safety plan
-5. Apply (with `auto-approve` after environment approval)
-
-## Version Requirements
-
-| Component | Version | Notes |
-|-----------|---------|-------|
-| Terraform | `>= 1.5.0` | S3 native locking requires 1.13+ in practice |
-| AWS Provider | `~> 6.0` | Latest stable |
-| Cloudflare Provider | `~> 5.0` | Simplified from `>= 5.3.0, < 6.0` |
-| GitHub Actions | `v5` | Latest for OIDC support |
-
-## GitHub Secrets
-
-Required secrets in repository settings:
-
-| Secret | Description |
-|--------|-------------|
-| `AWS_ROLE_ARN` | IAM role ARN for OIDC: `arn:aws:iam::756755582140:role/GitHubActionsTerraformRole` |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Zone/Tunnel permissions |
-| `CLOUDFLARE_ZONE_ID` | Zone ID for `yuandrk.net` |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
-
-## Local Development
-
-### Prerequisites
-
-1. **AWS CLI** configured with credentials (or use `AWS_PROFILE`)
-2. **Terraform** >= 1.5.0 installed
-3. **Cloudflare API token** (for local testing)
-
-### Initialize Terraform
-
-```bash
-cd terraform/live/homelab/cloudflare
-terraform init -backend-config=backend.hcl
-```
-
-### Plan Changes
-
-```bash
-terraform plan
-```
-
-### Apply Changes (Local)
-
-```bash
-terraform apply
-```
-
-**Note**: Local applies bypass GitHub environment protection. Use CI/CD for production changes.
-
-## Backend Configuration
-
-All stacks use S3 backend with native locking:
-
-```hcl
-# backend.tf
-terraform {
-  backend "s3" {}
-}
-```
-
-Configuration is provided via `backend.hcl`:
-
-```hcl
-bucket       = "terraform-state-homelab-yuandrk"
-key          = "cloudflare/terraform.tfstate"  # varies per stack
-region       = "eu-west-2"
-encrypt      = true
-use_lockfile = true
-```
-
-**Why separate files?**
-- Inline `backend "s3" { ... }` blocks don't support `use_lockfile`
-- External `backend.hcl` allows S3 native locking parameter
-- Cleaner separation of environment-specific config
-
-## Tunnel DNS Records
-
-Each tunnel hostname gets a CNAME pointing at `<tunnel_id>.cfargotunnel.com`. Records are inlined in `terraform/live/homelab/cloudflare/main.tf` (the previous `modules/tunnel` abstraction was removed when cloudflared moved in-cluster — the standalone token data source it provided is no longer needed).
-
-```hcl
-resource "cloudflare_dns_record" "services" {
-  for_each = local.tunnel_services_map
-
-  zone_id = data.cloudflare_zone.root.zone_id
-  name    = split(".", each.value.hostname)[0]
-  content = "${local.tunnel_id}.cfargotunnel.com"
-  type    = "CNAME"
-  ttl     = 1
-  proxied = true
-}
-```
-
-To add a new hostname: append to `local.tunnel_services` in `main.tf`, then `git push` — CI runs `terraform-apply` and creates the CNAME + ingress entry.
+- Apply the Cloudflare stack only through CI. A local `terraform apply` skips the approval
+  gate, and a Claude Code hook warns about it.
+- Never commit `terraform.tfvars` or state. `.gitignore` covers both.
+- Renovate does not touch Terraform. Provider versions are bumped by hand.
 
 ## Troubleshooting
 
-### OIDC Authentication Failures
-
-**Error**: `Not authorized to perform sts:AssumeRoleWithWebIdentity`
-
-**Causes**:
-- Trust policy doesn't match repository/branch
-- OIDC provider not created
-- Role ARN secret incorrect
-
-**Fix**:
-```bash
-# Check trust policy
-aws iam get-role --role-name GitHubActionsTerraformRole
-
-# Verify OIDC provider exists
-aws iam list-open-id-connect-providers
-```
-
-### S3 Backend Locking Issues
-
-**Error**: `Unsupported argument: use_lockfile`
-
-**Cause**: Using inline backend block instead of external `backend.hcl`
-
-**Fix**: Ensure `backend.tf` has empty block and configuration is in `backend.hcl`
-
-### Cloudflare Provider Errors
-
-**Error**: `Invalid Configuration for Read-Only Attribute` (warp_routing)
-
-**Cause**: Attempting to set read-only computed attributes
-
-**Fix**: Remove `warp_routing` from config block - provider manages it automatically
-
-## Best Practices
-
-1. **Always use CI/CD** for production changes
-2. **Never commit** `terraform.tfvars` with secrets
-3. **Use backend.hcl** for S3 native locking configuration
-4. **Pin provider versions** to avoid breaking changes
-5. **Test locally** with `terraform plan` before opening PR
-6. **Review plans** carefully in PR comments before merging
-7. **Use environment protection** for apply workflows
-
-## Migration Notes
-
-### From DynamoDB to S3 Native Locking
-
-If migrating from DynamoDB locking:
-
-1. Update `backend.hcl` to use `use_lockfile = true`
-2. Remove `dynamodb_table` parameter
-3. Run `terraform init -migrate-state`
-4. Delete DynamoDB table after successful migration
-5. Update IAM policies to remove DynamoDB permissions
-
-### From Old Structure to `live/homelab/`
-
-Previous structure had roots at `terraform/{bootstrap,cloudflare}`. Current structure:
-- Moved to `terraform/live/homelab/{aws-bootstrap,cloudflare}`
-- Module paths updated: `source = "../../../modules/tunnel"`
-- State keys remain unchanged in S3
+| Error | Likely cause |
+|-------|--------------|
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The job's `sub` is not in the trust policy (see above), or `id-token: write` is missing |
+| `No OpenIDConnect provider found` | The provider URL must be exactly `https://token.actions.githubusercontent.com` |
+| `Unsupported argument: use_lockfile` | Backend settings written inline instead of in `backend.hcl` |
+| `Invalid Configuration for Read-Only Attribute` (`warp_routing`) | The tunnel config sets a computed attribute. Remove it |

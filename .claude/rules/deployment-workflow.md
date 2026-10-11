@@ -8,6 +8,8 @@
 4. **Reconcile** Flux source: `flux reconcile source git flux-system -n flux-system`
 5. **Reconcile** kustomization: `flux reconcile kustomization apps -n flux-system` (or `infrastructure`)
 6. **Verify** with `flux get kustomization apps -n flux-system` and `kubectl get helmrelease,pods -n <ns>` — check status, pod state, image tags
+7. **Docs**: if the change adds, removes or re-exposes something, or needed a non-obvious reason,
+   update the place that owns that fact (see [docs.md](docs.md))
 
 > Shortcut: the `/reconcile [target]` slash command wraps steps 4–6.
 

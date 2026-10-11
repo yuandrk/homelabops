@@ -2,13 +2,14 @@
 
 ## Components
 
-- **Prometheus**: Metrics collection (10Gi PVC, 15d retention)
-- **Grafana**: Dashboards at `grafana.yuandrk.net`. `admin/flux` no longer works — read the live
+What runs, the selector labels that decide what Prometheus picks up, and what is still missing
+are in [monitoring.md](../../docs/monitoring.md). Two things to keep in mind when touching it:
+
+- **Alertmanager is disabled**, so alert rules notify no one. The custom `PrometheusRule` also
+  lacks the `release: kube-prometheus-stack` label, which the default `ruleSelector` needs.
+- **Grafana**: dashboards at `grafana.yuandrk.net`. `admin/flux` no longer works. Read the live
   credentials with:
   `kubectl get secret -n monitoring grafana-admin-credentials -o jsonpath='{.data.admin-password}' | base64 -d`
-- **Node Exporter**: System metrics from all K3s nodes
-- **Kube State Metrics**: Cluster state and Flux resources
-- **PodMonitor**: Scrapes Flux controllers in `flux-system` namespace
 
 ## Quick Access
 
@@ -27,4 +28,5 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:909
   `headlamp-token`) and synced to the `headlamp-token` Secret in `kube-system`. The token the old
   docs recorded was minted 2025-08-09 for one year, so unless it was rotated it expired 2026-08-09.
 - Renew: `kubectl create token headlamp-admin -n kube-system --duration=8760h`, then paste it into
-  the 1Password item (the cluster picks it up within 6h, see `docs/secrets.md`)
+  the 1Password item (the cluster picks it up within 6h, see `docs/secrets.md`). Logins,
+  break-glass and Okta details for every surface: [access.md](../../docs/access.md)

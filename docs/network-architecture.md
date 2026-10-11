@@ -1,101 +1,59 @@
-# 🌐 Homelab Network Architecture
+# Network
 
-**Status**: ✅ K3s cluster operational with dual networking setup
-**Last Updated**: June 11, 2026
-**Cluster**: 3-node K3s cluster (1 master + 2 workers)
+The physical network, how names resolve, and the three ways into the cluster. The short version
+of the exposure rule is in [architecture.md](architecture.md#how-requests-get-in).
 
----
+## Segments
 
-## 🏗️ Network Overview
+| Network | Range | Notes |
+|---------|-------|-------|
+| Wired LAN | `10.10.0.0/24` | Unmanaged gigabit switch. Cluster traffic, NFS, PostgreSQL |
+| Home Wi-Fi | `192.168.1.0/24` | BT router. Internet access for k3s-master and k3s-worker1 (k3s-master's uplink is about 73 Mbit/s) |
+| Tailnet | `100.64.0.0/10` | Only k3s-master is a member. It routes the tailnet into the wired LAN |
+| Pods | `10.42.0.0/16` | Flannel VXLAN, one `/24` per node |
+| Services | `10.43.0.0/16` | ClusterIP. CoreDNS is `10.43.0.10` |
 
-### Network Segments
-- **Host LAN**: `10.10.0.0/24` (wired via unmanaged switch)
-- **Host Wi-Fi**: `192.168.1.0/24` (via BT router for internet)
-- **K3s Pod Network**: `10.42.0.0/16` (Flannel CNI)
-- **K3s Service Network**: `10.43.0.0/16` (ClusterIP services)
+The wired LAN carries cluster traffic and the Wi-Fi carries internet traffic. There is no NAT
+between the two. k3s-worker3 is wired only, and the route it takes to the internet is
+[not recorded](off-git.md#k3s-worker3).
 
-### Routing Strategy
-- **Internal Communication**: Direct LAN (10.10.0.x) for cluster traffic
-- **Internet Access**: Wi-Fi fallback (192.168.1.x) for external connectivity
-- **No NAT** between networks - coexistence model
+## Nodes
 
----
+| Node | Wired | Wi-Fi | Hardware |
+|------|-------|-------|----------|
+| `k3s-master` | `10.10.0.1` | `192.168.1.223` | Intel i3-7100U, 16 GB, 1 TB NVMe |
+| `k3s-worker1` | `10.10.0.2` | `192.168.1.137` | Raspberry Pi 4, 4 GB, 1 TB USB-SSD |
+| `k3s-worker3` | `10.10.0.5` | none | x86-64, 16 GB, Intel iGPU + NVIDIA MX130 |
 
-## 🖥️ Node Configuration
-
-| Node | Hostname | Host LAN IP | Wi-Fi IP | Role | Key Services |
-|------|----------|-------------|----------|------|--------------|
-| **Master** | `k3s-master` | 10.10.0.1/24 | 192.168.1.223 | Control Plane | K3s Server, Traefik, important app data in `/srv/data` (NFS server for Immich) |
-| **Worker 1** | `k3s-worker1` | 10.10.0.2/24 | 192.168.1.137 | Disposable Worker | K3s Agent, DaemonSets only, restic repository. Taint `homelab.yuandrk.net/disposable=true:NoSchedule`, see [backup.md](backup.md) |
-| **Worker 3** | `k3s-worker3` | 10.10.0.5/24 | - | Worker Node | PostgreSQL (Native), K3s Agent, GPU |
-
-### Hardware Specs
-- **k3s-master**: Intel i3-7100U, 15 GiB RAM, 931 GiB NVMe (x86-64)
-- **k3s-worker1**: ARM64 RPi 4, 3.7 GiB RAM, 954 GiB USB-SSD
-- **k3s-worker3**: x86_64, NVIDIA GeForce MX130 (2GB VRAM), CUDA 12.2
-
-> `k3s-worker2` (RPi 4, 10.10.0.4) was decommissioned in May 2026.
-
----
-
-## 📡 Network Topology
+`k3s-worker2` (RPi 4, `10.10.0.4`) was decommissioned in May 2026.
 
 ```txt
-┌─────────────────┐
-│   BT Wi-Fi      │ 🌐 Internet Access
-│   (Router)      │ 192.168.1.0/24
-└────────┬────────┘
-         │
-    Wi-Fi Cloud ☁️
-    ┌────┴────┐
-    │         │
-[k3s-master] [worker1]
-192.168.1.223 .137
-    │         │
-    │         │
-════════════════════════════════════
-    │ 10.10.0.0/24 LAN │ ⚡ Gigabit
-════════════════════════════════════
-    │    │    │
-  .1/24 .2/24 .5/24
-[k3s-master] [worker1] [worker3]
-    │    │    │
-    └────┴────┘
-   [Unmanaged Switch]
-
-K3s Pod Networks (Flannel):
-└─ One 10.42.x.0/24 subnet per node (see `kubectl get nodes -o custom-columns=NAME:.metadata.name,CIDR:.spec.podCIDR`)
-
-K3s Services: 10.43.0.0/16
+             BT router, 192.168.1.0/24 ── internet
+                  │ Wi-Fi          │ Wi-Fi
+            [k3s-master]      [k3s-worker1]
+             .223               .137
+                  │                │
+ ═════════ wired LAN 10.10.0.0/24, unmanaged gigabit switch ═════════
+                  │                │                │
+            [k3s-master]      [k3s-worker1]    [k3s-worker3]
+                .1               .2               .5
 ```
 
----
+## Listening ports
 
-## 🚦 Port Mapping & Services
+| Node | Port | Service | Reachable from |
+|------|------|---------|----------------|
+| every node | 80, 443 | Traefik through k3s ServiceLB (svclb) | LAN, and tailnet through k3s-master |
+| every node | 2222 | SSH, keys only | LAN |
+| k3s-master | 6443 | Kubernetes API | LAN, tailnet |
+| k3s-master | 2049 | NFS, Immich library export to `10.10.0.5` only | wired LAN |
+| k3s-master | 9119 | Hermes dashboard, a host process | LAN, tailnet, and Traefik as `hermes.yuandrk.net` |
+| k3s-worker3 | 5432 | PostgreSQL, native | LAN and pods |
+| any node | 30283 | Immich NodePort, for the mobile app on the LAN | LAN |
 
-### k3s-master (10.10.0.1)
-| Service | Port | Protocol | Access | Notes |
-|---------|------|----------|--------|-------|
-| **Traefik** | 80, 443 | HTTP/HTTPS | LAN + External | K3s ingress controller |
-| **K3s API** | 6443 | HTTPS | Internal | Kubernetes API server |
-| **SSH** | 2222 | TCP | LAN | Hardened SSH port |
+UFW is disabled on every node.
 
-### k3s-worker1 (10.10.0.2)
-| Service | Port | Protocol | Access | Notes |
-|---------|------|----------|--------|-------|
-| **SSH** | 2222 | TCP | LAN | Hardened SSH port |
-| **systemd-resolved** | 53 | UDP | Local | Local DNS stub |
-
-### k3s-worker3 (10.10.0.5)
-| Service | Port | Protocol | Access | Notes |
-|---------|------|----------|--------|-------|
-| **SSH** | 2222 | TCP | LAN | Hardened SSH port |
-| **PostgreSQL** | 5432 | TCP | LAN | Native install (not K3s-managed) |
-| **systemd-resolved** | 53 | UDP | Local | Local DNS stub |
-
----
-
-## 🔒 Tailscale
+## Tailscale
 
 k3s-master is a Tailscale node **and** a subnet router. Nothing else in the cluster runs
 Tailscale — workers are not on the tailnet.
@@ -115,9 +73,7 @@ The subnet route is what makes the wired-only nodes reachable from outside that 
 > MagicDNS names (`k3s-master.tail1fbf9e.ts.net`) resolve **only** through `100.100.100.100`.
 > They are not in public DNS, so they cannot be used as a CNAME target from Cloudflare.
 
----
-
-## 🌍 DNS Architecture
+## DNS
 
 There are three ways to reach a service, and the hostname says which one applies:
 
@@ -129,10 +85,10 @@ There are three ways to reach a service, and the hostname says which one applies
 
 ### Split-horizon without a DNS server
 
-The zone has a catch-all `*.yuandrk.net A → <Cloudflare proxy>` (proxied), so **every** name
-in the zone resolves to Cloudflare unless a more specific record overrides it. The tunnel has
-ingress rules for the public services and a terminal `http_status:404`, so any other name is
-publicly dead.
+The zone has a catch-all `*.yuandrk.net A → <Cloudflare proxy>` (proxied, created by hand, not in
+Terraform), so **every** name in the zone resolves to Cloudflare unless a more specific record
+overrides it. The tunnel has ingress rules for the public services and a terminal
+`http_status:404`, so any other name is publicly dead.
 
 Internal services are carved out by one DNS-only wildcard, managed in
 `terraform/live/homelab/cloudflare/main.tf` as `cloudflare_dns_record.internal_wildcard`:
@@ -199,61 +155,16 @@ Cluster node hostnames are mirrored in `/etc/hosts` on every node so `ssh k3s-wo
 10.10.0.5 k3s-worker3
 ```
 
----
+## Cloudflare Tunnel
 
-## 📈 Network Performance
+| | |
+|---|---|
+| Tunnel | `homeserver`, ID `4a6abf9a-d178-4a56-9586-a3d77907c5f1`. The tunnel itself was created outside Terraform |
+| Routes | `local.tunnel_services` in `terraform/live/homelab/cloudflare/main.tf`, ending in `http_status:404` |
+| Backends | `traefik.kube-system.svc.cluster.local:80` for every app. `flux-webhook.yuandrk.net` goes to `webhook-receiver.flux-system.svc.cluster.local:80` |
+| Connector | `cloudflared` HelmRelease, 2 replicas, namespace `networking`, token from 1Password |
 
-### Measured Performance (August 2025)
-| Connection Type | Latency | Bandwidth | Use Case |
-|----------------|---------|-----------|----------|
-| **Worker ↔ Worker** | 0.4ms | 932 Mbps | Pod-to-pod, storage replication |
-| **Master ↔ Workers** | 6-9ms | 60 Mbps | Control plane, kubectl |
-| **Internet Access** | ~50ms | 14-19 Mbps | Image pulls, external APIs |
-
-### Performance Tiers
-1. **🥇 Direct LAN**: Gigabit speeds between workers (excellent for workloads)
-2. **🥈 Wi-Fi Mesh**: Good for control plane traffic  
-3. **🥉 Internet**: Typical home broadband performance
-
----
-
-## 🔧 K3s Integration Notes
-
-### K3s Networking Features
-- **CNI**: Flannel VXLAN for pod networking
-- **Service Mesh**: ClusterIP services via kube-proxy
-- **Load Balancer**: Traefik for ingress traffic
-- **API Access**: Uses `k3s_install_api_endpoint: 10.10.0.1:6443` for reliability
-
----
-
-## 🛡️ Security Configuration
-
-### Network Security
-- **SSH Hardening**: All nodes use port 2222 with key-based auth
-- **Firewall**: Currently disabled (UFW=off) - LAN-only access
-- **Tunnel Security**: Cloudflare tunnels for secure external access
-
-### Access Control
-- **Internal Only**: Most services only accessible via LAN
-- **External Access**: Limited to specific services via Cloudflare tunnels
-- **Service Isolation**: K3s network policies can be implemented as needed
-
----
-
-## 🚀 External Services & Tunnels
-
-### Cloudflare Tunnel Configuration
-All public hostnames route via in-cluster `traefik.kube-system.svc.cluster.local:80`, except `flux-webhook.yuandrk.net` which targets `webhook-receiver.flux-system.svc.cluster.local:80`. See `apps/*/base/ingress.yaml` for per-service Traefik routing.
-
-### Tunnel Management
-- **Tunnel ID**: `4a6abf9a-d178-4a56-9586-a3d77907c5f1`
-- **Configuration**: Terraform managed in `terraform/live/homelab/cloudflare/main.tf`
-- **Deployment**: 2-replica `cloudflared` HelmRelease in the `networking` namespace (see `infrastructure/networking/cloudflared/`)
-
----
-
-## 📝 Management Commands
+## Commands
 
 ### Network Diagnostics
 ```bash
@@ -282,34 +193,3 @@ kubectl rollout restart -n kube-system deploy/coredns
 kubectl get cm -n kube-system coredns -o yaml
 ```
 
----
-
-## 🔮 Future Enhancements
-
-### Planned Network Improvements
-- **Network Policies**: Implement K3s NetworkPolicies for pod isolation
-- **Service Mesh**: Consider Istio or Linkerd for advanced traffic management
-- **Monitoring**: Deploy network monitoring (Prometheus + Grafana)
-- **Firewall**: Implement UFW rules for additional security
-
-### K3s Network Expansion
-- **Ingress Classes**: Multiple ingress controllers for different services
-- **External DNS**: Automate DNS record management
-- **Load Balancing**: MetalLB for better service exposure
-- **IPv6**: Enable IPv6 support for future-proofing
-
----
-
-## 🧠 **Prompt Context (LLM)**
-This homelab runs a **3-node K3s cluster** (1 master + 2 workers) with a **dual networking strategy**: high-speed direct LAN (10.10.0.0/24) for internal cluster communication and Wi-Fi fallback (192.168.1.0/24) for internet access.
-
-**Key Network Features:**
-- **Host DNS** via systemd-resolved → 1.1.1.1/8.8.8.8 (no host-level forwarder; CoreDNS handles cluster DNS independently)
-- **K3s cluster networking** via Flannel CNI (pods: 10.42.0.0/16, services: 10.43.0.0/16)
-- **Traefik ingress** handling ports 80/443 for K3s workloads
-- **PostgreSQL database** on k3s-worker3 (native installation, not K3s-managed)
-- **Cloudflare tunnels** for secure external access to select services
-
-**Performance characteristics:** Gigabit speeds between workers (0.4ms latency), Wi-Fi speeds for master communication (6-9ms), sufficient internet access (14-19 Mbps) for external dependencies.
-
-The network architecture supports both host-native services (PostgreSQL on worker3) and K3s workloads with external access via secure tunnels.

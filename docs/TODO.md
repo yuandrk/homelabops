@@ -1,46 +1,39 @@
-# Documentation TODO
+# Backlog
 
-**Last Updated**: 2026-06-11
+Open work that does not belong to a single doc. Gaps that do belong to one live in that doc,
+next to their context:
 
-## Performance & Operations
+- [backup.md](backup.md#still-missing): n8n database dump, backup alerting, the live SQLite copy
+- [monitoring.md](monitoring.md#still-missing): alert delivery, rule labels, Loki retention
+- [off-git.md](off-git.md): every **Not recorded** value, and the open questions
 
-### Critical - Memory Overcommit on k3s-worker3
+Last reviewed 2026-10-11.
 
-- [ ] Reduce memory limits on k3s-worker3
-  - [ ] Review Immich server limit (8Gi) - consider reducing to 6Gi
+## Reliability
 
-### High - Workload Rebalancing
+- [ ] Pin the seven infrastructure charts to exact versions, so major upgrades arrive as
+      Renovate PRs instead of installing themselves ([renovate-config.md](renovate-config.md#traps))
+- [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
+      ([gitops.md](gitops.md#traps-in-this-repo))
+- [ ] Check whether the Flux webhook works: `kubectl get receivers -A` ([off-git.md](off-git.md#open-questions))
+- [ ] Rotate the Headlamp break-glass token ([access.md](access.md#the-headlamp-break-glass-token-has-probably-expired))
+- [ ] Read the rebuild runbook against the live host and fill in its **verify** steps
+      ([runbooks/rebuild-k3s-master.md](runbooks/rebuild-k3s-master.md))
 
-- [ ] Move Prometheus off Raspberry Pi nodes (1.5GB on k3s-worker1 with 4GB total)
-- [ ] Rebalance pods between workers
+## Resources
 
-### Medium - Resource Limits
+- [ ] k3s-worker3 memory overcommit: the Immich server limit is 8Gi, consider 6Gi
+- [ ] Add limits to the pods that have none: traefik, immich-valkey, alloy
 
-- [ ] Add limits to unbound pods: traefik, immich-valkey, alloy
-- [ ] Optimize Loki chunks-cache (using 2.1GB memory)
+## Cleanup
 
-### Node Version Alignment
-
-- [x] Align node versions — all three nodes upgraded to k3s v1.34.9+k3s1 on 2026-08-01
-  (k3s-worker2 was decommissioned May 2026). Upgrade by binary swap, not the install
-  script: `--cluster-cidr`, `--service-cidr` and one `--tls-san` live only in the systemd
-  unit and would be lost. Pre-upgrade backups are in `/root/k3s-backup-pre-1.34` on the
-  master and `/root/k3s-v1.33.*.bin` on the workers.
-- [ ] Consider Flux v2.9.x now that the K8s >= v1.34.1 floor is met (PR #30 was closed
-  while the cluster was still on v1.33, so Renovate will not re-raise it)
-
-## Identity & Access
-
-- [x] Integrate Headlamp with Okta via K3s OIDC
-  - [x] Create Okta OIDC app for K3s API server
-  - [x] Configure K3s `--kube-apiserver-arg` flags (`oidc-issuer-url`, `oidc-client-id`, `oidc-username-claim`, `oidc-groups-claim`)
-  - [x] Map Okta user to K8s RBAC via ClusterRoleBinding (subject format: `https://okta.yuandrk.net#me@yuandrk.net`)
-  - [x] Update Headlamp to use OIDC flow (PKCE enabled)
-  - [ ] If 403 errors return: check `Authorization` header in DevTools Network tab on a failing request — verify Headlamp is sending the OIDC JWT (starts with `eyJ`), not the service account token
-
-## Documentation Gaps
-
-- [ ] Document Immich setup and configuration (photos.yuandrk.net)
-- [ ] Document Loki + Alloy log aggregation stack
-- [ ] Document NFS storage provisioner setup
-- [ ] Document backup and restore procedures
+- [ ] Remove the NFS provisioner (scaled to zero) together with the `storage` dependency of
+      `apps`, and the old worker1 claims kept as a rollback path in `c36a446`
+- [ ] SOPS leftovers: `.sops.yaml`, the `sops -d` permission and age-key read denies in
+      `.claude/settings.json`, and `.claude/hooks/guard-secrets.sh`, which should flag committed
+      plaintext `kind: Secret` instead
+- [ ] The `headlamp-oidc` OnePasswordItem in `flux-system` (item `headlamp-oidc-authentik`) has
+      no consumer
+- [ ] The `flux-system` PodMonitor still selects the removed image-automation controllers
+- [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
+- [ ] Delete the `glance-credentials` item in 1Password

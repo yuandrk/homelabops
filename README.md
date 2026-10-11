@@ -73,7 +73,7 @@ kubectl get helmreleases -A                # All deployed
 flux get all -A
 ```
 
-📖 **Detailed Guides:** [K3s Deployment](docs/k3s-deploy-summary.md) · [Terraform](docs/terraform-guide.md) · [FluxCD](docs/fluxcd-setup.md)
+📖 **Detailed Guides:** [Architecture](docs/architecture.md) · [GitOps](docs/gitops.md) · [Terraform](docs/terraform-guide.md)
 
 ## 🌐 Services
 
@@ -135,15 +135,9 @@ homelabops/
 
 | Topic | Description |
 |-------|-------------|
-| [Architecture Diagrams](docs/architecture-diagrams.md) | Mermaid infrastructure diagrams |
-| [Network Architecture](docs/network-architecture.md) | Network topology and setup |
-| [K3s Deployment](docs/k3s-deploy-summary.md) | Cluster deployment guide |
-| [FluxCD Setup](docs/fluxcd-setup.md) | GitOps setup and configuration |
-| [FluxCD Troubleshooting](docs/fluxcd-troubleshooting.md) | Common issues and solutions |
-| [Monitoring Setup](docs/monitoring-setup.md) | Prometheus/Grafana stack |
-| [Terraform](docs/terraform-guide.md) | Cloud infrastructure management |
-| [Secrets](docs/secrets.md) | 1Password operator: how secrets reach the cluster |
-| [GPU Setup](docs/gpu-setup.md) | NVIDIA GPU configuration for K3s |
+| [Architecture](docs/architecture.md) | Principles, nodes, request, change and data flows |
+| [Decisions](docs/decisions.md) | Why things are the way they are |
+| [All docs](docs/README.md) | Index of every doc and runbook |
 
 ## 📝 License
 

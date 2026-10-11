@@ -63,7 +63,7 @@ them in from the live host the next time you are on it.
 | Okta (`okta.yuandrk.net`) | the apps for the k3s API/Headlamp, Kite and the Hermes dashboard, the groups and the app assignments | [access.md](access.md) describes each app. Nothing is exported |
 | 1Password | vault `homelab`, the operator's service account | [secrets.md](secrets.md) |
 | GitHub | Actions secrets `AWS_ROLE_ARN` and `CLOUDFLARE_*`, environment `homelab` with its approval gate, Flux's deploy key, the Renovate app | [terraform-guide.md](terraform-guide.md) |
-| AWS | S3 state bucket, GitHub OIDC provider and role | Terraform stacks `aws-bootstrap` and `aws-oidc`, applied once from a laptop, not by CI |
+| AWS | S3 state bucket, GitHub OIDC provider and role | Terraform stacks `aws-bootstrap` and `aws-oidc`, applied once from a laptop, not by CI. `aws-oidc` has no backend, so its state and its `terraform.tfvars` (the live trust patterns) exist only where it was applied |
 | Backblaze B2 | buckets `homelab-backup-yuandrk` and `obsidian-backup-yuandrk`, bucket-scoped keys, the lifecycle rule | [backup.md](backup.md#offsite-copy-backblaze-b2) |
 | Tailscale | tailnet `tail1fbf9e.ts.net`, approval of k3s-master's subnet route | [network-architecture.md](network-architecture.md#tailscale) |
 

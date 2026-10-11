@@ -43,8 +43,9 @@ The NFS export is host config outside git:
 `no_root_squash` is needed because Immich writes as root. Only k3s-worker3 is allowed.
 
 **Not in the backup:** `/srv/media` (re-downloadable media), the Postgres instance on k3s-worker3
-(Immich's database is covered by Immich's own dumps in `library/backups`, but n8n's is not), and
-cluster state (git is the source of truth).
+(Immich's database is covered by Immich's own dumps in `library/backups`, but n8n's is not),
+local-path volumes on k3s-worker3 (Fleet's MySQL, Prometheus), and cluster state (git is the
+source of truth, apart from what [off-git.md](off-git.md) lists).
 
 ## The backup
 
