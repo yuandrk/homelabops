@@ -7,7 +7,7 @@ to work here, for agents and people. The repository is public.
 ## Layout
 
 ```
-clusters/prod/           Flux entry point; secrets/ holds the OnePasswordItems
+clusters/prod/           Flux entry point; secrets/ holds most OnePasswordItems
 apps/<app>/base/         user-facing apps
 infrastructure/          operator, monitoring, cloudflared, Headlamp, Hermes sandbox and dashboard
 terraform/live/homelab/  cloudflare/ is applied by CI; the other stacks were applied once by hand
@@ -17,15 +17,17 @@ docs/                    the docs below, procedures in docs/runbooks/
 
 ## Rules
 
-1. **Change the cluster through git**: edit, commit, push to `main`, `/reconcile`. Flux polls
-   `main` every minute and reverts hand edits.
+1. **Change the cluster through git**: edit, commit, land it on `main` (a PR shows Terraform's
+   plan first), then `/reconcile`. Flux polls `main` every minute and reverts hand edits.
 2. **Terraform runs only in CI**: the PR shows the plan, the merge applies it, and there is no
    approval gate. Never apply the cloudflare stack locally.
 3. **Secrets live in 1Password** (vault `homelab`) and reach the cluster as `OnePasswordItem`s.
    Never commit Secret data, `terraform.tfvars` or state.
-4. **The hostname decides who can reach an app**: `<app>.yuandrk.net` is public and needs an
+4. **The hostname decides how an app is exposed**: `<app>.yuandrk.net` is public and needs an
    entry in `local.tunnel_services`; `<app>.home.yuandrk.net` is tailnet-only and needs nothing
-   else. No NodePorts for LAN access, except Immich's 30283 for its mobile app.
+   else. That is naming, not access control: the home LAN reaches any app with a `Host` header,
+   so every app keeps its own login. No NodePorts for LAN access, except Immich's 30283 for its
+   mobile app.
 5. **Data that matters lives under `/srv/data` on k3s-master**, the only node that is backed
    up, with its pod pinned there. k3s-worker1 is disposable: nothing important goes there. A
    `local-path` volume pins its pod to its node.
@@ -58,8 +60,9 @@ docs/                    the docs below, procedures in docs/runbooks/
 - Prometheus only picks up labelled objects, and Alertmanager is off
   ([monitoring](docs/monitoring.md#labels-decide-what-gets-picked-up)).
 - A 1Password change takes up to 6 hours to arrive; restart the operator to sync now. A first
-  deploy can wait in `CreateContainerConfigError` for its Secret. Delete a `OnePasswordItem` in
-  the same commit as its namespace, or every secret stops syncing ([secrets](docs/secrets.md)).
+  deploy can wait in `CreateContainerConfigError` for its Secret. Remove a `OnePasswordItem` in
+  the same commit as the app it serves: one that outlives its namespace stops every secret
+  syncing ([secrets](docs/secrets.md#removing-a-secret)).
 - Infrastructure charts float on `>=` ranges, so majors install without a PR
   ([renovate](docs/renovate-config.md#traps)).
 - k3s-master's `192.168.1.223` (k3s config, Hermes EndpointSlice) and `100.96.117.64`
@@ -76,7 +79,7 @@ docs/                    the docs below, procedures in docs/runbooks/
 - One fact, one place: link to the owner, or to a manifest comment that already explains it.
   `README.md` is the showcase; it owns only the Services table.
 - Open work and unknowns live only in [TODO](docs/TODO.md); a doc states a gap in one line and
-  links there. No generic commands.
+  links there. No generic commands, emoji headings or status checkmarks.
 
 | When you change… | Also update |
 |------------------|-------------|

@@ -10,8 +10,9 @@ unit `hermes-dashboard.service`, running `hermes dashboard --no-open --host 0.0.
 out of `~/.hermes`. It stays outside k3s on purpose, as the agent's control channel
 ([decisions.md](decisions.md#standing-decisions)). Publishing it through Traefik trades that
 independence for the public hostname: **if the cluster is down, `hermes.yuandrk.net` is down**.
-The way in is then `http://192.168.1.223:9119` on the LAN, or `http://100.96.117.64:9119` from
-the tailnet.
+The process still answers on `http://192.168.1.223:9119` (LAN) and `http://100.96.117.64:9119`
+(tailnet), but the OIDC login returns to the dead public name, so logging in that way needs
+`basic_auth` restored first ([below](#basic_auth-is-gone)).
 
 ## The routing chain
 
@@ -67,8 +68,9 @@ well, but it does not set the cookie's `Secure` flag, so it cannot replace step 
 | Authorization | Okta **app assignment** to `Andriuk corp`, and nothing else |
 
 Hermes uses its bundled `self_hosted` provider: authorization code with PKCE, and the ID token
-verified against the discovered `jwks_uri`. A forward-auth proxy would not help, because Hermes
-has no trusted-header mode.
+verified against the discovered `jwks_uri`. Its settings are under `dashboard.oauth.self_hosted`
+in `~/.hermes/config.yaml`. A forward-auth proxy would not help, because Hermes has no
+trusted-header mode.
 
 It has to be a **public client**, and `config.yaml` deliberately carries no `client_secret`.
 Given a secret, Hermes authenticates with HTTP Basic while still sending `client_id` in the
@@ -85,7 +87,8 @@ channel.
 ## `basic_auth` is gone
 
 The shared username and password login was removed once SSO worked, because the dashboard is
-reachable from the internet. `/api/auth/providers` lists `self-hosted` and nothing else.
+reachable from the internet. `/api/auth/providers` lists `self-hosted` and nothing else, and
+`POST /auth/password-login` answers `404 Unknown provider`.
 
 **That removed the fallback.** If Okta is unreachable there is no other way into the web UI:
 restore `dashboard.basic_auth` from a `config.yaml.bak-preremove-*` backup over SSH and restart
@@ -110,6 +113,10 @@ curl -s https://hermes.yuandrk.net/api/auth/me                          # 401 JS
 kubectl get endpointslice -n hermes-dashboard
 kubectl -n kube-system exec deploy/traefik -- wget -qS -O /dev/null http://192.168.1.223:9119/
 ```
+
+To check Okta's client authentication without a browser, POST a deliberately invalid code to the
+token endpoint with only `client_id` and `code_verifier`: `invalid_grant` means the client
+authentication passed, `invalid_request` or `invalid_client` means it did not.
 
 **Rollback:** restore a `config.yaml.bak-*` over `config.yaml` and
 `systemctl --user restart hermes-dashboard`, choosing a backup that still contains `basic_auth`.

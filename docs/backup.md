@@ -111,13 +111,16 @@ ssh k3s-master sudo systemctl start restic-backup      # run the local one now
 # On k3s-master. Restore into a scratch dir first, then move into place.
 sudo bash -c 'set -a; . /etc/restic/restic.env
   restic restore latest --target /tmp/restore --include /srv/data/actualbudget'
+# restic keeps the full path: the files land in /tmp/restore/srv/data/actualbudget
 ```
 
-For a full Immich restore, scale `immich-server` to 0 first (`flux suspend helmrelease immich -n
-apps` so Flux does not scale it back), restore `/srv/data/immich`, then resume.
+Stop the app before moving data into place, and keep Flux from scaling it back up: for a plain
+Deployment such as ActualBudget, `flux suspend kustomization apps` and scale it to 0; for Immich,
+`flux suspend helmrelease immich -n apps` and scale `immich-server` to 0. Resume afterwards.
 
-If k3s-master itself is gone, any machine with restic, the password from 1Password and SSH access
-to k3s-worker1 can read the local repository.
+If k3s-master itself is gone, any machine with restic and the password from 1Password can read
+the local repository. Its SFTP key lived on k3s-master, though, so reach `/srv/backup/restic`
+through your own login to k3s-worker1 and sudo.
 
 If the whole house is gone, any machine with restic and the two 1Password items can restore from
 B2:

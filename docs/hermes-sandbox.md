@@ -66,12 +66,13 @@ rolls the Deployment whenever the file changes.
 ### browserless / Chromium — `browserless:3000`
 
 Headless Chromium behind a CDP endpoint, for pages a plain HTTP fetch cannot read, screenshots
-and form filling. Every route requires the token, which on the host comes from 1Password because
-the sandbox account cannot read Secrets:
+and form filling. Every route requires the token. The sandbox account cannot read Secrets and the
+host has no 1Password CLI, so `make-kubeconfig.sh` leaves the token in
+`~/.hermes/sandbox/browserless.token`:
 
 ```bash
 BROWSERLESS=$(kubectl get svc browserless -o jsonpath='{.spec.clusterIP}')
-TOKEN=$(op read "op://homelab/hermes-sandbox-credentials/browserless-token")
+TOKEN=$(cat ~/.hermes/sandbox/browserless.token)
 curl -s "http://$BROWSERLESS:3000/pressure?token=$TOKEN"
 ```
 
@@ -151,7 +152,7 @@ ssh k3s-worker3 'sudo iptables -L -n -v | grep -A15 KUBE-POD-FW'
   missing. The `secrets` Kustomization syncs it after `infrastructure`, so a short gap on first
   deploy is expected. If it persists, check the `OnePasswordItem` and the operator logs in the
   `onepassword` namespace.
-- **Pod rejected at admission.** `violates PodSecurity "baseline:latest"` means
+- **Pod rejected at admission.** `violates PodSecurity "baseline:…"` means
   privileged/hostPath/hostNetwork, `exceeded quota` means the namespace budget, and
   `must specify limits` means the LimitRange could not default something.
 

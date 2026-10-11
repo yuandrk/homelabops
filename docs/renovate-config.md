@@ -10,7 +10,7 @@ Renovate proposes version bumps as PRs, and it is the only way a pinned version 
 |---------|-----|
 | Container images in `apps/` and `infrastructure/` manifests and HelmRelease values | managers `kubernetes`, `helm-values` |
 | Helm chart versions in HelmReleases | managers `flux`, `helmv3` |
-| Flux itself: `clusters/prod/flux-system/gotk-components.yaml` | the `flux` manager's default file pattern. Releases arrive as `fluxcd/flux2` PRs |
+| Flux itself: `clusters/prod/flux-system/gotk-components.yaml` | the `flux` manager's default file pattern, which `managerFilePatterns` extends rather than replaces. Releases arrive as `fluxcd/flux2` PRs |
 | The Cloudflare Terraform provider, in `terraform/live/homelab/cloudflare/` only | manager `terraform` with `rangeStrategy: update-lockfile`. The constraint stays `~> 5.0` and Renovate bumps the committed `.terraform.lock.hcl`, so `terraform-plan.yml` runs before `main` sees it ([why](decisions.md#2026-09-26--the-cloudflare-provider-is-pinned-by-a-committed-lock-file)) |
 
 GitHub Actions and the other Terraform stacks are bumped by hand. Two images need care:
@@ -22,7 +22,7 @@ GitHub Actions and the other Terraform stacks are bumped by hand. Two images nee
 
 ## How PRs arrive
 
-Mondays 00:00–05:00 Europe/London, at most three open, with a Dependency Dashboard issue. They
+Mondays before 06:00 Europe/London, at most three open, with a Dependency Dashboard issue. They
 are grouped so that one failing chart cannot block the rest: `app-images`, `app-helm-charts`,
 `infra-images`, `infra-helm-charts`, `terraform-cloudflare`, and `immich`, whose server, machine
 learning and chart arrive together because an Immich upgrade migrates its database. Only patch

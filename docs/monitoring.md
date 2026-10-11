@@ -7,7 +7,7 @@ What is collected, where to look, and what does not work yet.
 | Piece | Details |
 |-------|---------|
 | Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
-| Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab` (the PostgreSQL on k3s-worker3) |
+| Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab`, which still points at `k3s-worker1:5432`, where no PostgreSQL runs ([TODO](TODO.md#monitoring)) |
 | Loki | SingleBinary on a 10Gi `local-path` volume on k3s-worker3, caches off. local-path does not enforce the size and no retention is set, so it grows on that node's disk ([TODO](TODO.md#monitoring)) |
 | Alloy | A DaemonSet on every node, the disposable one included, that ships **pod** logs to Loki. Host journals are not collected |
 | Alertmanager | Disabled |
@@ -64,7 +64,8 @@ kube-state-metrics and in a separate `flux-kube-state-metrics` Deployment
 ## Is an app still used?
 
 Answer it with data before removing an app. Traefik counts requests per service and Prometheus
-scrapes it. The dashboard **App Usage (Traefik)** (uid `app-usage`, default range 14 days) shows
+scrapes it; k3s's bundled Traefik serves those metrics by default (port `metrics`), so no
+`HelmChartConfig` is needed. The dashboard **App Usage (Traefik)** (uid `app-usage`, default range 14 days) shows
 requests per service, the idle ones, the request rate and the response bytes. From a shell:
 
 ```bash

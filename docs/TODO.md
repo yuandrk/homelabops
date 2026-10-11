@@ -42,8 +42,14 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] Set a Loki retention. Nothing sets one and local-path does not cap the 10Gi volume, so
       logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts evicting pods
       there, and the native PostgreSQL on that disk runs out of space as well
-- [ ] Drop one of the two collectors of Flux object state: the stack's own kube-state-metrics or
-      the separate `flux-kube-state-metrics` Deployment ([monitoring.md](monitoring.md#flux-metrics))
+- [ ] Drop the separate `flux-kube-state-metrics` Deployment, a leftover from debugging the Flux
+      Cluster Stats dashboard: the stack's own kube-state-metrics collects the same Flux state
+      ([monitoring.md](monitoring.md#flux-metrics))
+- [ ] Grafana's `PostgreSQL-Homelab` datasource points at `k3s-worker1:5432`, where nothing
+      listens: point it at k3s-worker3 or delete it
+      (`infrastructure/monitoring/base/configs/datasources/postgres-datasource.yaml`)
+- [ ] Watch the host processes (restic, Tailscale, the NFS server, PostgreSQL, Hermes), which
+      node-exporter sees only as machines: a blackbox probe or a systemd exporter
 
 ## Reliability
 
@@ -53,7 +59,8 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
       ([gitops.md](gitops.md#traps-in-this-repo))
 - [ ] Decide whether Terraform applies need an approval: add a required reviewer to the
-      `homelab` environment, or accept the merge as the only gate ([terraform-guide.md](terraform-guide.md#ci))
+      `homelab` environment, or accept the merge as the only gate ([terraform-guide.md](terraform-guide.md#ci)).
+      The apply step is still named "Apply (after env approval)"
 - [ ] Decide what to do with the hand-made proxied catch-all `*.yuandrk.net`. Every name without
       a record of its own now ends in a Cloudflare 522
       ([network-architecture.md](network-architecture.md#split-horizon-without-a-dns-server))
@@ -73,6 +80,9 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       `actualbudget-data` in `/var/lib/rancher/k3s/storage/`
 - [ ] k3s-master: delete the inactive `k3s-agent.service`, which carries k3s-worker3's flags, and
       its `k3s-agent.service.env`, which holds a join token (both in `/etc/systemd/system/`)
+- [ ] k3s-master keeps `/root/k3s-backup-pre-1.34`, a copy of the server state (join token
+      included) from before the 2026-08-01 upgrade, and the workers keep the old binaries as
+      `/root/k3s-v1.33.*.bin`. Delete them once a rollback to 1.33 is off the table
 - [ ] k3s-worker3: remove `tailscaled` (installed, running, logged out), `sops`, `flux`, `gh`,
       and the kubeconfig in `~/.kube/` whose credentials the API server rejects
 - [ ] Every node: drop the per-link DNS server `10.10.0.1` from the wired link in netplan.
@@ -88,8 +98,8 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] The `flux-system` PodMonitor still selects the removed image-automation and
       image-reflector controllers
 - [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
-- [ ] GitHub: delete the `CLAUDE_CODE_OAUTH_TOKEN` secret, unused since the Claude workflows
-      went in `9aa8bbb`. The webhook to n8n points at `/webhook-test/…`, which answers only while
+- [ ] GitHub: delete the `CLAUDE_CODE_OAUTH_TOKEN` secret, unused since `9aa8bbb` removed the
+      Claude workflows. The webhook to n8n points at `/webhook-test/…`, which answers only while
       the n8n editor is listening, and returned 404: move it to the production `/webhook/…` URL
       or delete it
 

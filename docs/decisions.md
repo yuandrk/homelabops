@@ -121,7 +121,8 @@ first removals it decided. `bbc161f`, `cfe1006`
 k3s ServiceLB (klipper) masquerades the client address even with `externalTrafficPolicy: Local`,
 so Traefik always sees the svclb pod. Replacing the load balancer is out of proportion for a home
 media app, so "internal" means not in the tunnel and not in public DNS. The cost: anyone on the
-home Wi-Fi can reach an internal app with the right `Host` header. `42eeedf`
+home Wi-Fi can reach an internal app with the right `Host` header. Real per-service access
+control would need the Tailscale Kubernetes operator. `42eeedf`
 
 ### 2026-05-25 · NVIDIA device plugin removed
 
@@ -137,9 +138,9 @@ change. The cost: when the cluster is down, every public hostname is down too. `
 
 ### 2026-05-24 · No DNS server
 
-Pi-hole was uninstalled from k3s-master. The nodes resolve through 1.1.1.1 and 1.0.0.1, and
-internal names were later solved with DNS records instead of a resolver (see 2026-08-17).
-`5d1882c`
+Pi-hole was uninstalled from k3s-master; why was not recorded. The nodes resolve through
+1.1.1.1 and 1.0.0.1, and internal names were later solved with DNS records instead of a
+resolver (see 2026-08-17), so nothing local has to stay up for names to resolve. `5d1882c`
 
 ### 2026-05-17 · Secrets in 1Password instead of SOPS
 
