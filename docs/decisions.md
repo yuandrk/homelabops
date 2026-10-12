@@ -156,10 +156,14 @@ binds the user. That replaced a shared ServiceAccount token. Behind the tunnel i
 `X-Forwarded-Proto: https` from a Traefik middleware, and PKCE. The issuer moved to the custom
 domain on 2026-06-26 (`c21d197`). `eae210e`…`687fac3`, [access.md](access.md)
 
+Headlamp was removed on 2026-10-11 ([removed apps](#removed-apps)), and with it the only user
+of this login.
+
 ## Removed apps
 
 | Date | App | Why | Left behind |
 |------|-----|-----|-------------|
+| 2026-10-11 | Headlamp | Not used; Kite covers the Kubernetes UI | the API server's OIDC flags on k3s-master, vault items `headlamp-oidc-okta` and `headlamp-token` ([TODO](TODO.md#cleanup)) |
 | 2026-08-08 | Glance | Dashboard on NodePort 30081, not wanted after a week | nothing (its vault item was gone by 2026-10-11) |
 | 2026-08-08 | Perlite | Read-only Obsidian vault viewer, not wanted after trying it | nothing (the vault was mounted read-only) |
 | 2026-08-01 | Jellyfin | 0 ingress requests in 14 days | 16 GB of media at `/srv/media` on k3s-master |
@@ -167,7 +171,7 @@ domain on 2026-06-26 (`c21d197`). `eae210e`…`687fac3`, [access.md](access.md)
 | 2026-08-01 | Stirling-PDF | Unused, and stuck mid-rollout for 14 days | vault item `stirling-pdf-credentials` ([TODO](TODO.md#cleanup)) |
 | 2026-08-01 | MCP Slack Bot | Unused | vault item `mcp-slack-bot-credentials` ([TODO](TODO.md#cleanup)) |
 | 2026-05-25 | Uptime Kuma, pgAdmin, Ollama | No longer used | vault item `pgadmin-credentials` ([TODO](TODO.md#cleanup)) |
-| 2025-11-15 | Authentik | No longer needed (Okta came in 2026-05) | vault item `headlamp-oidc-authentik`, still pulled into `flux-system` ([TODO](TODO.md#cleanup)) |
+| 2025-11-15 | Authentik | No longer needed (Okta came in 2026-05) | vault item `headlamp-oidc-authentik` ([TODO](TODO.md#cleanup)) |
 | 2025-08-30 | Jenkins | Not recorded | nothing |
 
 Commits: `35a8413`, `1c0bdf7`, `cfe1006`, `5edce6a`, `f9a0fb9`, `7ae60cb`, `3668d49`.

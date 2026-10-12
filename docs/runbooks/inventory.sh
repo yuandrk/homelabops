@@ -443,26 +443,6 @@ import json, sys
 raw = sys.stdin.read()
 print(" ".join(sorted(json.loads(raw))) if raw.startswith("{") else raw[:120])')"
     done
-  echo "## Headlamp's OIDC client ID (an identifier, not a secret). The API server's oidc-client-id must match it"
-  k -n kube-system get secret headlamp-oidc -o jsonpath='{.data.clientID}' 2>&1 | py '
-import base64, sys
-raw = sys.stdin.read().strip()
-try:
-    print("clientID", base64.b64decode(raw, validate=True).decode())
-except Exception:
-    print(raw[:200])'
-  echo "## Headlamp break-glass token: expiry only, the token is not printed"
-  k -n kube-system get secret headlamp-token -o jsonpath='{.data.token}' 2>&1 | py '
-import base64, datetime, json, sys
-raw = sys.stdin.read().strip()
-try:
-    part = base64.b64decode(raw).decode().split(".")[1]
-    claims = json.loads(base64.urlsafe_b64decode(part + "=" * (-len(part) % 4)))
-    exp = claims.get("exp")
-    print("sub:", claims.get("sub"), "| exp:",
-          datetime.datetime.fromtimestamp(exp, datetime.timezone.utc).isoformat() if exp else "none")
-except Exception as e:
-    print("could not decode:", type(e).__name__)'
 }
 
 c_workloads() {

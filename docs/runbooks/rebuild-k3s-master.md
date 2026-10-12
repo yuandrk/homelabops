@@ -83,18 +83,9 @@ tls-san:
   - 10.10.0.1
   - 192.168.1.223
   - 100.96.117.64
-kube-apiserver-arg:
-  - "oidc-issuer-url=https://okta.yuandrk.net"
-  - "oidc-client-id=<the client ID Headlamp uses>"
-  - "oidc-username-claim=preferred_username"
-  - "oidc-groups-claim=groups"
 resolv-conf: /etc/k3s-resolv.conf
 ```
 
-- The username claim is not `email`, so the API server prefixes it with the issuer and `#`. That
-  gives the RBAC subject `https://okta.yuandrk.net#me@yuandrk.net` in git. The client ID has to
-  be the one in Headlamp's `headlamp-oidc-okta` item, see
-  [access.md](../access.md#recreating-headlamps-okta-app).
 - **verify** `/etc/k3s-resolv.conf`: its contents are not recorded. Pods resolve external names
   through it, so it must list real upstream servers, not systemd-resolved's `127.0.0.53` stub.
 - Install the k3s version the workers run (`k3s --version` on a worker), without flags, since

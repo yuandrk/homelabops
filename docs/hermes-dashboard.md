@@ -43,7 +43,7 @@ Okta rejects. The fix has two halves, and each is useless alone:
 
 1. **Traefik sends the header.** `infrastructure/hermes-dashboard/base/middleware.yaml` sets
    `X-Forwarded-Proto: https`, referenced from the Ingress as
-   `hermes-dashboard-hermes-https-headers@kubernetescrd`, the same trick as Headlamp's.
+   `hermes-dashboard-hermes-https-headers@kubernetescrd`.
 2. **uvicorn believes it.** It honours `X-Forwarded-*` only from peers in `FORWARDED_ALLOW_IPS`,
    which defaults to `127.0.0.1`, and Hermes offers no other setting for it. A drop-in on the
    host sets it, scoped to the pod CIDR so that a LAN client hitting `:9119` directly cannot
@@ -62,7 +62,7 @@ well, but it does not set the cookie's `Secure` flag, so it cannot replace step 
 
 | | |
 |---|---|
-| Issuer | `https://okta.yuandrk.net`, the same as Headlamp and the k3s API server |
+| Issuer | `https://okta.yuandrk.net`, the same as Kite |
 | App | `Hermes Dashboard`, OIDC **Native** app, **public client** (`token_endpoint_auth_method: none`) |
 | Redirect URI | `https://hermes.yuandrk.net/auth/callback`. It **must** end in `/auth/callback`: Hermes validates it and fails fast otherwise |
 | Authorization | Okta **app assignment** to `Andriuk corp`, and nothing else |

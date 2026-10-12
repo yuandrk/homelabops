@@ -6,12 +6,6 @@ closes it.
 
 Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the same day.
 
-## First
-
-- [ ] Check that Headlamp can still log in through Okta, or
-      [recreate its app](access.md#recreating-headlamps-okta-app), and renew its expired
-      [break-glass token](access.md#break-glass)
-
 ## Backups
 
 - [ ] Give n8n's database a scheduled dump. It lives in the native PostgreSQL on k3s-worker3,
@@ -44,7 +38,7 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Reliability
 
-- [ ] Pin the seven infrastructure charts to exact versions, so major upgrades arrive as
+- [ ] Pin the six infrastructure charts to exact versions, so major upgrades arrive as
       Renovate PRs instead of installing themselves, and pin cloudflared's image tag
       ([renovate-config.md](renovate-config.md#traps))
 - [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
@@ -81,11 +75,12 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] SOPS leftovers: `.sops.yaml`, the `sops -d` permission and age-key read denies in
       `.claude/settings.json`, and `.claude/hooks/guard-secrets.sh`, which should flag committed
       plaintext `kind: Secret` instead
-- [ ] Delete the `headlamp-oidc` OnePasswordItem in `flux-system`. It reads the vault item
-      `headlamp-oidc-authentik`, a leftover of the Authentik era, and nothing consumes it
 - [ ] Delete the vault items whose consumer is gone: `pgadmin-credentials`,
-      `stirling-pdf-credentials`, `mcp-slack-bot-credentials`, and `headlamp-oidc-authentik`
-      once the item above is gone
+      `stirling-pdf-credentials`, `mcp-slack-bot-credentials`, `headlamp-oidc-authentik`,
+      `headlamp-oidc-okta` and `headlamp-token`, and Headlamp's Okta app if one exists
+- [ ] k3s-master: drop the four `oidc-*` entries of `kube-apiserver-arg` in
+      `/etc/rancher/k3s/config.yaml` at the next k3s restart, an upgrade for instance. They
+      served only Headlamp
 - [ ] The `flux-system` PodMonitor still selects the removed image-automation and
       image-reflector controllers
 - [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
@@ -108,7 +103,6 @@ and [off-git.md](off-git.md) marks where each belongs with **Not recorded**.
 - The Tailscale ACL: who can reach `10.10.0.0/24`
 - Where the `aws-oidc` Terraform state and its `terraform.tfvars` live
 - Where the proxied catch-all `*.yuandrk.net` points
-- Which Okta app Headlamp logs in through, if any
 - What the 1Password items `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)` hold, and
   whether `hermes-dashboard-oidc` is the Hermes dashboard's Okta client
 - Why PostgreSQL on k3s-worker3 is a native install

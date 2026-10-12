@@ -9,7 +9,7 @@ to work here, for agents and people. The repository is public.
 ```
 clusters/prod/           Flux entry point; secrets/ holds most OnePasswordItems
 apps/<app>/base/         user-facing apps
-infrastructure/          operator, monitoring, cloudflared, Headlamp, Hermes sandbox and dashboard
+infrastructure/          operator, monitoring, cloudflared, Hermes sandbox and dashboard
 terraform/live/homelab/  cloudflare/ is applied by CI; the other stacks were applied once by hand
 docs/                    the docs below, procedures in docs/runbooks/
 .claude/                 commands (/reconcile, /new-app, /upgrade-app, /cluster-status), agents, hooks

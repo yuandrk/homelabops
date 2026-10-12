@@ -159,11 +159,9 @@ O1 … O8: an answer, or "Needs Yurii".
 
 ### Questions outside the hosts
 
-- **O1 Okta.** For each app (Kite, Hermes Dashboard, the app Headlamp and the k3s API server use,
-  and any other): its type (Web, Native or SPA), client authentication, grant types, redirect
-  URIs, and the users or groups assigned to it. Whether any app's client ID matches the API
-  server's `oidc-client-id`. Who is in `IT` and `Andriuk corp`. Which sign-on and app policies
-  require MFA.
+- **O1 Okta.** For each app (Kite, Hermes Dashboard and any other): its type (Web, Native or
+  SPA), client authentication, grant types, redirect URIs, and the users or groups assigned to
+  it. Who is in `IT` and `Andriuk corp`. Which sign-on and app policies require MFA.
 - **O2 Cloudflare.** DNS records in `yuandrk.net` that Terraform does not manage, the
   `*.yuandrk.net` catch-all among them. The status of the `homeserver` tunnel's connectors. Any
   Cloudflare Access applications. The permissions of the API token CI uses.

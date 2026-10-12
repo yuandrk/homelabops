@@ -35,7 +35,7 @@ flowchart TB
 
     subgraph cluster["k3s cluster: 3 nodes"]
         cfd["cloudflared x2"] --> traefik["Traefik"]
-        traefik --> apps["Immich, ActualBudget, n8n,<br/>Fleet, Grafana, Headlamp, Kite"]
+        traefik --> apps["Immich, ActualBudget, n8n,<br/>Fleet, Grafana, Kite"]
         flux["Flux"] -->|"applies"| apps
         operator["1Password operator"] -->|"Secrets"| apps
     end
@@ -70,8 +70,8 @@ Requests, changes and data each take one path, and the rule for each is written 
   default-deny networking, PodSecurity, quotas and a scoped kubeconfig. The namespace also fixes
   a race, found by measurement, in which short-lived Jobs ran unfiltered before kube-router
   programmed their NetworkPolicy. [→ sandbox](docs/hermes-sandbox.md)
-- **SSO on the admin plane.** Okta OIDC sits in front of the Kubernetes API (via Headlamp), Kite
-  and the agent's dashboard, and each has a written break-glass path. The agent's dashboard
+- **SSO on the admin plane.** Okta OIDC sits in front of Kite and the agent's dashboard, and each
+  has a written break-glass path. The agent's dashboard
   could only work as a public PKCE client, and the docs say why. [→ access](docs/access.md)
 - **Secrets never touch git.** A 1Password vault feeds the 1Password operator, which creates the
   Kubernetes Secrets, with polling tuned to the API's rate limit. [→ secrets](docs/secrets.md)
@@ -103,7 +103,6 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 | [n8n](https://n8n.io) | Workflow automation | Internet: `n8n.yuandrk.net` |
 | [Fleet](https://fleetdm.com) | osquery device management | Internet: `fleet.yuandrk.net` |
 | [Grafana](https://grafana.com) | Metrics and log dashboards | Internet: `grafana.yuandrk.net` |
-| [Headlamp](https://headlamp.dev) | Kubernetes UI, Okta login | Internet: `headlamp.yuandrk.net` |
 | [Kite](https://github.com/kite-org/kite) | Kubernetes UI, Okta login | Internet: `kite.yuandrk.net` |
 | Hermes dashboard | The AI agent's control panel, a host process behind Traefik | Internet: `hermes.yuandrk.net`, Okta login |
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client | Tailnet only: `qbit.home.yuandrk.net` |
@@ -140,7 +139,7 @@ Nothing here pretends to be finished:
 ```
 clusters/prod/          Flux entry point: Kustomizations, Flux itself, 1Password items
 apps/                   user-facing apps, one directory per app
-infrastructure/         operator, monitoring, cloudflared, Headlamp, Hermes sandbox and dashboard
+infrastructure/         operator, monitoring, cloudflared, Hermes sandbox and dashboard
 terraform/live/homelab/ Cloudflare (applied by CI), AWS state bucket and OIDC role, Flux bootstrap
 docs/                   architecture, decisions, runbooks, component deep-dives
 CLAUDE.md               how to work here: rules, a map of the docs, traps
