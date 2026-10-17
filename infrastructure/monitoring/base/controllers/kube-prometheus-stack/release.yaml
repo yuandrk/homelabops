@@ -26,12 +26,59 @@ spec:
           kind: PrometheusRule
   values:
     # Prometheus keeps only the metrics something reads: the dashboards, Kite's charts and the
-    # planned alerts. Every source has an allowlist, here or in its PodMonitor, and a new metric
-    # goes into it first (docs/monitoring.md#only-listed-metrics-are-kept).
+    # alerts. Every source has an allowlist, here or in its PodMonitor, and a new metric goes
+    # into it first (docs/monitoring.md#only-listed-metrics-are-kept).
     defaultRules:
       create: false
+    # Alerts leave as emails from healthchecks.io: each area is one check there, whose keyword
+    # filter reads Alertmanager's "status" as down or up (docs/monitoring.md#alerts). The ping URLs
+    # come from the healthchecks Secret, mounted under /etc/alertmanager/secrets/.
     alertmanager:
-      enabled: false
+      enabled: true
+      serviceMonitor:
+        selfMonitor: false
+      alertmanagerSpec:
+        secrets: [healthchecks]
+        nodeSelector:
+          kubernetes.io/arch: amd64
+      config:
+        inhibit_rules: []
+        route:
+          receiver: "null"
+          group_by: [area]
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 24h
+          routes:
+            - receiver: watchdog
+              matchers: ['alertname = "Watchdog"']
+              group_wait: 0s
+              group_interval: 1m
+              repeat_interval: 2m
+            - receiver: alerts-nodes
+              matchers: ['area = "nodes"']
+            - receiver: alerts-cluster
+              matchers: ['area = "cluster"']
+            - receiver: alerts-tunnel
+              matchers: ['area = "tunnel"']
+        receivers:
+          - name: "null"
+          - name: watchdog
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/healthchecks/watchdog
+                send_resolved: false
+          - name: alerts-nodes
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/healthchecks/alerts-nodes
+                send_resolved: true
+          - name: alerts-cluster
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/healthchecks/alerts-cluster
+                send_resolved: true
+          - name: alerts-tunnel
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/healthchecks/alerts-tunnel
+                send_resolved: true
     # k3s runs the control plane in one process. The API server's metrics came back from both the
     # apiserver and the kubelet endpoint, and scheduler, controller-manager, proxy and etcd (k3s
     # uses SQLite) have no endpoint to scrape, so those targets only ever fired "down" alerts.

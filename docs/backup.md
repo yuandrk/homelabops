@@ -94,6 +94,24 @@ cap above $0, which needs a payment method on the account. The cap is per accoun
 the Obsidian bucket too. If it ever falls back to the free tier, every upload to the account fails
 with `storage cap exceeded`. A raised cap takes up to 10 minutes to apply.
 
+### Monitoring
+
+Each of the four units reports to its own check on healthchecks.io when it stops: the bare URL on
+success, `/fail` with the last 40 lines of the run's log on failure. healthchecks.io emails when a
+run fails, and also when none arrives on time: each check follows its timer's `OnCalendar`, with
+three hours of grace for the backups and six for the checks
+([monitoring.md](monitoring.md#alerts)).
+
+| Piece | Where |
+|-------|-------|
+| Hook | drop-in `healthchecks.conf` in each `restic-*.service.d/`: `ExecStopPost=-/usr/local/bin/restic-healthchecks ${HC_…}` |
+| Helper | `/usr/local/bin/restic-healthchecks` |
+| Ping URLs | `/etc/restic/healthchecks.env` (root, 0600), copied from the 1Password item `healthchecks` ([secrets.md](secrets.md#vault-items-used-outside-the-cluster)) |
+
+The drop-ins load the env file and run the helper with a leading `-`, so neither a missing file
+nor a failed ping can fail a backup. A ping that never arrives still ends in an email, because
+the check then misses its schedule.
+
 ### Day-to-day
 
 ```bash

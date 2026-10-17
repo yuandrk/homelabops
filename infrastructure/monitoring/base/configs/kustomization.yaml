@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+- alert-rules.yaml
 - dashboards
 - datasources
 - flux-kube-state-metrics.yaml

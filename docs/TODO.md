@@ -24,13 +24,12 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Monitoring
 
-- [ ] Alerting: the rules worth waking up for, and a way to deliver them (Alertmanager, or a
-      Grafana contact point). A failed backup comes first: today it only shows up in `journalctl`
 - [ ] Grafana's `PostgreSQL-Homelab` datasource points at `k3s-worker1:5432`, where nothing
       listens: point it at k3s-worker3 or delete it
       (`infrastructure/monitoring/base/configs/datasources/postgres-datasource.yaml`)
-- [ ] Watch the host processes (restic, Tailscale, the NFS server, PostgreSQL, Hermes), which
-      node-exporter sees only as machines: a blackbox probe or a systemd exporter
+- [ ] Watch the host processes (Tailscale, the NFS server, PostgreSQL, Hermes), which
+      node-exporter sees only as machines: a blackbox probe or a systemd exporter. restic already
+      reports to healthchecks.io ([backup.md](backup.md#monitoring))
 
 ## Reliability
 

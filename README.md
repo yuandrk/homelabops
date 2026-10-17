@@ -108,7 +108,7 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 | SearXNG, browserless | Search and headless Chromium for the agent | Inside the cluster only |
 
 **Platform:** Flux, Traefik, cloudflared, the 1Password operator and kube-prometheus-stack in the
-cluster, with restic and Tailscale on the host.
+cluster, with restic and Tailscale on the host. Alerts arrive by email from healthchecks.io.
 
 ## Principles
 
@@ -125,8 +125,6 @@ cluster, with restic and Tailscale on the host.
 
 Nothing here pretends to be finished:
 
-- **No alerting yet.** Alertmanager is off and there are no alert rules. Both wait until it
-  is clear what deserves a notification ([monitoring](docs/monitoring.md#alerting-reaches-no-one)).
 - **k3s-master is a single point of failure** for both the control plane and the data. There is
   a [rebuild runbook](docs/runbooks/rebuild-k3s-master.md), but it has not been rehearsed.
 - **Infrastructure charts float** on `>=` ranges, so their major upgrades skip review

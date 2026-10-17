@@ -57,6 +57,11 @@ Next to a few items unrelated to the homelab, the vault holds:
 - `Restic — Obsidian vault backup` and `Backblaze B2 — restic repo`: the Obsidian vault backup on
   k3s-master. The first is its restic password (`~/.restic-password`), the second its B2 key
   (`~/.restic-env`), limited to the bucket `obsidian-backup-yuandrk`.
+- `healthchecks`: the healthchecks.io ping URLs, written by
+  [runbooks/healthchecks.py](runbooks/healthchecks.py). Alertmanager reads its four through the
+  Secret `healthchecks`; the four `restic-*` URLs were copied into `/etc/restic/healthchecks.env`
+  on k3s-master, so a change to them has to be copied there again
+  ([backup.md](backup.md#monitoring)).
 - `hermes-dashboard-oidc`, `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)`: what they
   hold is not recorded ([TODO](TODO.md#unknowns)).
 

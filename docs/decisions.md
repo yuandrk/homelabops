@@ -17,6 +17,19 @@ change would make a future reader ask "why on earth…?".
 
 ## Log
 
+### 2026-10-17 · Alerts arrive by email from healthchecks.io
+
+No chat app was wanted for alerts. Alertmanager sends every alert to healthchecks.io, whose
+email is the only channel, and the restic units on k3s-master report there too. Because the
+service is outside the house, the always-firing Watchdog doubles as a dead man's switch: if the
+cluster, the power or the internet goes, the silence is what sends the email. No mail password
+lives in the cluster, only ping URLs.
+
+- **Cost:** one email per area while it stays down, so a second alert in the same area is visible
+  only in the check's log; the email carries the start of Alertmanager's JSON rather than a
+  written message. The free plan allows 20 checks, and the homelab uses 8.
+- [monitoring.md](monitoring.md#alerts)
+
 ### 2026-10-17 · No log store
 
 Loki and Alloy were removed with the 16 GB of pod logs they held. In the 14 days before, nothing
@@ -53,7 +66,7 @@ which leaves one public hostname fewer. [gitops.md](gitops.md#flux-kustomization
 `homelab-monitoring-rules` (18 alerts) lacked the `release: kube-prometheus-stack` label, so
 Prometheus never loaded it, and with Alertmanager off it would have reached no one. It was
 deleted rather than fixed; new rules come with a way to deliver them
-([monitoring.md](monitoring.md#alerting-reaches-no-one)).
+([monitoring.md](monitoring.md#alerts)).
 
 ### 2026-10-10 · Important data on k3s-master, in three copies
 

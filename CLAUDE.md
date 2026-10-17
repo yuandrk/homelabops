@@ -58,8 +58,9 @@ docs/                    the docs below, procedures in docs/runbooks/
 - An empty or commented-out `kustomization.yaml` breaks its whole Kustomization. Two
   Kustomizations apply the monitoring stack ([gitops](docs/gitops.md#traps-in-this-repo)).
 - Prometheus only picks up labelled objects
-  ([monitoring](docs/monitoring.md#labels-decide-what-gets-picked-up)), keeps only allowlisted
-  metrics ([monitoring](docs/monitoring.md#only-listed-metrics-are-kept)), and Alertmanager is off.
+  ([monitoring](docs/monitoring.md#labels-decide-what-gets-picked-up)) and keeps only allowlisted
+  metrics ([monitoring](docs/monitoring.md#only-listed-metrics-are-kept)). An alert without an
+  `area` label reaches no one ([monitoring](docs/monitoring.md#alerts)).
 - A 1Password change takes up to 6 hours to arrive; restart the operator to sync now. A first
   deploy can wait in `CreateContainerConfigError` for its Secret. Remove a `OnePasswordItem` in
   the same commit as the app it serves: one that outlives its namespace stops every secret
