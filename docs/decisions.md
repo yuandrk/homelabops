@@ -17,6 +17,21 @@ change would make a future reader ask "why on earth…?".
 
 ## Log
 
+### 2026-10-17 · Prometheus keeps only the metrics something reads
+
+The dashboards read 29 of the 2,314 metric names Prometheus stored, and three quarters of its
+series were the k3s API server's own metrics, collected twice because k3s serves them from the
+kubelet endpoint as well. Every source now keeps an allowlist sized for the dashboards, Kite's
+charts and the alerts planned next, and the chart's default rules are off: most read what is
+gone, and three of their critical alerts never stopped firing on k3s. With that few series, a
+year of history fits on the volume, so App Usage can look back a year.
+
+- **Cost:** a metric outside the lists has no history; adding one is a commit, and its history
+  starts there. node-exporter is listed too, including the disk I/O and pressure metrics that
+  showed the [2026-10-05 hang](#2026-10-10--important-data-on-k3s-master-in-three-copies), and the
+  next incident may need something else.
+- [monitoring.md](monitoring.md#only-listed-metrics-are-kept)
+
 ### 2026-10-11 · No Flux webhook
 
 `flux-webhook.yuandrk.net` had no `Receiver` behind it and GitHub never called it: Flux's

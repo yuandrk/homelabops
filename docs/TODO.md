@@ -29,9 +29,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] Set a Loki retention. Nothing sets one and local-path does not cap the 10Gi volume, so
       logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts evicting pods
       there, and the native PostgreSQL on that disk runs out of space as well
-- [ ] Drop the separate `flux-kube-state-metrics` Deployment, a leftover from debugging the Flux
-      Cluster Stats dashboard: the stack's own kube-state-metrics collects the same Flux state
-      ([monitoring.md](monitoring.md#flux-metrics))
 - [ ] Grafana's `PostgreSQL-Homelab` datasource points at `k3s-worker1:5432`, where nothing
       listens: point it at k3s-worker3 or delete it
       (`infrastructure/monitoring/base/configs/datasources/postgres-datasource.yaml`)
@@ -83,8 +80,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] k3s-master: drop the four `oidc-*` entries of `kube-apiserver-arg` in
       `/etc/rancher/k3s/config.yaml` at the next k3s restart, an upgrade for instance. They
       served only Headlamp
-- [ ] The `flux-system` PodMonitor still selects the removed image-automation and
-      image-reflector controllers
 - [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
 - [ ] GitHub: delete the `CLAUDE_CODE_OAUTH_TOKEN` secret, unused since `9aa8bbb` removed the
       Claude workflows. The webhook to n8n points at `/webhook-test/…`, which answers only while

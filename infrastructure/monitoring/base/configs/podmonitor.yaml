@@ -19,7 +19,11 @@ spec:
           - source-controller
           - kustomize-controller
           - notification-controller
-          - image-automation-controller
-          - image-reflector-controller
   podMetricsEndpoints:
     - port: http-prom
+      # Only what the Flux Cluster Stats dashboard reads here. The state of Flux objects
+      # (gotk_resource_info) comes from flux-kube-state-metrics.
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          action: keep
+          regex: 'gotk_reconcile_duration_seconds_(sum|count)'

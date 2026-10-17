@@ -5,9 +5,6 @@ configMapGenerator:
 - name: flux-cluster-dashboard
   files:
   - cluster.json
-- name: flux-control-plane-dashboard
-  files:
-  - control-plane.json
 - name: k3s-nodes-dashboard
   files:
   - nodes.json

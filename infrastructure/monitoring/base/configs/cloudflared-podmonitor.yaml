@@ -26,3 +26,8 @@ spec:
   podMetricsEndpoints:
     - port: metrics
       path: /metrics
+      # Whether the tunnel is connected, and how many requests through it fail
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          action: keep
+          regex: 'cloudflared_tunnel_(ha_connections|total_requests|request_errors)'

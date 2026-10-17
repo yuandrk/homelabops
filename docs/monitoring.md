@@ -6,7 +6,7 @@ What is collected, where to look, and what does not work yet.
 
 | Piece | Details |
 |-------|---------|
-| Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`) |
+| Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the kubelets' cAdvisor, `flux-kube-state-metrics`, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`), and keeps only [the listed metrics](#only-listed-metrics-are-kept) |
 | Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, Loki, and `PostgreSQL-Homelab`, which still points at `k3s-worker1:5432`, where no PostgreSQL runs ([TODO](TODO.md#monitoring)) |
 | Loki | SingleBinary on a 10Gi `local-path` volume on k3s-worker3, caches off. local-path does not enforce the size and no retention is set, so it grows on that node's disk ([TODO](TODO.md#monitoring)) |
 | Alloy | A DaemonSet on every node, the disposable one included, that ships **pod** logs to Loki. Host journals are not collected |
@@ -22,16 +22,37 @@ kubectl get secret -n monitoring grafana-admin-credentials \
   -o jsonpath='{.data.admin-password}' | base64 -d
 ```
 
+## Only listed metrics are kept
+
+Prometheus keeps the metrics that something reads, and drops the rest as it scrapes
+([why](decisions.md#2026-10-17--prometheus-keeps-only-the-metrics-something-reads)). A dashboard
+or alert that needs another metric shows no data until the metric is added to its source's list,
+and its history starts from that commit.
+
+| Source | Read by | Its list |
+|--------|---------|----------|
+| node-exporter | the two node dashboards, and the record of a host that hung (disk I/O, pressure) | `prometheus-node-exporter` in the [kube-prometheus-stack HelmRelease](../infrastructure/monitoring/base/controllers/kube-prometheus-stack/release.yaml) |
+| kube-state-metrics | Kite, the planned alerts | `kube-state-metrics`, same file |
+| kubelet (cAdvisor) | Kite's pod and node charts, [traffic that skips ingress](#blind-spots) | `kubelet`, same file |
+| Traefik | App Usage | the `traefik` job, same file |
+| Flux controllers | Flux Cluster Stats | PodMonitor [`flux-system`](../infrastructure/monitoring/base/configs/podmonitor.yaml) |
+| `flux-kube-state-metrics` | Flux Cluster Stats, the planned alerts | none needed: it serves only `gotk_resource_info` |
+| cloudflared | the planned alerts | PodMonitor [`cloudflared`](../infrastructure/monitoring/base/configs/cloudflared-podmonitor.yaml) |
+
+The API server, scheduler, controller-manager, kube-proxy, etcd and CoreDNS are not scraped, and
+neither is the monitoring stack itself. The HelmRelease says why for the k3s components.
+
 ## Alerting reaches no one
 
 Alertmanager is off, so nothing notifies anyone: a hung disk or a failed backup is seen only by
-whoever looks ([TODO](TODO.md#monitoring)). The chart's default rules are loaded and evaluated.
-There are no custom rules
+whoever looks ([TODO](TODO.md#monitoring)). There are no rules either. The chart's defaults are
+off, because most of them read metrics that are no longer kept and three of their critical alerts
+never stopped firing on k3s. The custom ones were removed
 ([why](decisions.md#2026-10-11--custom-alert-rules-removed-until-they-have-a-purpose)).
 
 A new `PrometheusRule` goes in `infrastructure/monitoring/base/configs/` with the label
-`release: kube-prometheus-stack`. Check that Prometheus loaded it. The image has no `curl` or
-`wget`, so go through the API server rather than `kubectl exec`:
+`release: kube-prometheus-stack`, and can only use kept metrics. Check that Prometheus loaded it.
+The image has no `curl` or `wget`, so go through the API server rather than `kubectl exec`:
 
 ```bash
 kubectl get --raw /api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/rules \
@@ -55,11 +76,12 @@ metrics on `:2000` without declaring it, so its HelmRelease patches the port in 
 
 ## Flux metrics
 
-The controllers are scraped through the PodMonitor `flux-system` on port `http-prom`. The state of
-Flux objects (`gotk_resource_info`, behind the Flux Cluster Stats dashboard) comes from
-kube-state-metrics custom-resource state, configured twice: in the stack's own
-kube-state-metrics and in a separate `flux-kube-state-metrics` Deployment
-([TODO](TODO.md#monitoring)).
+The state of every Flux object (`gotk_resource_info`: ready, suspended, revision) comes from
+`flux-kube-state-metrics`, a kube-state-metrics Deployment that reads only the Flux kinds through
+custom-resource state ([its config](../infrastructure/monitoring/base/configs/flux-kube-state-metrics.yaml)).
+The stack's own kube-state-metrics does not collect it. The controllers themselves are scraped
+through the PodMonitor `flux-system` on port `http-prom`, for their reconcile durations. Both feed
+the Flux Cluster Stats dashboard.
 
 ## Is an app still used?
 
@@ -75,9 +97,7 @@ curl -s --get --data-urlencode 'query=sort_desc(sum by (service) (increase(traef
 ```
 
 Service labels look like `apps-immich-server-2283@kubernetes`: namespace, service, port. The
-Prometheus retention (`retention` in its HelmRelease) caps the window. A longer one needs a bigger
-volume first, and since that volume is `local-path`, growing it means recreating it and losing
-the history.
+window is capped by the Prometheus retention, a year (`retention` in its HelmRelease).
 
 ## Blind spots
 
