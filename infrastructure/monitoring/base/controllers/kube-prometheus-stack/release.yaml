@@ -73,7 +73,9 @@ spec:
               - url_file: /etc/alertmanager/secrets/healthchecks/watchdog
                 send_resolved: false
           # The URL ends in ?tpl=alertmanager: ntfy's built-in template turns Alertmanager's own
-          # body into the push's title and text
+          # body into the push's title and text. Alertmanager renders the URL as a template too,
+          # and the one in the Secret appends &p=4 while the group is firing: high priority, which
+          # iOS delivers as time-sensitive, through Focus. A resolved push keeps the default.
           - name: ntfy
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/ntfy/url

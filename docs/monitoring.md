@@ -49,8 +49,9 @@ sends each alert with an `area` label to both:
 
 - **ntfy.sh** pushes every change of an area's alerts to the ntfy app, titled with the alert's
   name and carrying its summary. ntfy's built-in template formats Alertmanager's own body, because
-  the URL ends in `?tpl=alertmanager`. The phone subscribes to the topic kept in the 1Password item
-  `ntfy`.
+  the URL ends in `?tpl=alertmanager`. A firing alert goes out at high priority, which the iPhone
+  shows as time-sensitive, through Focus; a resolved one at the default, which Focus silences. The
+  phone subscribes to the topic kept in the 1Password item `ntfy`.
 - **healthchecks.io** has one check per area. Alertmanager sends it a short body,
   `{"alerts":"<summary> (<alert>). …","status":"firing"}`, which the email quotes; the check reads
   `"status":"firing"` as down and `"status":"resolved"` as up. So an area emails once when it
@@ -64,6 +65,9 @@ sends each alert with an `area` label to both:
 | `alerts-cluster` | alerts with `area: cluster` | a pod crash-loops or runs out of memory, a workload is short of ready replicas, a Flux object has not been Ready for an hour, or a scrape target is down |
 | `alerts-tunnel` | alerts with `area: tunnel` | cloudflared has had no connection for 10 minutes |
 | `restic-*` | the four restic units on k3s-master | a run failed, or did not happen on time ([backup.md](backup.md#monitoring)) |
+
+healthchecks.io also pushes `watchdog` and the restic checks to the same ntfy topic. The `alerts-*`
+checks do not, because Alertmanager already pushes those with their text.
 
 The rules are in [alert-rules.yaml](../infrastructure/monitoring/base/configs/alert-rules.yaml),
 the routes in the kube-prometheus-stack HelmRelease, and the URLs in the 1Password items
