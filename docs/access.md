@@ -22,7 +22,6 @@ state (apps, groups, assignments) is not exported anywhere, so this page is its 
 | Hermes dashboard, `hermes.yuandrk.net` | Okta OIDC, Native app, public client with PKCE | Okta: assignment to `Andriuk corp`. Groups are read but not checked | None online: restore `basic_auth` over SSH ([hermes-dashboard.md](hermes-dashboard.md#basic_auth-is-gone)) |
 | Grafana, `grafana.yuandrk.net` | Local login | `grafana-admin-credentials` | The same login |
 | Immich, ActualBudget, n8n, Fleet | Each app's own login | Whatever is set in the app's UI, which is not in git | |
-| qBittorrent, `qbit.home.yuandrk.net` | Its own login | Tailnet, and the LAN through the `Host` header | |
 | SSH to the nodes | Keys only, on the [ports listed here](network-architecture.md#listening-ports) | `yuandrk`, who can then sudo without a password | |
 | Admin kubeconfig | `/etc/rancher/k3s/k3s.yaml` on k3s-master (root-only), copied to `~/.kube/config` | `system:masters`, readable by anything running as `yuandrk`, Hermes included ([hermes-sandbox.md](hermes-sandbox.md#what-this-is-and-is-not)) | |
 

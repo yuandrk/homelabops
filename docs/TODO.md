@@ -83,6 +83,8 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] k3s-master: drop the four `oidc-*` entries of `kube-apiserver-arg` in
       `/etc/rancher/k3s/config.yaml` at the next k3s restart, an upgrade for instance. They
       served only Headlamp
+- [ ] k3s-master: delete `/srv/media`, 19 GB of downloads that nothing reads since qBittorrent's
+      removal, or keep it on purpose and say so in the [removal log](decisions.md#removed-apps)
 - [ ] The `flux-system` PodMonitor still selects the removed image-automation and
       image-reflector controllers
 - [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists

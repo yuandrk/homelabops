@@ -72,11 +72,6 @@
       "groupName": "infra-images"
     },
     {
-      "description": "linuxserver/qbittorrent still carries legacy tags named after its Ubuntu base (14.x, 20.x). Renovate ranks those above the real 5.x releases, so PR #44 proposed 5.2.3 -> 20.04.1, an image last pushed 2021-11-29. Cap the range below the legacy tags.",
-      "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
-      "allowedVersions": "<14"
-    },
-    {
       "description": "Fleet supports MySQL 8.x only (tested against 8.4; 9.6.x is listed as incompatible). Docker Hub's mysql 26.x is Oracle's innovation track, and MySQL cannot downgrade an upgraded data dictionary in place. PR #65 proposed 8.4.11 -> 26.7.0.",
       "matchPackageNames": ["mysql"],
       "allowedVersions": "<8.5"

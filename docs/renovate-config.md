@@ -35,7 +35,6 @@ schedule.
 
   | Package | Trap | Guard |
   |---------|------|-------|
-  | `lscr.io/linuxserver/qbittorrent` | Legacy tags named after its Ubuntu base (14.x, 20.x) rank above the real 5.x releases | `allowedVersions: "<14"` |
   | `mysql` (Fleet) | 26.x is Oracle's innovation track. Fleet supports 8.x only, and MySQL cannot downgrade an upgraded data dictionary in place | `allowedVersions: "<8.5"` |
   | `valkey/valkey` | A short tag such as `9.2-alpine` can point at a release candidate | Pin full versions (`9.1.2-alpine`); Renovate skips the `-rcN` tags |
   | `n8nio/n8n` | Betas use plain semver tags | None. Before merging, check that the tag's digest matches `n8nio/n8n:stable` |

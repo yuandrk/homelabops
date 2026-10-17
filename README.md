@@ -105,7 +105,6 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 | [Grafana](https://grafana.com) | Metrics and log dashboards | Internet: `grafana.yuandrk.net` |
 | [Kite](https://github.com/kite-org/kite) | Kubernetes UI, Okta login | Internet: `kite.yuandrk.net` |
 | Hermes dashboard | The AI agent's control panel, a host process behind Traefik | Internet: `hermes.yuandrk.net`, Okta login |
-| [qBittorrent](https://www.qbittorrent.org) | Torrent client | Tailnet only: `qbit.home.yuandrk.net` |
 | SearXNG, browserless | Search and headless Chromium for the agent | Inside the cluster only |
 
 **Platform:** Flux, Traefik, cloudflared, the 1Password operator, kube-prometheus-stack, Loki and

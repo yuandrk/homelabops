@@ -41,7 +41,7 @@ pod to the node where the volume was first created. These are pinned on purpose:
 
 | Workload | Node | Why |
 |----------|------|-----|
-| ActualBudget, qBittorrent | k3s-master | Their data is a hostPath under `/srv/data` and `/srv/media` |
+| ActualBudget | k3s-master | Its data is a hostPath under `/srv/data` |
 | Immich server, machine learning, Valkey | k3s-worker3 | The server uses the Intel iGPU for hardware transcoding. The library comes over NFS from k3s-master |
 | Fleet, its MySQL and Valkey | k3s-worker3 | The Fleet image is amd64-only, and MySQL on `local-path` must not land on the Pi |
 | Hermes sandbox jobs and services | k3s-worker3 | The only node with real headroom |
@@ -94,7 +94,7 @@ deploy. See [gitops.md](gitops.md), [terraform-guide.md](terraform-guide.md) and
 flowchart LR
     subgraph master["k3s-master"]
         data["/srv/data<br/>Immich library, ActualBudget"]
-        pvcs["local-path volumes<br/>n8n, Kite, qBittorrent config"]
+        pvcs["local-path volumes<br/>n8n, Kite"]
         restic["restic<br/>systemd timers"]
     end
     subgraph worker3["k3s-worker3"]

@@ -127,7 +127,7 @@ Order: `infrastructure` first, then `secrets` and `infrastructure-networking`; `
 `CreateContainerConfigError` until the `secrets` Kustomization has run (see
 [secrets.md](../secrets.md#adding-a-secret)).
 
-For n8n, Kite and qBittorrent:
+For n8n and Kite:
 
 ```bash
 flux suspend kustomization apps          # otherwise Flux scales the app back up
@@ -154,7 +154,7 @@ flux resume kustomization apps          # scales the app back up
 ## 8. Check
 
 - `flux get all -A`: everything `Ready`.
-- `https://photos.yuandrk.net` and `https://budget.yuandrk.net` load from outside, and
-  `qbit.home.yuandrk.net` loads from a tailnet device.
+- `https://photos.yuandrk.net` and `https://budget.yuandrk.net` load from outside, and a tailnet
+  device reaches k3s-master at `100.96.117.64`.
 - Immich shows the library, which means worker3 mounted the NFS export.
 - The next morning, `journalctl -u restic-backup -u restic-b2-backup` shows both runs succeeded.

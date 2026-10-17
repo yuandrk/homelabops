@@ -3,9 +3,8 @@ description: Scaffold a new app under apps/<name>/base and register it with Flux
 argument-hint: "<name> [port] [storageGi]"
 ---
 
-Scaffold a new application following the existing app pattern (see `apps/n8n/base/` and
-`apps/qbittorrent/base/`). Do NOT apply anything to the cluster — only create files and let
-Flux deploy on the next reconcile.
+Scaffold a new application following the existing app pattern (see `apps/n8n/base/`). Do NOT
+apply anything to the cluster — only create files and let Flux deploy on the next reconcile.
 
 Arguments:
 - `$1` = app name (required, lowercase-kebab) — used as the resource name, label, and namespace stays `apps`.

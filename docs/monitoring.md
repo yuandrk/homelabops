@@ -83,8 +83,9 @@ the history.
 
 Cross-check these before deleting anything:
 
-- **Traffic that skips ingress.** qBittorrent seeds over the torrent protocol while its web UI
-  sits at zero requests, so check `container_network_transmit_bytes_total`. A ClusterIP-only
+- **Traffic that skips ingress.** An app can be busy on another protocol, a torrent client
+  seeding say, while its web UI sits at zero requests, so check
+  `container_network_transmit_bytes_total`. A ClusterIP-only
   service never appears in Traefik's numbers: read its logs, e.g.
   `kubectl logs -n apps deploy/<app> | grep -v /health`.
 - **Host processes.** restic, Tailscale, the NFS server, PostgreSQL and Hermes are visible only

@@ -98,7 +98,7 @@ spec:
 #
 # 10.42.0.0/31 is therefore the rule that matters: it is exactly flannel.1 (.0) and cni0 (.1) on
 # k3s-master, and nothing else. A /24 here would have quietly granted ingress to every pod
-# scheduled on master — Traefik, CoreDNS, cloudflared, qBittorrent — which is not the intent.
+# scheduled on master — Traefik, CoreDNS, cloudflared, ActualBudget — which is not the intent.
 # 10.10.0.0/24, the node link network, is kept as a fallback for paths that do not go through
 # flannel. Scoped to role=service so disposable Jobs stay unreachable from outside the namespace.
 #

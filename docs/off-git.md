@@ -20,7 +20,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | Upstream DNS for pods | `/etc/k3s-resolv.conf`, named by `resolv-conf` in the k3s config. Every node has one | **Not recorded**: its contents |
 | Cluster datastore and join token | `/var/lib/rancher/k3s/server/`: SQLite in `db/state.db` (a stale `etcd/` directory sits next to it), the token in `token` | none. Git recreates the objects, but a new server means a new token, and every worker has to re-join ([TODO](TODO.md#backups)) |
 | Important data: Immich library, ActualBudget | `/srv/data/{immich,actualbudget}` | restic, local and B2 |
-| local-path volumes: n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | restic. A new cluster gives them new names, see [the rebuild runbook](runbooks/rebuild-k3s-master.md#2-data-before-anything-writes-to-it) |
+| local-path volumes: n8n, Kite | `/var/lib/rancher/k3s/storage/pvc-*` | restic. A new cluster gives them new names, see [the rebuild runbook](runbooks/rebuild-k3s-master.md#2-data-before-anything-writes-to-it) |
 | NFS export of the Immich library to k3s-worker3 | `/etc/exports.d/immich.exports` | doc: [backup.md](backup.md#where-the-data-lives) |
 | restic: env files, password file, four timers, SSH key and alias for worker1 | `/etc/restic/`, `restic-*.{service,timer}`, `/root/.ssh/` | password and B2 key in 1Password, the rest is described in [backup.md](backup.md) |
 | Tailscale node and subnet router for `10.10.0.0/24`, address `100.96.117.64`. Key expiry is off and the route is approved | `tailscaled` | doc: [network-architecture.md](network-architecture.md#tailscale). The address is also hardcoded in Terraform (`internal_ingress_ip`) |
@@ -29,7 +29,7 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | Samba | `smbd` and `nmbd`, listening on `10.10.0.1:139/445`: the wired LAN, and the tailnet through the subnet route | **Not recorded**: the shares in `/etc/samba/smb.conf`, and who uses them |
 | Syncthing | user unit `syncthing.service`, listening on `*:22000`, web UI on `127.0.0.1:8384` | **Not recorded**: which folders it syncs, with which devices |
 | Obsidian vault backup | user units `vault-backup.*`, key in `~/.restic-env` | goes to B2 bucket `obsidian-backup-yuandrk` |
-| Media | `/srv/media` (qBittorrent downloads, old Jellyfin files) | none, by design: re-downloadable |
+| Downloads left behind by the removed qBittorrent, Jellyfin's old library among them | `/srv/media` | none, by design: re-downloadable ([TODO](TODO.md#cleanup)) |
 
 ## Every node
 

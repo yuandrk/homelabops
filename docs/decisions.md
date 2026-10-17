@@ -163,6 +163,7 @@ of this login.
 
 | Date | App | Why | Left behind |
 |------|-----|-----|-------------|
+| 2026-10-17 | qBittorrent | Not wanted; 0 web UI requests in 14 days | 19 GB of downloads at `/srv/media` on k3s-master ([TODO](TODO.md#cleanup)) |
 | 2026-10-11 | Headlamp | Not used; Kite covers the Kubernetes UI | the API server's OIDC flags on k3s-master, vault items `headlamp-oidc-okta` and `headlamp-token` ([TODO](TODO.md#cleanup)) |
 | 2026-08-08 | Glance | Dashboard on NodePort 30081, not wanted after a week | nothing (its vault item was gone by 2026-10-11) |
 | 2026-08-08 | Perlite | Read-only Obsidian vault viewer, not wanted after trying it | nothing (the vault was mounted read-only) |
