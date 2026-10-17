@@ -28,7 +28,7 @@ Two rules came out of it:
 | Immich library: originals, uploads, Immich's own nightly DB dumps (`backups/`), thumbs, encoded video | `/srv/data/immich` | NFS. `immich-server` stays on k3s-worker3 for the Intel iGPU. Static PV `immich-library-master` in [apps/immich/base/pv.yaml](../apps/immich/base/pv.yaml) |
 | ActualBudget (SQLite) | `/srv/data/actualbudget` | hostPath, Deployment pinned to k3s-master |
 | n8n, Kite, qBittorrent config | `/var/lib/rancher/k3s/storage/pvc-*` | local-path PVCs |
-| Database dumps taken by hand before an upgrade that migrates a DB (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted |
+| Database dumps taken by hand: before an upgrade that migrates a DB, or after an app is stopped (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted |
 
 The NFS export is host config outside git:
 
@@ -44,8 +44,8 @@ The NFS export is host config outside git:
 
 - `/srv/media`: re-downloadable media.
 - The PostgreSQL on k3s-worker3. Immich's database is covered by Immich's own dumps in
-  `library/backups`; n8n's only by the dumps taken by hand before an upgrade, in
-  `/srv/data/db-dumps`.
+  `library/backups`; n8n's only by the dumps taken by hand, in `/srv/data/db-dumps`. n8n is
+  scaled to zero, so the last one, taken after it stopped, is complete.
 - The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus, Loki.
 - Hermes' home `~/.hermes` on k3s-master: its config, API keys and memory.
 - Cluster state: git is the source of truth, apart from what [off-git.md](off-git.md) lists.

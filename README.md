@@ -100,7 +100,7 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 |---------|--------------|----------------|
 | [Immich](https://immich.app) | Photo and video library | Internet: `photos.yuandrk.net` |
 | [ActualBudget](https://actualbudget.org) | Personal budgeting | Internet: `budget.yuandrk.net` |
-| [n8n](https://n8n.io) | Workflow automation | Internet: `n8n.yuandrk.net` |
+| [n8n](https://n8n.io) | Workflow automation, scaled to zero while unused | Internet: `n8n.yuandrk.net` |
 | [Fleet](https://fleetdm.com) | osquery device management | Internet: `fleet.yuandrk.net` |
 | [Grafana](https://grafana.com) | Metrics and log dashboards | Internet: `grafana.yuandrk.net` |
 | [Kite](https://github.com/kite-org/kite) | Kubernetes UI, Okta login | Internet: `kite.yuandrk.net` |

@@ -6,7 +6,9 @@ metadata:
   labels:
     app: n8n
 spec:
-  replicas: 1
+  # Scaled to zero on 2026-10-17 while unused. Its workflows stay in its database on
+  # k3s-worker3; read docs/TODO.md#backups before setting this back to 1.
+  replicas: 0
   selector:
     matchLabels:
       app: n8n
