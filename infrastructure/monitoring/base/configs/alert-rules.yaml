@@ -1,7 +1,9 @@
-# The alerts worth an email (docs/monitoring.md#alerts). Each one needs an `area` label: Alertmanager
-# routes on it to the matching check on healthchecks.io, and an alert without it reaches no one.
-# The rules can only read the kept metrics. Thresholds were replayed against two weeks of data,
-# so that they fire on real breakage: worker1 hanging on 2026-10-05, Flux stalled for days after.
+# The alerts worth a notification (docs/monitoring.md#alerts). Each one needs an `area` label:
+# Alertmanager routes on it to the phone and to the matching check on healthchecks.io, and an alert
+# without it reaches no one. Every expression aggregates down to the labels a reader needs, so a
+# push or an email names the node or the workload rather than the scrape target. The rules can
+# only read the kept metrics. Thresholds were replayed against two weeks of data, so that they fire
+# on real breakage: worker1 hanging on 2026-10-05, Flux stalled for days after.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -22,77 +24,103 @@ spec:
     - name: nodes
       rules:
         - alert: NodeNotReady
-          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          expr: max by (node) (kube_node_status_condition{condition="Ready",status="true"}) == 0
           for: 5m
           labels:
             area: nodes
+            severity: critical
           annotations:
             summary: "{{ $labels.node }} is not Ready"
         - alert: NodeDiskAlmostFull
           expr: |
-            node_filesystem_avail_bytes{fstype!~"tmpfs|vfat"} / node_filesystem_size_bytes{fstype!~"tmpfs|vfat"}
-              * on (instance) group_left (nodename) node_uname_info < 0.10
+            min by (nodename, mountpoint) (
+              node_filesystem_avail_bytes{fstype!~"tmpfs|vfat"} / node_filesystem_size_bytes{fstype!~"tmpfs|vfat"}
+                * on (instance) group_left (nodename) node_uname_info
+            ) < 0.10
           for: 15m
           labels:
             area: nodes
+            severity: warning
           annotations:
             summary: "{{ $labels.nodename }}: {{ $labels.mountpoint }} has less than 10% free"
         - alert: NodeMemoryLow
           expr: |
-            node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
-              * on (instance) group_left (nodename) node_uname_info < 0.10
+            min by (nodename) (
+              node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+                * on (instance) group_left (nodename) node_uname_info
+            ) < 0.10
           for: 15m
           labels:
             area: nodes
+            severity: warning
           annotations:
             summary: "{{ $labels.nodename }} has less than 10% of its memory available"
         # k3s-master peaks at 89 °C under load; nothing stayed above 90 °C for 15 minutes
         - alert: NodeOverheating
           expr: |
-            max by (instance) (node_hwmon_temp_celsius or node_thermal_zone_temp)
-              * on (instance) group_left (nodename) node_uname_info > 90
+            max by (nodename) (
+              (node_hwmon_temp_celsius or node_thermal_zone_temp)
+                * on (instance) group_left (nodename) node_uname_info
+            ) > 90
           for: 15m
           labels:
             area: nodes
+            severity: warning
           annotations:
             summary: "{{ $labels.nodename }} is above 90 °C"
 
     - name: cluster
       rules:
         - alert: PodCrashLooping
-          expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[10m]) >= 1
+          expr: |
+            max by (namespace, pod, container) (
+              max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[10m])
+            ) >= 1
           for: 15m
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is crash-looping"
         - alert: ContainerOOMKilled
           expr: |
-            (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 15m >= 1)
-              and ignoring (reason) kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+            max by (namespace, pod, container) (
+              (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 15m >= 1)
+                and ignoring (reason) kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+            )
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) ran out of memory and restarted"
         - alert: DeploymentUnavailable
-          expr: kube_deployment_status_replicas_available < kube_deployment_spec_replicas
+          expr: |
+            max by (namespace, deployment) (kube_deployment_spec_replicas)
+              > max by (namespace, deployment) (kube_deployment_status_replicas_available)
           for: 15m
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.deployment }} has fewer replicas available than it wants"
         - alert: StatefulSetUnavailable
-          expr: kube_statefulset_status_replicas_ready < kube_statefulset_replicas
+          expr: |
+            max by (namespace, statefulset) (kube_statefulset_replicas)
+              > max by (namespace, statefulset) (kube_statefulset_status_replicas_ready)
           for: 15m
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.statefulset }} has fewer replicas ready than it wants"
         - alert: DaemonSetUnavailable
-          expr: kube_daemonset_status_number_ready < kube_daemonset_status_desired_number_scheduled
+          expr: |
+            max by (namespace, daemonset) (kube_daemonset_status_desired_number_scheduled)
+              > max by (namespace, daemonset) (kube_daemonset_status_number_ready)
           for: 15m
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.daemonset }} is not ready on every node it should run on"
         # An OCI HelmRepository has no Ready condition, so only explicit False or Unknown counts.
@@ -102,14 +130,16 @@ spec:
           for: 1h
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "{{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has not been Ready for an hour"
         # Also the alarm for the alarms: without kube-state-metrics most of the rules above go quiet
         - alert: TargetDown
-          expr: up == 0
+          expr: max by (job, instance) (up) == 0
           for: 15m
           labels:
             area: cluster
+            severity: warning
           annotations:
             summary: "Prometheus cannot scrape {{ $labels.job }} at {{ $labels.instance }}"
 
@@ -120,5 +150,6 @@ spec:
           for: 10m
           labels:
             area: tunnel
+            severity: critical
           annotations:
             summary: cloudflared has no connection to Cloudflare, so the public hostnames are down

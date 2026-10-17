@@ -9,7 +9,7 @@ What is collected, where to look, and what does not work yet.
 | Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the kubelets' cAdvisor, `flux-kube-state-metrics`, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`), and keeps only [the listed metrics](#only-listed-metrics-are-kept) |
 | Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, and `PostgreSQL-Homelab`, which still points at `k3s-worker1:5432`, where no PostgreSQL runs ([TODO](TODO.md#monitoring)) |
 | Logs | Not stored ([why](decisions.md#2026-10-17--no-log-store)). `kubectl logs` reads what the kubelet keeps on the node for a running container, `--previous` the one before its last restart, and both go with the pod. Host services log to `journalctl` on their node |
-| Alertmanager | amd64 nodes only. Hands every alert to healthchecks.io, which sends the email ([below](#alerts)) |
+| Alertmanager | amd64 nodes only. Hands every alert to ntfy.sh and healthchecks.io, which push and email it ([below](#alerts)) |
 
 Dashboards are ConfigMaps in `infrastructure/monitoring/base/configs/`, loaded by the Grafana
 sidecar. Without the tunnel:
@@ -43,12 +43,19 @@ neither is the monitoring stack itself. The HelmRelease says why for the k3s com
 
 ## Alerts
 
-Alerts arrive as emails from healthchecks.io, outside the house
-([why](decisions.md#2026-10-17--alerts-arrive-by-email-from-healthchecksio)). Alertmanager sends
-each alert, by its `area` label, to one check there. The check reads `"status":"firing"` in the
-request as down and `"status":"resolved"` as up, so an area emails once when it breaks and once
-when it is whole again. While an area is down, a second alert in it sends no new email; the
-check's event log on healthchecks.io lists every one.
+Alerts arrive as pushes on the phone and as emails, both from services outside the house
+([why](decisions.md#2026-10-17--alerts-by-push-and-by-email-without-a-chat-app)). Alertmanager
+sends each alert with an `area` label to both:
+
+- **ntfy.sh** pushes every change of an area's alerts to the ntfy app, titled with the alert's
+  name and carrying its summary. ntfy's built-in template formats Alertmanager's own body, because
+  the URL ends in `?tpl=alertmanager`. The phone subscribes to the topic kept in the 1Password item
+  `ntfy`.
+- **healthchecks.io** has one check per area. Alertmanager sends it a short body,
+  `{"alerts":"<summary> (<alert>). …","status":"firing"}`, which the email quotes; the check reads
+  `"status":"firing"` as down and `"status":"resolved"` as up. So an area emails once when it
+  breaks and once when it is whole again. While it is down, a second alert in it still pushes but
+  sends no new email; the check's event log lists every one.
 
 | Check | Fed by | Emails when |
 |-------|--------|-------------|
@@ -59,8 +66,8 @@ check's event log on healthchecks.io lists every one.
 | `restic-*` | the four restic units on k3s-master | a run failed, or did not happen on time ([backup.md](backup.md#monitoring)) |
 
 The rules are in [alert-rules.yaml](../infrastructure/monitoring/base/configs/alert-rules.yaml),
-the routes in the kube-prometheus-stack HelmRelease, and the ping URLs in the 1Password item
-`healthchecks`, which reaches Alertmanager as the Secret `healthchecks`.
+the routes in the kube-prometheus-stack HelmRelease, and the URLs in the 1Password items
+`healthchecks` and `ntfy`, which reach Alertmanager as Secrets of the same names.
 [runbooks/healthchecks.py](runbooks/healthchecks.py) recreates the checks and the item. The
 chart's default rules are off: most of them read metrics that are no longer kept, and three of
 their critical alerts never stopped firing on k3s.

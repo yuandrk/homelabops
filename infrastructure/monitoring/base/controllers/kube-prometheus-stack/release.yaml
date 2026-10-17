@@ -30,15 +30,16 @@ spec:
     # into it first (docs/monitoring.md#only-listed-metrics-are-kept).
     defaultRules:
       create: false
-    # Alerts leave as emails from healthchecks.io: each area is one check there, whose keyword
-    # filter reads Alertmanager's "status" as down or up (docs/monitoring.md#alerts). The ping URLs
-    # come from the healthchecks Secret, mounted under /etc/alertmanager/secrets/.
+    # Alerts leave as pushes through ntfy.sh and as emails from healthchecks.io
+    # (docs/monitoring.md#alerts). Each area is one check on healthchecks.io, whose keyword filter
+    # reads the "status" of the short body below as down or up. The URLs come from the healthchecks
+    # and ntfy Secrets, mounted under /etc/alertmanager/secrets/.
     alertmanager:
       enabled: true
       serviceMonitor:
         selfMonitor: false
       alertmanagerSpec:
-        secrets: [healthchecks]
+        secrets: [healthchecks, ntfy]
         nodeSelector:
           kubernetes.io/arch: amd64
       config:
@@ -55,6 +56,10 @@ spec:
               group_wait: 0s
               group_interval: 1m
               repeat_interval: 2m
+            # Every area alert goes to the phone too, then on to its email below
+            - receiver: ntfy
+              matchers: ['area =~ "nodes|cluster|tunnel"']
+              continue: true
             - receiver: alerts-nodes
               matchers: ['area = "nodes"']
             - receiver: alerts-cluster
@@ -67,18 +72,34 @@ spec:
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/watchdog
                 send_resolved: false
+          # The URL ends in ?tpl=alertmanager: ntfy's built-in template turns Alertmanager's own
+          # body into the push's title and text
+          - name: ntfy
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/ntfy/url
+                send_resolved: true
+          # healthchecks.io puts the body in its email, so it is cut down to the alerts' summaries
           - name: alerts-nodes
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-nodes
                 send_resolved: true
+                payload:
+                  status: '{{ .Status }}'
+                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
           - name: alerts-cluster
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-cluster
                 send_resolved: true
+                payload:
+                  status: '{{ .Status }}'
+                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
           - name: alerts-tunnel
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-tunnel
                 send_resolved: true
+                payload:
+                  status: '{{ .Status }}'
+                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
     # k3s runs the control plane in one process. The API server's metrics came back from both the
     # apiserver and the kubelet endpoint, and scheduler, controller-manager, proxy and etcd (k3s
     # uses SQLite) have no endpoint to scrape, so those targets only ever fired "down" alerts.

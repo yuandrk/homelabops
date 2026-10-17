@@ -108,7 +108,8 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 | SearXNG, browserless | Search and headless Chromium for the agent | Inside the cluster only |
 
 **Platform:** Flux, Traefik, cloudflared, the 1Password operator and kube-prometheus-stack in the
-cluster, with restic and Tailscale on the host. Alerts arrive by email from healthchecks.io.
+cluster, with restic and Tailscale on the host. Alerts arrive as ntfy pushes and as emails from
+healthchecks.io.
 
 ## Principles
 

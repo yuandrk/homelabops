@@ -17,17 +17,19 @@ change would make a future reader ask "why on earth…?".
 
 ## Log
 
-### 2026-10-17 · Alerts arrive by email from healthchecks.io
+### 2026-10-17 · Alerts by push and by email, without a chat app
 
-No chat app was wanted for alerts. Alertmanager sends every alert to healthchecks.io, whose
-email is the only channel, and the restic units on k3s-master report there too. Because the
-service is outside the house, the always-firing Watchdog doubles as a dead man's switch: if the
-cluster, the power or the internet goes, the silence is what sends the email. No mail password
-lives in the cluster, only ping URLs.
+No chat app was wanted for alerts. Alertmanager sends every alert to two services outside the
+house: ntfy.sh, which pushes it to the ntfy app on the phone, and healthchecks.io, which emails
+it. The restic units on k3s-master report to healthchecks.io too. Because that service is outside
+the house, the always-firing Watchdog doubles as a dead man's switch: if the cluster, the power or
+the internet goes, the silence is what sends the email. No password lives in the cluster: ntfy.sh
+needs no account, and both URLs come from 1Password.
 
-- **Cost:** one email per area while it stays down, so a second alert in the same area is visible
-  only in the check's log; the email carries the start of Alertmanager's JSON rather than a
-  written message. The free plan allows 20 checks, and the homelab uses 8.
+- **Cost:** two public services in the alert path. Anyone who learns the ntfy topic can read the
+  pushes and send to it, so the topic is random and kept in 1Password. healthchecks.io emails once
+  per area while it stays down, so a second alert there arrives only as a push. Its free plan
+  allows 20 checks, and the homelab uses 8.
 - [monitoring.md](monitoring.md#alerts)
 
 ### 2026-10-17 · No log store
