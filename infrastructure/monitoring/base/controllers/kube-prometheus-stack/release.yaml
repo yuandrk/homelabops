@@ -72,6 +72,10 @@ spec:
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/watchdog
                 send_resolved: false
+          # Alertmanager renders each payload below and then reads the result as YAML, where any
+          # "text: more" would turn into a map. So each one renders a whole JSON object at once,
+          # with toJson quoting every text.
+          #
           # The push is written here. The URL in the Secret turns on ntfy's inline templates and
           # maps title, message and priority to the fields below (?tpl=yes&t={{.title}}&m=...,
           # percent-encoded). ntfy's own ?tpl=alertmanager ignores the priority until ntfy.sh runs
@@ -81,35 +85,44 @@ spec:
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/ntfy/url
                 send_resolved: true
-                payload:
-                  title: '{{ if eq .Status "firing" }}🚨 {{ .GroupLabels.area }}: {{ if eq (len .Alerts.Firing) 1 }}{{ (index .Alerts.Firing 0).Labels.alertname }}{{ else }}{{ len .Alerts.Firing }} alerts{{ end }}{{ else }}✅ {{ .GroupLabels.area }}: resolved{{ end }}'
-                  message: |-
-                    {{ range .Alerts.Firing }}{{ .Annotations.summary }}
-                    {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }}
-                    {{ end }}
-                  priority: '{{ if eq .Status "firing" }}4{{ else }}3{{ end }}'
+                payload: |-
+                  {{- $title := printf "✅ %s: resolved" .GroupLabels.area -}}
+                  {{- if eq .Status "firing" -}}
+                    {{- $title = printf "🚨 %s: %d alerts" .GroupLabels.area (len .Alerts.Firing) -}}
+                    {{- if eq (len .Alerts.Firing) 1 }}{{ $title = printf "🚨 %s: %s" .GroupLabels.area (index .Alerts.Firing 0).Labels.alertname }}{{ end -}}
+                  {{- end -}}
+                  {{- $message := "" -}}
+                  {{- range .Alerts.Firing }}{{ $message = printf "%s%s\n" $message .Annotations.summary }}{{ end -}}
+                  {{- range .Alerts.Resolved }}{{ $message = printf "%sResolved: %s\n" $message .Annotations.summary }}{{ end -}}
+                  {"title": {{ $title | toJson }}, "message": {{ $message | toJson }}, "priority": {{ if eq .Status "firing" }}4{{ else }}3{{ end }}}
           # healthchecks.io puts the body in its email, so it is cut down to the alerts' summaries
           - name: alerts-nodes
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-nodes
                 send_resolved: true
-                payload:
-                  status: '{{ .Status }}'
-                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
+                payload: |-
+                  {{- $alerts := "" -}}
+                  {{- range .Alerts.Firing }}{{ $alerts = printf "%s%s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {{- range .Alerts.Resolved }}{{ $alerts = printf "%sResolved: %s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {"status": {{ .Status | toJson }}, "alerts": {{ $alerts | toJson }}}
           - name: alerts-cluster
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-cluster
                 send_resolved: true
-                payload:
-                  status: '{{ .Status }}'
-                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
+                payload: |-
+                  {{- $alerts := "" -}}
+                  {{- range .Alerts.Firing }}{{ $alerts = printf "%s%s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {{- range .Alerts.Resolved }}{{ $alerts = printf "%sResolved: %s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {"status": {{ .Status | toJson }}, "alerts": {{ $alerts | toJson }}}
           - name: alerts-tunnel
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/alerts-tunnel
                 send_resolved: true
-                payload:
-                  status: '{{ .Status }}'
-                  alerts: '{{ range .Alerts.Firing }}{{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }} ({{ .Labels.alertname }}). {{ end }}'
+                payload: |-
+                  {{- $alerts := "" -}}
+                  {{- range .Alerts.Firing }}{{ $alerts = printf "%s%s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {{- range .Alerts.Resolved }}{{ $alerts = printf "%sResolved: %s (%s). " $alerts .Annotations.summary .Labels.alertname }}{{ end -}}
+                  {"status": {{ .Status | toJson }}, "alerts": {{ $alerts | toJson }}}
     # k3s runs the control plane in one process. The API server's metrics came back from both the
     # apiserver and the kubelet endpoint, and scheduler, controller-manager, proxy and etcd (k3s
     # uses SQLite) have no endpoint to scrape, so those targets only ever fired "down" alerts.
