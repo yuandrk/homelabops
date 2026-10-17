@@ -45,7 +45,7 @@ The NFS export is host config outside git:
 - The PostgreSQL on k3s-worker3. Immich's database is covered by Immich's own dumps in
   `library/backups`; n8n's only by the dumps taken by hand, in `/srv/data/db-dumps`. n8n is
   scaled to zero, so the last one, taken after it stopped, is complete.
-- The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus, Loki.
+- The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus.
 - Hermes' home `~/.hermes` on k3s-master: its config, API keys and memory.
 - Cluster state: git is the source of truth, apart from what [off-git.md](off-git.md) lists.
 

@@ -378,8 +378,7 @@ for h in json.load(sys.stdin)["items"]:
 c_monitoring() {
   echo "## which Flux Kustomization last applied each object (label kustomize.toolkit.fluxcd.io/name)"
   local o
-  for o in helmrelease/kube-prometheus-stack helmrelease/loki helmrelease/alloy \
-    podmonitor/flux-system deploy/flux-kube-state-metrics; do
+  for o in helmrelease/kube-prometheus-stack podmonitor/flux-system deploy/flux-kube-state-metrics; do
     printf '%s: %s\n' "$o" "$(k -n monitoring get "$o" -o jsonpath='{.metadata.labels.kustomize\.toolkit\.fluxcd\.io/name}' 2>&1)"
   done
   echo "## Prometheus rule selector"
@@ -395,9 +394,6 @@ except Exception:
     print(raw[:300])'
   echo "## Alertmanagers"
   k get alertmanagers.monitoring.coreos.com -A 2>&1
-  echo "## Loki retention settings"
-  k -n monitoring get cm loki -o jsonpath='{.data.config\.yaml}' 2>&1 |
-    grep -nE 'retention|compactor|delete_request' || echo "nothing about retention in configmap loki"
 }
 
 c_storage() {

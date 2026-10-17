@@ -90,7 +90,7 @@ Requests, changes and data each take one path, and the rule for each is written 
 | | `k3s-master` | `k3s-worker3` | `k3s-worker1` |
 |---|---|---|---|
 | **Hardware** | i3-7100U, 16 GB, 1 TB NVMe | i5-8265U, 16 GB, 512 GB NVMe, Intel iGPU + NVIDIA MX130 | Raspberry Pi 4, 4 GB, 1 TB USB SSD |
-| **Runs** | Control plane, all important data, NFS server, Tailscale router, backups, the Hermes agent | Immich with hardware transcoding, Fleet, PostgreSQL, Prometheus, Loki | DaemonSets and the local backup repository: a *disposable* node |
+| **Runs** | Control plane, all important data, NFS server, Tailscale router, backups, the Hermes agent | Immich with hardware transcoding, Fleet, PostgreSQL, Prometheus | DaemonSets and the local backup repository: a *disposable* node |
 
 A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu 24.04 throughout.
 
@@ -102,13 +102,13 @@ A wired gigabit LAN for cluster traffic, home Wi-Fi for the internet, and Ubuntu
 | [ActualBudget](https://actualbudget.org) | Personal budgeting | Internet: `budget.yuandrk.net` |
 | [n8n](https://n8n.io) | Workflow automation, scaled to zero while unused | Internet: `n8n.yuandrk.net` |
 | [Fleet](https://fleetdm.com) | osquery device management | Internet: `fleet.yuandrk.net` |
-| [Grafana](https://grafana.com) | Metrics and log dashboards | Internet: `grafana.yuandrk.net` |
+| [Grafana](https://grafana.com) | Metrics dashboards | Internet: `grafana.yuandrk.net` |
 | [Kite](https://github.com/kite-org/kite) | Kubernetes UI, Okta login | Internet: `kite.yuandrk.net` |
 | Hermes dashboard | The AI agent's control panel, a host process behind Traefik | Internet: `hermes.yuandrk.net`, Okta login |
 | SearXNG, browserless | Search and headless Chromium for the agent | Inside the cluster only |
 
-**Platform:** Flux, Traefik, cloudflared, the 1Password operator, kube-prometheus-stack, Loki and
-Alloy in the cluster, with restic and Tailscale on the host.
+**Platform:** Flux, Traefik, cloudflared, the 1Password operator and kube-prometheus-stack in the
+cluster, with restic and Tailscale on the host.
 
 ## Principles
 

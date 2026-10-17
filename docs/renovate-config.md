@@ -42,9 +42,9 @@ schedule.
 
 - **A closed PR blocks that exact version.** Only a newer release gets a new PR. To get a closed
   one back, reopen it from the Dependency Dashboard.
-- **The infrastructure charts float.** All six infrastructure HelmReleases
-  (kube-prometheus-stack, Loki, Alloy, cloudflared, the 1Password operator, the NFS
-  provisioner) use `version: ">=x"`. helm-controller installs the newest matching chart on its
+- **The infrastructure charts float.** All four infrastructure HelmReleases
+  (kube-prometheus-stack, cloudflared, the 1Password operator, the NFS provisioner) use
+  `version: ">=x"`. helm-controller installs the newest matching chart on its
   next run, **major versions included**, with no PR and no review, so the `infra-helm-charts`
   group never fires. Only the app charts (Immich, Fleet) are pinned
   ([TODO](TODO.md#reliability)).

@@ -3,5 +3,3 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - kube-prometheus-stack
-  - loki
-  - alloy

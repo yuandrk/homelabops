@@ -26,9 +26,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 - [ ] Alerting: the rules worth waking up for, and a way to deliver them (Alertmanager, or a
       Grafana contact point). A failed backup comes first: today it only shows up in `journalctl`
-- [ ] Set a Loki retention. Nothing sets one and local-path does not cap the 10Gi volume, so
-      logs pile up on k3s-worker3's root filesystem. If it fills, the kubelet starts evicting pods
-      there, and the native PostgreSQL on that disk runs out of space as well
 - [ ] Grafana's `PostgreSQL-Homelab` datasource points at `k3s-worker1:5432`, where nothing
       listens: point it at k3s-worker3 or delete it
       (`infrastructure/monitoring/base/configs/datasources/postgres-datasource.yaml`)
@@ -37,7 +34,7 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Reliability
 
-- [ ] Pin the six infrastructure charts to exact versions, so major upgrades arrive as
+- [ ] Pin the four infrastructure charts to exact versions, so major upgrades arrive as
       Renovate PRs instead of installing themselves, and pin cloudflared's image tag
       ([renovate-config.md](renovate-config.md#traps))
 - [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
@@ -52,7 +49,7 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 ## Resources
 
 - [ ] k3s-worker3 memory overcommit: the Immich server limit is 8Gi, consider 6Gi
-- [ ] Add limits to the pods that have none: traefik, immich-valkey, alloy
+- [ ] Add limits to the pods that have none: traefik, immich-valkey
 
 ## Cleanup
 

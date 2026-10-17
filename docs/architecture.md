@@ -27,7 +27,7 @@ holds what stays true from week to week; for what runs right now, ask the cluste
 | Node | Hardware | Network | Role |
 |------|----------|---------|------|
 | `k3s-master` | Intel i3-7100U, 16 GB, 1 TB NVMe (Crucial P3) | `10.10.0.1` wired, `192.168.1.223` Wi-Fi, `100.96.117.64` Tailscale | Control plane, important data under `/srv/data`, NFS server, Tailscale subnet router, restic, Hermes |
-| `k3s-worker3` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel UHD 620 + NVIDIA MX130 | `10.10.0.5` wired, `192.168.1.246` Wi-Fi | The heavy worker: Immich compute, Fleet, Prometheus, Loki, the Hermes sandbox. Native PostgreSQL |
+| `k3s-worker3` | Intel i5-8265U, 16 GB, 512 GB NVMe, Intel UHD 620 + NVIDIA MX130 | `10.10.0.5` wired, `192.168.1.246` Wi-Fi | The heavy worker: Immich compute, Fleet, Prometheus, the Hermes sandbox. Native PostgreSQL |
 | `k3s-worker1` | Raspberry Pi 4, 4 GB, 1 TB USB SSD | `10.10.0.2` wired, `192.168.1.137` Wi-Fi | Disposable: DaemonSets only, plus the local restic repository |
 
 The wired LAN is an unmanaged gigabit switch, and each node reaches the internet over its own

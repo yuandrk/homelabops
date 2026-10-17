@@ -17,6 +17,16 @@ change would make a future reader ask "why on earth…?".
 
 ## Log
 
+### 2026-10-17 · No log store
+
+Loki and Alloy were removed with the 16 GB of pod logs they held. In the 14 days before, nothing
+but Loki's own canary had queried it, and 91% of what it took in was Loki logging those canary
+queries. The stack also held about 1.1 GiB of memory, half of it Alloy on the Raspberry Pi.
+
+- **Cost:** a pod's logs last only as long as the pod: after a reschedule, or with a dead node,
+  they are gone. A crash loop still shows its previous run through `kubectl logs --previous`.
+- [monitoring.md](monitoring.md#what-runs)
+
 ### 2026-10-17 · Prometheus keeps only the metrics something reads
 
 The dashboards read 29 of the 2,314 metric names Prometheus stored, and three quarters of its

@@ -14,7 +14,7 @@ flowchart LR
     infra["infrastructure<br/>./infrastructure"] --> secrets["secrets<br/>clusters/prod/secrets"]
     infra --> net["infrastructure-networking<br/>cloudflared"]
     storage["storage<br/>NFS provisioner"] --> apps["apps<br/>./apps"]
-    monc["monitoring-controllers<br/>Prometheus stack, Loki, Alloy"] --> monconf["monitoring-configs<br/>monitors, dashboards"]
+    monc["monitoring-controllers<br/>Prometheus stack"] --> monconf["monitoring-configs<br/>monitors, dashboards"]
     secrets --> monconf
 ```
 
