@@ -47,11 +47,12 @@ Alerts arrive as pushes on the phone and as emails, both from services outside t
 ([why](decisions.md#2026-10-17--alerts-by-push-and-by-email-without-a-chat-app)). Alertmanager
 sends each alert with an `area` label to both:
 
-- **ntfy.sh** pushes every change of an area's alerts to the ntfy app, titled with the alert's
-  name and carrying its summary. ntfy's built-in template formats Alertmanager's own body, because
-  the URL ends in `?tpl=alertmanager`. A firing alert goes out at high priority, which the iPhone
-  shows as time-sensitive, through Focus; a resolved one at the default, which Focus silences. The
-  phone subscribes to the topic kept in the 1Password item `ntfy`.
+- **ntfy.sh** pushes every change of an area's alerts to the ntfy app: titled
+  `🚨 nodes: NodeNotReady` (or `✅ nodes: resolved`), with one line per alert. Alertmanager writes
+  title, text and priority into a short body, and ntfy's inline templates, switched on by the URL,
+  read them from it. A firing alert goes out at high priority, which the iPhone shows as
+  time-sensitive, through Focus; a resolved one at the default, which Focus silences. The phone
+  subscribes to the topic kept in the 1Password item `ntfy`.
 - **healthchecks.io** has one check per area. Alertmanager sends it a short body,
   `{"alerts":"<summary> (<alert>). …","status":"firing"}`, which the email quotes; the check reads
   `"status":"firing"` as down and `"status":"resolved"` as up. So an area emails once when it

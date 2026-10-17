@@ -72,14 +72,22 @@ spec:
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/healthchecks/watchdog
                 send_resolved: false
-          # The URL ends in ?tpl=alertmanager: ntfy's built-in template turns Alertmanager's own
-          # body into the push's title and text. Alertmanager renders the URL as a template too,
-          # and the one in the Secret appends &p=4 while the group is firing: high priority, which
-          # iOS delivers as time-sensitive, through Focus. A resolved push keeps the default.
+          # The push is written here. The URL in the Secret turns on ntfy's inline templates and
+          # maps title, message and priority to the fields below (?tpl=yes&t={{.title}}&m=...,
+          # percent-encoded). ntfy's own ?tpl=alertmanager ignores the priority until ntfy.sh runs
+          # a release with ntfy#2045. Priority 4 reaches an iPhone as time-sensitive, through Focus;
+          # a resolved push stays at the default, which Focus silences.
           - name: ntfy
             webhook_configs:
               - url_file: /etc/alertmanager/secrets/ntfy/url
                 send_resolved: true
+                payload:
+                  title: '{{ if eq .Status "firing" }}🚨 {{ .GroupLabels.area }}: {{ if eq (len .Alerts.Firing) 1 }}{{ (index .Alerts.Firing 0).Labels.alertname }}{{ else }}{{ len .Alerts.Firing }} alerts{{ end }}{{ else }}✅ {{ .GroupLabels.area }}: resolved{{ end }}'
+                  message: |-
+                    {{ range .Alerts.Firing }}{{ .Annotations.summary }}
+                    {{ end }}{{ range .Alerts.Resolved }}Resolved: {{ .Annotations.summary }}
+                    {{ end }}
+                  priority: '{{ if eq .Status "firing" }}4{{ else }}3{{ end }}'
           # healthchecks.io puts the body in its email, so it is cut down to the alerts' summaries
           - name: alerts-nodes
             webhook_configs:

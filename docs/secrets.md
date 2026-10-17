@@ -62,10 +62,10 @@ Next to a few items unrelated to the homelab, the vault holds:
   Secret `healthchecks`; the four `restic-*` URLs were copied into `/etc/restic/healthchecks.env`
   on k3s-master, so a change to them has to be copied there again
   ([backup.md](backup.md#monitoring)).
-- `ntfy`: the ntfy.sh topic, random, and Alertmanager's URL for it. Alertmanager reads `url`
-  through the Secret `ntfy` and renders it as a template: it ends in
-  `?tpl=alertmanager{{ if eq .Status "firing" }}&p=4{{ end }}`. The ntfy app on the phone
-  subscribes to `topic` ([monitoring.md](monitoring.md#alerts)).
+- `ntfy`: the ntfy.sh topic, random, and Alertmanager's URL for it, which ends in
+  `?tpl=yes&t=%7B%7B.title%7D%7D&m=%7B%7B.message%7D%7D&p=%7B%7B.priority%7D%7D`. Alertmanager
+  reads `url` through the Secret `ntfy`; the ntfy app on the phone subscribes to `topic`
+  ([monitoring.md](monitoring.md#alerts)).
 - `hermes-dashboard-oidc`, `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)`: what they
   hold is not recorded ([TODO](TODO.md#unknowns)).
 
