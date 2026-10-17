@@ -223,7 +223,7 @@ h_services() {
 
 h_storage() {
   local d
-  for d in /srv/data /srv/media /srv/backup /srv/nfs; do
+  for d in /srv/data /srv/backup /srv/nfs; do
     [ -d "$d" ] || continue
     echo "## $d"
     S sh -c "timeout 300 du -sh $d/* 2>&1" | head -n 20

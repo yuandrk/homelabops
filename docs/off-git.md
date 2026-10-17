@@ -29,7 +29,6 @@ collects them from the live hosts. Leftovers waiting to be deleted are in
 | Samba | `smbd` and `nmbd`, listening on `10.10.0.1:139/445`: the wired LAN, and the tailnet through the subnet route | **Not recorded**: the shares in `/etc/samba/smb.conf`, and who uses them |
 | Syncthing | user unit `syncthing.service`, listening on `*:22000`, web UI on `127.0.0.1:8384` | **Not recorded**: which folders it syncs, with which devices |
 | Obsidian vault backup | user units `vault-backup.*`, key in `~/.restic-env` | goes to B2 bucket `obsidian-backup-yuandrk` |
-| Downloads left behind by the removed qBittorrent, Jellyfin's old library among them | `/srv/media` | none, by design: re-downloadable ([TODO](TODO.md#cleanup)) |
 
 ## Every node
 
