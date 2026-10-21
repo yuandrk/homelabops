@@ -128,8 +128,6 @@ Nothing here pretends to be finished:
 
 - **k3s-master is a single point of failure** for both the control plane and the data. There is
   a [rebuild runbook](docs/runbooks/rebuild-k3s-master.md), but it has not been rehearsed.
-- **Infrastructure charts float** on `>=` ranges, so their major upgrades skip review
-  ([renovate](docs/renovate-config.md#traps)).
 - The rest is in the [backlog](docs/TODO.md).
 
 ## Repository layout

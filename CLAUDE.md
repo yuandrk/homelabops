@@ -65,8 +65,8 @@ docs/                    the docs below, procedures in docs/runbooks/
   deploy can wait in `CreateContainerConfigError` for its Secret. Remove a `OnePasswordItem` in
   the same commit as the app it serves: one that outlives its namespace stops every secret
   syncing ([secrets](docs/secrets.md#removing-a-secret)).
-- Infrastructure charts float on `>=` ranges, so majors install without a PR
-  ([renovate](docs/renovate-config.md#traps)).
+- Renovate removes `{{ }}` before reading a manifest and silently skips one that is then invalid
+  YAML, such as the Alertmanager templates without `|2-` ([renovate](docs/renovate-config.md#traps)).
 - k3s-master's `192.168.1.223` (k3s config, Hermes EndpointSlice) and `100.96.117.64`
   (`internal_ingress_ip`) are hardcoded.
 - On k3s-master, non-interactive `kubectl` needs `KUBECONFIG=~/.kube/config`

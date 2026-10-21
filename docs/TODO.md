@@ -33,9 +33,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Reliability
 
-- [ ] Pin the four infrastructure charts to exact versions, so major upgrades arrive as
-      Renovate PRs instead of installing themselves, and pin cloudflared's image tag
-      ([renovate-config.md](renovate-config.md#traps))
 - [ ] Untangle the monitoring stack from the `infrastructure` Kustomization
       ([gitops.md](gitops.md#traps-in-this-repo))
 - [ ] Decide whether Terraform applies need an approval: add a required reviewer to the

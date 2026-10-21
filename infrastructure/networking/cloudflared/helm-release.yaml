@@ -8,13 +8,19 @@ spec:
   chart:
     spec:
       chart: cloudflare-tunnel-remote
-      version: ">=0.1.2"
+      version: "0.1.2"
       sourceRef:
         kind: HelmRepository
         name: cloudflare
         namespace: networking
   values:
     replicaCount: 2
+    # Without a tag the chart runs cloudflared:latest with IfNotPresent, so each node kept the
+    # release it first pulled. repository is the chart default; it is spelled out so Renovate can
+    # see the tag.
+    image:
+      repository: cloudflare/cloudflared
+      tag: "2026.7.3"
   # cloudflared serves Prometheus metrics on :2000 (the chart hardcodes `--metrics 0.0.0.0:2000`
   # into the container command), but it never declares a containerPort for it. A PodMonitor
   # cannot select an undeclared port: the operator emits a `keep` action on

@@ -1,24 +1,26 @@
 # Renovate
 
 Renovate proposes version bumps as PRs, and it is the only way a pinned version changes
-([why](decisions.md#2026-08-01--renovate-owns-version-bumps)). Unpinned versions are another story
-(see [Traps](#traps)). [`renovate.json`](../renovate.json) is the source of truth.
+([why](decisions.md#2026-08-01--renovate-owns-version-bumps)). Every chart and image is pinned to
+an exact version, because a range such as `>=1.0` never gets a PR: helm-controller installs each
+new release by itself, majors included. [`renovate.json`](../renovate.json) is the source of truth.
 
 ## What it covers
 
 | Covered | How |
 |---------|-----|
-| Container images in `apps/` and `infrastructure/` manifests and HelmRelease values | managers `kubernetes`, `helm-values` |
-| Helm chart versions in HelmReleases | managers `flux`, `helmv3` |
+| Container images in `apps/` and `infrastructure/` manifests | manager `kubernetes` |
+| Helm chart versions in HelmReleases, and the images in their values | manager `flux`. `helm-values` and `helmv3` are enabled but find nothing: the repository has no `values.yaml` or `Chart.yaml` |
 | Flux itself: `clusters/prod/flux-system/gotk-components.yaml` | the `flux` manager's default file pattern, which `managerFilePatterns` extends rather than replaces. Releases arrive as `fluxcd/flux2` PRs |
 | The Cloudflare Terraform provider, in `terraform/live/homelab/cloudflare/` only | manager `terraform` with `rangeStrategy: update-lockfile`. The constraint stays `~> 5.0` and Renovate bumps the committed `.terraform.lock.hcl`, so `terraform-plan.yml` runs before `main` sees it ([why](decisions.md#2026-09-26--the-cloudflare-provider-is-pinned-by-a-committed-lock-file)) |
 
-GitHub Actions and the other Terraform stacks are bumped by hand. Two images need care:
+GitHub Actions and the other Terraform stacks are bumped by hand. Images set in chart values need
+care:
 
 - **Fleet's `imageTag`** is a bare tag with no repository, so Renovate cannot see it. Fleet chart
   versions map 1:1 to Fleet releases: bump `imageTag` together with the chart.
-- **Immich's server and machine-learning images** are visible only because their HelmRelease
-  values carry `repository:` next to `tag:`. Keep it that way.
+- **Immich's server and machine-learning images, and cloudflared's,** are visible only because
+  their HelmRelease values carry `repository:` next to `tag:`. Keep it that way.
 
 ## How PRs arrive
 
@@ -42,15 +44,12 @@ schedule.
 
 - **A closed PR blocks that exact version.** Only a newer release gets a new PR. To get a closed
   one back, reopen it from the Dependency Dashboard.
-- **The infrastructure charts float.** All four infrastructure HelmReleases
-  (kube-prometheus-stack, cloudflared, the 1Password operator, the NFS provisioner) use
-  `version: ">=x"`. helm-controller installs the newest matching chart on its
-  next run, **major versions included**, with no PR and no review, so the `infra-helm-charts`
-  group never fires. Only the app charts (Immich, Fleet) are pinned
-  ([TODO](TODO.md#reliability)).
-- **cloudflared's image floats too.** Its chart declares the app version `latest` and the
-  HelmRelease sets no tag, so the pods presumably run whatever `cloudflare/cloudflared:latest`
-  was when their node pulled it.
+- **A template can hide a whole file.** The `flux` manager deletes every `{{ }}` before it parses
+  a manifest, and silently skips one that is then invalid YAML, so its chart and images get no
+  PRs. A block scalar whose leading lines are only templates is enough, if one of them is indented
+  deeper than the first line of text. Give such a block an explicit indentation (`|2-`, as the
+  Alertmanager payloads in the kube-prometheus-stack HelmRelease do). After editing a file with
+  templates, check that it is still listed under the Dependency Dashboard's detected dependencies.
 - **Flux bumps need a matching cluster.** Check `flux check --pre` against the k3s version before
   merging ([runbooks/upgrade-k3s.md](runbooks/upgrade-k3s.md#before)). The `fluxcd/flux2` PR's
   diff should change only versions and controller images.
