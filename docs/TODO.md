@@ -91,5 +91,3 @@ and [off-git.md](off-git.md) marks where each belongs with **Not recorded**.
 - What the 1Password items `k3s-sudo` and `legacy-key-yuandrk (from k3s-worker3)` hold, and
   whether `hermes-dashboard-oidc` is the Hermes dashboard's Okta client
 - Why PostgreSQL on k3s-worker3 is a native install
-- Which images run with the tag `latest` (cloudflared presumably does, see
-  [renovate-config.md](renovate-config.md#traps))
