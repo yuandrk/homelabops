@@ -82,8 +82,8 @@ existed only on that disk.
   worker1 and to Backblaze B2. Immich still computes on k3s-worker3 for the iGPU and reads its
   library over NFS (`sync`, so an acknowledged original is on disk).
 - **Cost:** k3s-master is the single point of failure for the control plane and the data
-  ([runbooks/rebuild-k3s-master.md](runbooks/rebuild-k3s-master.md)). The old worker1 PVCs stay
-  bound as a rollback path.
+  ([runbooks/rebuild-k3s-master.md](runbooks/rebuild-k3s-master.md)). The old worker1 volumes
+  stayed as a rollback path until 2026-10-28.
 - `c36a446`, `7520ed4`, `6f3f9c7`, `d1b40a8`, [backup.md](backup.md)
 
 ### 2026-09-26 · The cloudflare provider is pinned by a committed lock file

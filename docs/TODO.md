@@ -24,9 +24,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Monitoring
 
-- [ ] Grafana's `PostgreSQL-Homelab` datasource points at `k3s-worker1:5432`, where nothing
-      listens: point it at k3s-worker3 or delete it
-      (`infrastructure/monitoring/base/configs/datasources/postgres-datasource.yaml`)
 - [ ] Watch the host processes (Tailscale, the NFS server, PostgreSQL, Hermes), which
       node-exporter sees only as machines: a blackbox probe or a systemd exporter. restic already
       reports to healthchecks.io ([backup.md](backup.md#monitoring))
@@ -49,12 +46,9 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Cleanup
 
-- [ ] Remove the NFS provisioner (scaled to zero) together with the `storage` dependency of
-      `apps`, and the old worker1 claims kept as a rollback path in `c36a446`. Then, on
-      k3s-worker1: stop `nfs-server`, which still exports the old Immich library (98 GB in
-      `/srv/nfs/immich`) read-write with `no_root_squash` to all of `10.10.0.0/24`; drop that
-      export from `/etc/exports`; delete `/srv/nfs/immich` and the old ActualBudget volume
-      `actualbudget-data` in `/var/lib/rancher/k3s/storage/`
+- [ ] k3s-worker1: delete the old copies kept as a rollback path, which nothing uses any more:
+      `/srv/nfs` (the Immich library, 98 GB) and
+      `/var/lib/rancher/k3s/storage/pvc-794c4f74-7646-488e-b1c5-b953c80d8a62_apps_actualbudget-data`
 - [ ] k3s-master: delete the inactive `k3s-agent.service`, which carries k3s-worker3's flags, and
       its `k3s-agent.service.env`, which holds a join token (both in `/etc/systemd/system/`)
 - [ ] k3s-master keeps `/root/k3s-backup-pre-1.34`, a copy of the server state (join token
@@ -68,6 +62,7 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       `.claude/settings.json`, and `.claude/hooks/guard-secrets.sh`, which should flag committed
       plaintext `kind: Secret` instead
 - [ ] Delete the vault items whose consumer is gone: `pgadmin-credentials`,
+      `postgres-credentials` (for the PostgreSQL that ran on k3s-worker1),
       `stirling-pdf-credentials`, `mcp-slack-bot-credentials`, `headlamp-oidc-authentik`,
       `headlamp-oidc-okta` and `headlamp-token`, and Headlamp's Okta app if one exists
 - [ ] k3s-master: drop the four `oidc-*` entries of `kube-apiserver-arg` in

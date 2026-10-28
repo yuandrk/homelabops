@@ -7,4 +7,3 @@ resources:
 - infrastructure.yaml
 - infrastructure-networking.yaml
 - monitoring.yaml
-- storage.yaml

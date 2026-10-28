@@ -7,7 +7,7 @@ What is collected, where to look, and what does not work yet.
 | Piece | Details |
 |-------|---------|
 | Prometheus (kube-prometheus-stack) | On a 10Gi `local-path` volume, amd64 nodes only. Scrapes node-exporter, kube-state-metrics, the kubelets' cAdvisor, `flux-kube-state-metrics`, the Flux controllers and cloudflared (PodMonitors), and Traefik (`additionalScrapeConfigs`, job `traefik`), and keeps only [the listed metrics](#only-listed-metrics-are-kept) |
-| Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus, and `PostgreSQL-Homelab`, which still points at `k3s-worker1:5432`, where no PostgreSQL runs ([TODO](TODO.md#monitoring)) |
+| Grafana | `grafana.yuandrk.net`, local admin from the `grafana-admin-credentials` Secret. Datasources: Prometheus and Alertmanager |
 | Logs | Not stored ([why](decisions.md#2026-10-17--no-log-store)). `kubectl logs` reads what the kubelet keeps on the node for a running container, `--previous` the one before its last restart, and both go with the pod. Host services log to `journalctl` on their node |
 | Alertmanager | amd64 nodes only. Hands every alert to ntfy.sh and healthchecks.io, which push and email it ([below](#alerts)) |
 

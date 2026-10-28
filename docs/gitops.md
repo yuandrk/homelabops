@@ -6,20 +6,20 @@ How a change gets from this repository into the cluster, and the traps specific 
 
 Flux pulls `main` from the GitRepository `flux-system` every minute. That poll is the only
 trigger: there is no webhook ([decisions.md](decisions.md#2026-10-11--no-flux-webhook)). The
-root Kustomization (`flux-system`, path `clusters/prod`) creates the seven below. The arrows are
+root Kustomization (`flux-system`, path `clusters/prod`) creates the six below. The arrows are
 `dependsOn`:
 
 ```mermaid
 flowchart LR
     infra["infrastructure<br/>./infrastructure"] --> secrets["secrets<br/>clusters/prod/secrets"]
     infra --> net["infrastructure-networking<br/>cloudflared"]
-    storage["storage<br/>NFS provisioner"] --> apps["apps<br/>./apps"]
     monc["monitoring-controllers<br/>Prometheus stack"] --> monconf["monitoring-configs<br/>monitors, dashboards"]
     secrets --> monconf
+    apps["apps<br/>./apps"]
 ```
 
 - `secrets` waits for `infrastructure` because the operator and its CRD come from there.
-- `apps` waits only for `storage`, not for `secrets`. A first deploy can show a short
+- `apps` waits for nothing, not even `secrets`. A first deploy can show a short
   `CreateContainerConfigError` until the app's Secret has been synced.
 - A hand edit lasts until the Kustomization's next run. To keep one while debugging, use
   `flux suspend kustomization <name> -n flux-system`.
@@ -73,6 +73,3 @@ After the merge, Flux prunes the Deployment, Service, Ingress and PVCs. These yo
   objects. The `dependsOn` of `monitoring-configs` therefore does not gate them, and the Flux
   ownership label goes to whichever ran last. Untangle it carefully: dropping the path from one
   side makes that side prune what it believes it owns.
-- **The NFS provisioner is scaled to zero but still wired in.** `apps` depends on `storage`,
-  whose health check is that provisioner's Deployment. Removing it means editing
-  `clusters/prod/storage.yaml` and `apps.yaml` together.

@@ -42,7 +42,6 @@ its default route. Nothing is NATed between the two.
 | k3s-master | 139, 445 | Samba, bound to `10.10.0.1` | wired LAN, tailnet |
 | k3s-master | 22000 | Syncthing | LAN, tailnet |
 | k3s-master | 9119 | Hermes dashboard, a host process | LAN, tailnet, and Traefik as `hermes.yuandrk.net` |
-| k3s-worker1 | 2049 | NFS, a leftover export of the old Immich library ([TODO](TODO.md#cleanup)) | wired LAN |
 | k3s-worker3 | 5432 | PostgreSQL, native. `pg_hba.conf` admits only the wired LAN and the pod network | LAN and pods |
 | any node | 30283 | Immich NodePort, for the mobile app on the LAN | LAN |
 

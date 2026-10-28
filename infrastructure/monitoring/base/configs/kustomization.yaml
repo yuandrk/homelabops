@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
 - alert-rules.yaml
 - dashboards
-- datasources
 - flux-kube-state-metrics.yaml
 - podmonitor.yaml
 - node-exporter-full-dashboard.yaml

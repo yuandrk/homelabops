@@ -252,7 +252,6 @@ spec:
         existingSecret: grafana-admin-credentials
         userKey: admin-user
         passwordKey: admin-password
-      envFromSecret: postgres-credentials
       # Schedule on amd64 nodes with more RAM (k3s-master or k3s-worker3)
       nodeSelector:
         kubernetes.io/arch: amd64
