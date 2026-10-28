@@ -46,9 +46,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Cleanup
 
-- [ ] k3s-worker1: delete the old copies kept as a rollback path, which nothing uses any more:
-      `/srv/nfs` (the Immich library, 98 GB) and
-      `/var/lib/rancher/k3s/storage/pvc-794c4f74-7646-488e-b1c5-b953c80d8a62_apps_actualbudget-data`
 - [ ] k3s-master: delete the inactive `k3s-agent.service`, which carries k3s-worker3's flags, and
       its `k3s-agent.service.env`, which holds a join token (both in `/etc/systemd/system/`)
 - [ ] k3s-master keeps `/root/k3s-backup-pre-1.34`, a copy of the server state (join token
