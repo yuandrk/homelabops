@@ -42,7 +42,7 @@ spec:
               image:
                 repository: docker.io/valkey/valkey
                 # Full version on purpose: the short 9.2-alpine tag pointed at 9.2.0-rc1.
-                tag: 9.1.2-alpine
+                tag: 9.1.3-alpine
       persistence:
         data:
           enabled: true
