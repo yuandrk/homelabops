@@ -20,7 +20,7 @@ spec:
     # see the tag.
     image:
       repository: cloudflare/cloudflared
-      tag: "2026.10.3"
+      tag: "2026.10.5"
   # cloudflared serves Prometheus metrics on :2000 (the chart hardcodes `--metrics 0.0.0.0:2000`
   # into the container command), but it never declares a containerPort for it. A PodMonitor
   # cannot select an undeclared port: the operator emits a `keep` action on
