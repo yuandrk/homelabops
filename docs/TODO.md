@@ -11,8 +11,8 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 - [ ] n8n is scaled to zero since 2026-10-17. Before scaling it back up, give its database a
       scheduled dump: it lives in the native PostgreSQL on k3s-worker3, which nothing backs up,
       and only dumps taken by hand exist, in `/srv/data/db-dumps/n8n/`, the last one after it
-      stopped. Also move it to a stable release of 2.43 or later: 2.43.4 is a beta, and its
-      migrations have already run
+      stopped. The database carries the migrations of the beta 2.43.4, so the first start
+      migrates it to the stable release in the manifest: dump it right before
 - [ ] Copy ActualBudget consistently: its SQLite files are read while the server runs, so a
       write during the backup can leave that night's copy inconsistent. Add a `sqlite3 .backup`
       pre-step. Until then, older snapshots and the clients' local copies cover it
