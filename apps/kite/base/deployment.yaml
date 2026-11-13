@@ -21,7 +21,7 @@ spec:
       serviceAccountName: kite
       containers:
         - name: kite
-          image: ghcr.io/kite-org/kite:v0.16.0
+          image: ghcr.io/kite-org/kite:v0.17.0
           ports:
             - containerPort: 8080
           env:
