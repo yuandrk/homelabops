@@ -8,11 +8,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
 
 ## Backups
 
-- [ ] n8n is scaled to zero since 2026-10-17. Before scaling it back up, give its database a
-      scheduled dump: it lives in the native PostgreSQL on k3s-worker3, which nothing backs up,
-      and only dumps taken by hand exist, in `/srv/data/db-dumps/n8n/`, the last one after it
-      stopped. The database carries the migrations of the beta 2.43.4, so the first start
-      migrates it to the stable release in the manifest: dump it right before
 - [ ] Copy ActualBudget consistently: its SQLite files are read while the server runs, so a
       write during the backup can leave that night's copy inconsistent. Add a `sqlite3 .backup`
       pre-step. Until then, older snapshots and the clients' local copies cover it
@@ -67,9 +62,9 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       served only Headlamp
 - [ ] The Terraform workflows still watch `terraform/modules/**`, which no longer exists
 - [ ] GitHub: delete the `CLAUDE_CODE_OAUTH_TOKEN` secret, unused since `9aa8bbb` removed the
-      Claude workflows. The webhook to n8n points at `/webhook-test/…`, which answers only while
-      the n8n editor is listening, and returned 404: move it to the production `/webhook/…` URL
-      or delete it
+      Claude workflows, and the webhook to the removed n8n
+- [ ] n8n leftovers: on k3s-worker3, `DROP DATABASE` and `DROP ROLE` for `n8n` in PostgreSQL;
+      the vault item `n8n-credentials`
 
 ## Unknowns
 

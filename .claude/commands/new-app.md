@@ -3,7 +3,7 @@ description: Scaffold a new app under apps/<name>/base and register it with Flux
 argument-hint: "<name> [port] [storageGi]"
 ---
 
-Scaffold a new application following the existing app pattern (see `apps/n8n/base/`). Do NOT
+Scaffold a new application following the existing app pattern (see `apps/kite/base/`, minus its RBAC and ConfigMap). Do NOT
 apply anything to the cluster — only create files and let Flux deploy on the next reconcile.
 
 Arguments:
@@ -13,7 +13,7 @@ Arguments:
 
 Steps:
 1. If `apps/$1/` already exists, stop and tell me.
-2. Create `apps/$1/base/` with these files, mirroring the n8n manifests exactly
+2. Create `apps/$1/base/` with these files, mirroring the Kite manifests
    (namespace `apps`, `labels: { app: $1 }`, Traefik web entrypoint, host `$1.yuandrk.net`):
    - `deployment.yaml` — a single-replica Deployment. Leave `image:` as `REPLACE_ME:latest`
      with a `# TODO: set image` comment, container port `$2`, and mount the PVC at a sensible

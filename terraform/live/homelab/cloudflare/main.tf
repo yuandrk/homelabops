@@ -11,11 +11,6 @@ locals {
       service  = "http://traefik.kube-system.svc.cluster.local:80"
     },
     {
-      name     = "n8n"
-      hostname = "n8n.yuandrk.net"
-      service  = "http://traefik.kube-system.svc.cluster.local:80"
-    },
-    {
       name     = "grafana"
       hostname = "grafana.yuandrk.net"
       service  = "http://traefik.kube-system.svc.cluster.local:80"

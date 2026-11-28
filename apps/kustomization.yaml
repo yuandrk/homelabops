@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
 - actualbudget/base
-- n8n/base
 - immich/base
 - fleet/base
 - kite/base

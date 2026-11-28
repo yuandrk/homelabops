@@ -21,7 +21,7 @@ state (apps, groups, assignments) is not exported anywhere, so this page is its 
 | Kite, `kite.yuandrk.net` | Okta OIDC, Web app, `client_secret_post`, callback `/api/auth/callback` | Okta: assignment to group `IT`. Kite gives the admin role from the `groups` claim and by email. Its OAuth, RBAC and super-user settings come from the `kite-config` ConfigMap, so the UI shows them read-only: change them in git | Local `admin`, password in `kite-credentials` |
 | Hermes dashboard, `hermes.yuandrk.net` | Okta OIDC, Native app, public client with PKCE | Okta: assignment to `Andriuk corp`. Groups are read but not checked | None online: restore `basic_auth` over SSH ([hermes-dashboard.md](hermes-dashboard.md#basic_auth-is-gone)) |
 | Grafana, `grafana.yuandrk.net` | Local login | `grafana-admin-credentials` | The same login |
-| Immich, ActualBudget, n8n, Fleet | Each app's own login | Whatever is set in the app's UI, which is not in git | |
+| Immich, ActualBudget, Fleet | Each app's own login | Whatever is set in the app's UI, which is not in git | |
 | SSH to the nodes | Keys only, on the [ports listed here](network-architecture.md#listening-ports) | `yuandrk`, who can then sudo without a password | |
 | Admin kubeconfig | `/etc/rancher/k3s/k3s.yaml` on k3s-master (root-only), copied to `~/.kube/config` | `system:masters`, readable by anything running as `yuandrk`, Hermes included ([hermes-sandbox.md](hermes-sandbox.md#what-this-is-and-is-not)) | |
 
