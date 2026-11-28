@@ -93,7 +93,7 @@ deploy. See [gitops.md](gitops.md), [terraform-guide.md](terraform-guide.md) and
 ```mermaid
 flowchart LR
     subgraph master["k3s-master"]
-        data["/srv/data<br/>Immich library, ActualBudget"]
+        data["/srv/data<br/>Immich library, ActualBudget,<br/>copies of k3s and Hermes state"]
         pvcs["local-path volumes<br/>n8n, Kite"]
         restic["restic<br/>systemd timers"]
     end
