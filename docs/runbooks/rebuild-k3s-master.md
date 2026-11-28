@@ -127,7 +127,7 @@ Order: `infrastructure` first, then `secrets` and `infrastructure-networking`; `
 `CreateContainerConfigError` until the `secrets` Kustomization has run (see
 [secrets.md](../secrets.md#adding-a-secret)).
 
-For n8n and Kite:
+For Kite:
 
 ```bash
 flux suspend kustomization apps          # otherwise Flux scales the app back up

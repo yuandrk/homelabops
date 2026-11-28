@@ -26,7 +26,7 @@ flowchart LR
 
 ## Adding an app
 
-1. Scaffold it with `/new-app <name> [port] [storageGi]` (Claude Code), which copies the n8n
+1. Scaffold it with `/new-app <name> [port] [storageGi]` (Claude Code), which copies the Kite
    pattern into `apps/<name>/base/` and registers it in `apps/kustomization.yaml`.
 2. Choose who can reach it by its hostname: `<name>.yuandrk.net` plus an entry in
    `local.tunnel_services` for a public app, `<name>.home.yuandrk.net` alone for a tailnet-only

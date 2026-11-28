@@ -39,7 +39,6 @@ schedule.
   |---------|------|-------|
   | `mysql` (Fleet) | 26.x is Oracle's innovation track. Fleet supports 8.x only, and MySQL cannot downgrade an upgraded data dictionary in place | `allowedVersions: "<8.5"` |
   | `valkey/valkey` | A short tag such as `9.2-alpine` can point at a release candidate | Pin full versions (`9.1.2-alpine`); Renovate skips the `-rcN` tags |
-  | `n8nio/n8n` | Betas use plain semver tags | None. Before merging, check that the tag's digest matches `n8nio/n8n:stable` |
   | SearXNG | `YYYY.M.D-<sha>` tags | None. Read its `infra-images` PRs carefully |
 
 - **A closed PR blocks that exact version.** Only a newer release gets a new PR. To get a closed

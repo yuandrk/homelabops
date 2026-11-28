@@ -94,12 +94,12 @@ deploy. See [gitops.md](gitops.md), [terraform-guide.md](terraform-guide.md) and
 flowchart LR
     subgraph master["k3s-master"]
         data["/srv/data<br/>Immich library, ActualBudget"]
-        pvcs["local-path volumes<br/>n8n, Kite"]
+        pvcs["local-path volumes<br/>Kite"]
         restic["restic<br/>systemd timers"]
     end
     subgraph worker3["k3s-worker3"]
         immich["immich-server"]
-        pg[("PostgreSQL<br/>Immich, n8n")]
+        pg[("PostgreSQL<br/>Immich")]
     end
     immich -->|"NFS"| data
     immich --> pg

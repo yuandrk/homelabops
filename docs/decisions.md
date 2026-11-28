@@ -203,6 +203,7 @@ of this login.
 
 | Date | App | Why | Left behind |
 |------|-----|-----|-------------|
+| 2026-11-28 | n8n | Scaled to zero since 2026-10-17 and not missed; its traffic was mostly the n8n MCP connector listing its tools | the final `pg_dump` in `/srv/data/db-dumps/n8n/`, kept on purpose; until cleaned up, its database and role on k3s-worker3, vault item `n8n-credentials`, the GitHub webhook ([TODO](TODO.md#cleanup)) |
 | 2026-10-17 | qBittorrent | Not wanted; 0 web UI requests in 14 days | nothing (its 19 GB of downloads in `/srv/media` were deleted the same day) |
 | 2026-10-11 | Headlamp | Not used; Kite covers the Kubernetes UI | the API server's OIDC flags on k3s-master, vault items `headlamp-oidc-okta` and `headlamp-token` ([TODO](TODO.md#cleanup)) |
 | 2026-08-08 | Glance | Dashboard on NodePort 30081, not wanted after a week | nothing (its vault item was gone by 2026-10-11) |
