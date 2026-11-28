@@ -47,8 +47,9 @@ The NFS export is host config outside git:
   `library/backups`; n8n's only by the dumps taken by hand, in `/srv/data/db-dumps`. n8n is
   scaled to zero, so the last one, taken after it stopped, is complete.
 - The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus.
-- Hermes' code and caches under `~/.hermes` (`hermes-agent/`, virtualenvs, `cache/`), which a
-  reinstall brings back. Its config, keys and memory are copied ([below](#consistent-copies)).
+- Hermes' code, runtimes, caches, logs and its own backups under `~/.hermes`, which a reinstall
+  or restic's history replace. Its config, keys, memory and kanban are copied
+  ([below](#consistent-copies)).
 - Cluster objects: git is the source of truth, apart from what [off-git.md](off-git.md) lists.
   The datastore itself is copied, so a rebuilt master can keep the cluster and its join token.
 
@@ -108,7 +109,7 @@ take the databases from `host-state`.
 |-----------|------|-----|
 | `actualbudget/` | every SQLite file under `/srv/data/actualbudget`, same relative paths | `sqlite3 .backup`, as the file's owner, then `PRAGMA quick_check` |
 | `k3s-server/` | `db/state.db` and `token` from `/var/lib/rancher/k3s/server` | the same for `state.db`; `token` copied as is |
-| `hermes/` | `~yuandrk/.hermes`, minus `hermes-agent/`, `cache/`, virtualenvs and `node_modules/` | `rsync`, then each SQLite file in it replaced by a `.backup` copy |
+| `hermes/` | `~yuandrk/.hermes`, minus code and runtimes (`hermes-agent/`, `tools/`, `installs/`, `node/`, `venvs/`, `bin/`), `cache/`, `logs/`, and Hermes' own `backups/` and `state-snapshots/` | `rsync`, hard-linking what did not change since the last copy, then each SQLite file in it replaced by a `.backup` copy |
 
 | Piece | Where |
 |-------|-------|

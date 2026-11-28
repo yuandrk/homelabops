@@ -19,7 +19,8 @@ HERMES_HOME=/home/yuandrk/.hermes
 
 log() { printf 'restic-pre-backup: %s\n' "$*"; }
 
-is_sqlite() { [ "$(head -c 15 "$1" 2>/dev/null)" = "SQLite format 3" ]; }
+# tr drops NUL bytes, which bash would otherwise warn about for every binary file.
+is_sqlite() { [ "$(head -c 15 "$1" 2>/dev/null | tr -d '\0')" = "SQLite format 3" ]; }
 
 # snapshot SRC DST: copy a live SQLite database with the online backup API, check the copy,
 # then move it into place. sqlite3 runs as the file's owner: if it has to create a -wal or -shm
@@ -76,11 +77,15 @@ k3s_server() {
 hermes() {
   local new=$OUT/.new-hermes f n=0
   begin hermes
-  # Code, virtualenvs and caches come back with a reinstall. -wal/-shm/-journal belong to the
-  # live databases, which are copied below instead.
-  rsync -a \
-    --exclude='/hermes-agent/' --exclude='node_modules/' --exclude='.venv/' --exclude='venv/' \
-    --exclude='__pycache__/' --exclude='/cache/' \
+  # Left out: code, runtimes, tools and caches, which a reinstall brings back; logs; and Hermes'
+  # own backups and state snapshots, which restic's history replaces. -wal/-shm/-journal belong
+  # to the live databases, which are copied below instead. --link-dest hard-links files that did
+  # not change since the last copy, so a night costs only what changed.
+  rsync -a --link-dest="$OUT/hermes" \
+    --exclude='/hermes-agent/' --exclude='/tools/' --exclude='/installs/' --exclude='/node/' \
+    --exclude='/venvs/' --exclude='/bin/' --exclude='/cache/' --exclude='/logs/' \
+    --exclude='/backups/' --exclude='/state-snapshots/' \
+    --exclude='node_modules/' --exclude='.venv/' --exclude='venv/' --exclude='__pycache__/' \
     --exclude='*-wal' --exclude='*-shm' --exclude='*-journal' \
     "$HERMES_HOME/" "$new/" || return 1
   while IFS= read -r -d '' f; do
