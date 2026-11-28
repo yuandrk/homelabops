@@ -93,8 +93,22 @@ resolv-conf: /etc/k3s-resolv.conf
   `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<version> sh -s - server`.
 - `/etc/rancher/k3s/k3s.yaml` is root-only. Copy it to `~/.kube/config` for `yuandrk` and set
   `KUBECONFIG` in the shell profile ([access.md](../access.md#login-surfaces)).
-- A new server has a new join token (`/var/lib/rancher/k3s/server/token`). On each worker, put it
-  into `K3S_TOKEN` in `/etc/systemd/system/k3s-agent.service.env`, keep
+- To keep the old cluster and its join token, put the restored datastore in place **before** k3s
+  first starts, so the workers re-join by themselves:
+
+  ```bash
+  sudo install -d -m 0700 /var/lib/rancher/k3s/server/db
+  sudo cp /srv/data/host-state/k3s-server/db/state.db /var/lib/rancher/k3s/server/db/
+  sudo install -m 0600 /srv/data/host-state/k3s-server/token /var/lib/rancher/k3s/server/token
+  ```
+
+  Then install k3s as above with `K3S_TOKEN="$(sudo cat /var/lib/rancher/k3s/server/token)"`.
+  The objects come back as they were, the local-path PVs with their old `pvc-<uid>` names, so
+  step 6 shrinks to moving `/srv/restore/var/lib/rancher/k3s/storage/*` into place, also before
+  k3s starts.
+  **verify** on the first rebuild: this path is untested.
+- Without the datastore, a new server has a new join token (`/var/lib/rancher/k3s/server/token`).
+  On each worker, put it into `K3S_TOKEN` in `/etc/systemd/system/k3s-agent.service.env`, keep
   `K3S_URL='https://10.10.0.1:6443'`, and restart `k3s-agent`.
 - k3s-worker1 taints itself when it registers (`node-taint` in its own config file). Check with
   `kubectl get node k3s-worker1 -o jsonpath='{.spec.taints}'`.
@@ -142,9 +156,10 @@ flux resume kustomization apps          # scales the app back up
 - **Tailscale.** Install it, run `tailscale up --advertise-routes=10.10.0.0/24`, enable IP
   forwarding and approve the route in the admin console. If the address is no longer
   `100.96.117.64`, change `internal_ingress_ip` in `terraform/live/homelab/cloudflare/main.tf`.
-- **restic.** Recreate the four timers from [backup.md](../backup.md) and run one backup by hand.
-- **Hermes.** Reinstall it. Its `config.yaml`, `.env` (API keys, bot tokens) and `auth.json`
-  had no copy outside the old disk, so it is configured again from scratch. Regenerate
+- **restic.** Recreate the four timers and the pre-backup hook from [backup.md](../backup.md)
+  (`apt install sqlite3 rsync`), and run one backup by hand.
+- **Hermes.** Reinstall it, then restore its home from `/srv/data/host-state/hermes`
+  into `~/.hermes` as `yuandrk` ([backup.md](../backup.md#restore)). Regenerate
   `kube-sandbox.conf` with `infrastructure/hermes-sandbox/make-kubeconfig.sh`, recreate the
   `proxy.conf` drop-in from [hermes-dashboard.md](../hermes-dashboard.md), and run
   `loginctl enable-linger yuandrk` so that its user units start without a login.

@@ -17,6 +17,19 @@ change would make a future reader ask "why on earth…?".
 
 ## Log
 
+### 2026-11-28 · Live state is copied under /srv/data before each backup
+
+ActualBudget's SQLite files, the k3s datastore and Hermes' home are copied consistently into
+`/srv/data/host-state` by an `ExecStartPre=` of both restic runs, instead of adding paths to the
+runs. The units' backup paths stay the same, the copies land on the only disk that is backed up,
+and the B2 run gets a fresh copy of its own. The live files stay in the backup too, so nothing
+that was restorable before stops being restorable.
+
+- **Cost:** the databases are stored twice in each snapshot (they are small, and restic
+  deduplicates unchanged chunks). A failed copy fails the whole run, photos included, so that
+  healthchecks.io reports it instead of a stale copy going unnoticed.
+- [backup.md](backup.md#consistent-copies)
+
 ### 2026-10-17 · Alerts by push and by email, without a chat app
 
 No chat app was wanted for alerts. Alertmanager sends every alert to two services outside the

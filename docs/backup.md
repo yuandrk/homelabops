@@ -29,6 +29,7 @@ Two rules came out of it:
 | ActualBudget (SQLite) | `/srv/data/actualbudget` | hostPath, Deployment pinned to k3s-master |
 | n8n, Kite | `/var/lib/rancher/k3s/storage/pvc-*` | local-path PVCs |
 | Database dumps taken by hand: before an upgrade that migrates a DB, or after an app is stopped (`pg_dump -Fc`, `mysqldump`) | `/srv/data/db-dumps/<app>/` (root, 0700) | Not mounted |
+| Consistent copies of live state, rewritten before each backup run: ActualBudget's SQLite files, the k3s datastore and join token, Hermes' home | `/srv/data/host-state/` (root, 0700) | Not mounted ([below](#consistent-copies)) |
 
 The NFS export is host config outside git:
 
@@ -46,8 +47,11 @@ The NFS export is host config outside git:
   `library/backups`; n8n's only by the dumps taken by hand, in `/srv/data/db-dumps`. n8n is
   scaled to zero, so the last one, taken after it stopped, is complete.
 - The local-path volumes on k3s-worker3: Fleet's MySQL, Prometheus.
-- Hermes' home `~/.hermes` on k3s-master: its config, API keys and memory.
-- Cluster state: git is the source of truth, apart from what [off-git.md](off-git.md) lists.
+- Hermes' code, runtimes, caches, logs and its own backups under `~/.hermes`, which a reinstall
+  or restic's history replace. Its config, keys, memory and kanban are copied
+  ([below](#consistent-copies)).
+- Cluster objects: git is the source of truth, apart from what [off-git.md](off-git.md) lists.
+  The datastore itself is copied, so a rebuilt master can keep the cluster and its join token.
 
 What to add is in [TODO](TODO.md#backups).
 
@@ -94,6 +98,37 @@ cap above $0, which needs a payment method on the account. The cap is per accoun
 the Obsidian bucket too. If it ever falls back to the free tier, every upload to the account fails
 with `storage cap exceeded`. A raised cap takes up to 10 minutes to apply.
 
+### Consistent copies
+
+A file-level copy of a SQLite database that is being written can be torn. So before each of the
+two nightly runs, `restic-pre-backup` writes consistent copies under `/srv/data/host-state`,
+which the runs already include. The live files are still backed up as they are; on a restore,
+take the databases from `host-state`.
+
+| Directory | What | How |
+|-----------|------|-----|
+| `actualbudget/` | every SQLite file under `/srv/data/actualbudget`, same relative paths | `sqlite3 .backup`, as the file's owner, then `PRAGMA quick_check` |
+| `k3s-server/` | `db/state.db` and `token` from `/var/lib/rancher/k3s/server` | the same for `state.db`; `token` copied as is |
+| `hermes/` | `~yuandrk/.hermes`, minus code and runtimes (`hermes-agent/`, `tools/`, `installs/`, `node/`, `venvs/`, `bin/`), `cache/`, `logs/`, and Hermes' own `backups/` and `state-snapshots/` | `rsync`, hard-linking what did not change since the last copy, then each SQLite file in it replaced by a `.backup` copy |
+
+| Piece | Where |
+|-------|-------|
+| Script | `/usr/local/bin/restic-pre-backup` (root, 0755), from [runbooks/restic-pre-backup.sh](runbooks/restic-pre-backup.sh). Needs `sqlite3` and `rsync` |
+| Hook | drop-in `pre-backup.conf` in `restic-backup.service.d/` and `restic-b2-backup.service.d/` |
+
+```ini
+# /etc/systemd/system/restic-{,b2-}backup.service.d/pre-backup.conf
+[Service]
+ExecStartPre=/usr/local/bin/restic-pre-backup
+```
+
+Each section is built in a scratch directory and swapped in only when complete, so a failure
+keeps the previous night's copy. The hook has no leading `-` on purpose: a failure fails the run,
+and healthchecks.io emails about it, at the cost of that night's snapshot.
+
+`host-state/k3s-server/token` and `hermes/.env` hold credentials. They sit in a root-only
+directory and in the encrypted repositories, like the rest.
+
 ### Monitoring
 
 Each of the four units reports to its own check on healthchecks.io when it stops: the bare URL on
@@ -134,6 +169,16 @@ sudo bash -c 'set -a; . /etc/restic/restic.env
 Stop the app before moving data into place, and keep Flux from scaling it back up: for a plain
 Deployment such as ActualBudget, `flux suspend kustomization apps` and scale it to 0; for Immich,
 `flux suspend helmrelease immich -n apps` and scale `immich-server` to 0. Resume afterwards.
+
+For ActualBudget, take its SQLite files from `/srv/data/host-state/actualbudget` in the same
+snapshot and copy them over the restored live ones before starting the app. Copy them as the
+directory's owner, and leave out the live files' `-wal` and `-shm`.
+
+For Hermes, stop its two user units, restore `/srv/data/host-state/hermes` into `~/.hermes` as
+`yuandrk`, reinstall the code if `hermes-agent/` is gone, and start the units.
+
+The k3s datastore is restored only when rebuilding k3s-master
+([runbook](runbooks/rebuild-k3s-master.md#4-k3s-server)).
 
 If k3s-master itself is gone, any machine with restic and the password from 1Password can read
 the local repository. Its SFTP key lived on k3s-master, though, so reach `/srv/backup/restic`

@@ -13,14 +13,6 @@ Last reviewed 2026-10-11, against the [inventory](runbooks/inventory.md) of the 
       and only dumps taken by hand exist, in `/srv/data/db-dumps/n8n/`, the last one after it
       stopped. The database carries the migrations of the beta 2.43.4, so the first start
       migrates it to the stable release in the manifest: dump it right before
-- [ ] Copy ActualBudget consistently: its SQLite files are read while the server runs, so a
-      write during the backup can leave that night's copy inconsistent. Add a `sqlite3 .backup`
-      pre-step. Until then, older snapshots and the clients' local copies cover it
-- [ ] Back up the k3s server state: `server/db/` (SQLite, copied with `sqlite3 .backup` so the
-      copy is consistent) and `server/token`. A rebuilt master could then restore the cluster
-      instead of every worker re-joining a new one ([off-git.md](off-git.md#k3s-master))
-- [ ] Back up Hermes' home `~/.hermes` (config, API keys, memory), which no copy covers
-      ([off-git.md](off-git.md#k3s-master))
 
 ## Monitoring
 
